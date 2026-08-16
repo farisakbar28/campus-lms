@@ -1,9 +1,9 @@
 === EVIDENCE ===
-CLAIM:    No fmt.Println remains in apps/api
-COMMAND:  grep -rn 'fmt.Println' apps/api || echo CLEAN
+CLAIM:    No unstructured stdout printing (fmt.Print*/log.Print*) in apps/api
+COMMAND:  grep -rnE '(fmt\.(Print|Printf|Println)|log\.(Print|Printf|Println|Fatal|Fatalf|Fatalln))\(' apps/api --include='*.go' | grep -vE ':[0-9]+:[[:space:]]*//' || echo CLEAN
 CWD:      /home/hype/projects/campus-lms
-RUN AT:   2026-08-17T01:01:25+08:00
-COMMIT:   4693922
+RUN AT:   2026-08-17T01:19:25+08:00
+COMMIT:   eda3ba3
 EXIT:     0
 === RAW OUTPUT ===
 CLEAN
