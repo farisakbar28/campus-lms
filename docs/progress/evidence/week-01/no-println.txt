@@ -1,0 +1,10 @@
+=== EVIDENCE ===
+CLAIM:    No fmt.Println remains in apps/api
+COMMAND:  grep -rn 'fmt.Println' apps/api || echo CLEAN
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-17T01:01:25+08:00
+COMMIT:   4693922
+EXIT:     0
+=== RAW OUTPUT ===
+CLEAN
+=== END ===

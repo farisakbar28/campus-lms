@@ -1,0 +1,15 @@
+=== EVIDENCE ===
+CLAIM:    SIGTERM triggers graceful shutdown and exits with code 0
+COMMAND:  bash apps/api/scripts/verify-graceful-shutdown.sh
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-17T01:01:32+08:00
+COMMIT:   4693922
+EXIT:     0
+=== RAW OUTPUT ===
+PID: 32064
+ACTION: sending SIGTERM to PID 32064
+EXIT CODE: 0
+{"time":"2026-08-17T01:01:33.05842752+08:00","level":"INFO","msg":"HTTP server started","service":"campus-api","env":"development","version":"(devel)","address":":18081"}
+{"time":"2026-08-17T01:01:33.064729662+08:00","level":"INFO","msg":"readiness check passed","service":"campus-api","env":"development","version":"(devel)"}
+{"time":"2026-08-17T01:01:33.066745302+08:00","level":"INFO","msg":"shutting down gracefully","service":"campus-api","env":"development","version":"(devel)","signal":"context canceled"}
+=== END ===

@@ -1,0 +1,33 @@
+=== EVIDENCE ===
+CLAIM:    GET /healthz returns HTTP 200 and the API emits JSON logs
+COMMAND:  bash apps/api/scripts/verify-healthz.sh
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-17T01:01:31+08:00
+COMMIT:   4693922
+EXIT:     0
+=== RAW OUTPUT ===
+PID: 31939
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0*   Trying 127.0.0.1:18080...
+* Established connection to 127.0.0.1 (127.0.0.1 port 18080) from 127.0.0.1 port 58684 
+* using HTTP/1.x
+> GET /healthz HTTP/1.1
+> Host: 127.0.0.1:18080
+> User-Agent: curl/8.18.0
+> Accept: */*
+> 
+* Request completely sent off
+< HTTP/1.1 200 OK
+< Content-Type: application/json
+< Date: Sun, 16 Aug 2026 17:01:32 GMT
+< Content-Length: 16
+< 
+{ [16 bytes data]
+100     16 100     16   0      0  16016      0                              0100     16 100     16   0      0  14285      0                              0100     16 100     16   0      0  13082      0                              0
+* Connection #0 to host 127.0.0.1:18080 left intact
+{"status":"ok"}
+{"time":"2026-08-17T01:01:32.460794988+08:00","level":"INFO","msg":"HTTP server started","service":"campus-api","env":"development","version":"(devel)","address":":18080"}
+{"time":"2026-08-17T01:01:32.467903382+08:00","level":"INFO","msg":"liveness check passed","service":"campus-api","env":"development","version":"(devel)"}
+{"time":"2026-08-17T01:01:32.479129255+08:00","level":"INFO","msg":"liveness check passed","service":"campus-api","env":"development","version":"(devel)"}
+=== END ===

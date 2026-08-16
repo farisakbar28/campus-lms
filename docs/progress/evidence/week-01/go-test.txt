@@ -1,0 +1,15 @@
+=== EVIDENCE ===
+CLAIM:    Unit tests pass with the Go race detector
+COMMAND:  GOCACHE=/tmp/campus-lms-go-build make test
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-17T01:01:23+08:00
+COMMIT:   4693922
+EXIT:     0
+=== RAW OUTPUT ===
+make[1]: Entering directory '/home/hype/projects/campus-lms'
+cd apps/api && go test -race -count=1 ./...
+?   	github.com/farisakbar28/campus-lms/apps/api/cmd/api	[no test files]
+ok  	github.com/farisakbar28/campus-lms/apps/api/internal/config	1.023s
+ok  	github.com/farisakbar28/campus-lms/apps/api/internal/http	1.022s
+make[1]: Leaving directory '/home/hype/projects/campus-lms'
+=== END ===
