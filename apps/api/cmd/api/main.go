@@ -19,7 +19,7 @@
 //  2. STRUCTURED LOGGING
 //     - log/slog with a JSON handler. Level from APP_LOG_LEVEL.
 //     - Every line carries: service, env, version. trace_id is added in Week 6.
-//     - No unstructured standard-output printing anywhere.
+//     - No fmt.Println anywhere.
 //
 //  3. HTTP SERVER
 //     - net/http with chi (or stdlib router).
@@ -45,7 +45,7 @@
 // DEFINITION OF DONE (proposed by agent, ticked by human)
 //   - curl -v http://localhost:8080/healthz returns 200 with a JSON log line
 //   - SIGTERM produces "shutting down gracefully" and exit code 0
-//   - no unstructured standard-output printing remains
+//   - no fmt.Println remains
 //   - all four server timeouts are set
 //   - human can explain liveness vs readiness out loud
 //
