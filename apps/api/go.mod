@@ -1,4 +1,4 @@
-module github.com/CHANGE_ME/campus-lms/apps/api
+module github.com/farisakbar28/campus-lms/apps/api
 
 go 1.23
 

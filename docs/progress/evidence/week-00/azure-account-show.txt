@@ -1,0 +1,9 @@
+CLAIM: Azure CLI is authenticated to the Azure for Students subscription and it is enabled/default.
+EVIDENCE: docs/progress/evidence/week-00/azure-account-show.txt
+COMMAND: az account show --query "{Name:name,State:state,IsDefault:isDefault,Environment:environmentName}" --output table
+RUN AT: 2026-08-16T20:29:00+08:00
+COMMIT: a0d2890
+
+Name                State    IsDefault    Environment
+------------------  -------  -----------  -------------
+Azure for Students  Enabled  True         AzureCloud

@@ -102,7 +102,7 @@ docker-size: ## Check image size (Week 2 target: < 25MB)
 .PHONY: buildx
 buildx: ## Multi-arch build amd64+arm64 (Week 2)
 	docker buildx build --platform linux/amd64,linux/arm64 \
-		-t ghcr.io/CHANGE_ME/campus-lms-api:dev -f apps/api/Dockerfile apps/api
+		-t ghcr.io/farisakbar28/campus-lms-api:dev -f apps/api/Dockerfile apps/api
 
 .PHONY: prune
 prune: ## Clean Docker junk - run every Friday (256GB disk!)

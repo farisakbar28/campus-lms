@@ -1,0 +1,10 @@
+CLAIM: WSL2 is configured with memory=5GB, processors=8, and swap=8GB.
+EVIDENCE: docs/progress/evidence/week-00/wslconfig.txt
+COMMAND: cat /mnt/c/Users/Hype/.wslconfig
+RUN AT: 2026-08-16T20:29:25+08:00
+COMMIT: a0d2890
+
+[wsl2]
+memory=5GB
+processors=8
+swap=8GB

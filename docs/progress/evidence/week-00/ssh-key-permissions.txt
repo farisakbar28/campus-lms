@@ -1,0 +1,8 @@
+CLAIM: The Azure SSH private key is protected with owner-only permissions.
+EVIDENCE: docs/progress/evidence/week-00/ssh-key-permissions.txt
+COMMAND: ls -l ~/.ssh/campus_lms_azure ~/.ssh/campus_lms_azure.pub
+RUN AT: 2026-08-16T20:30:06+08:00
+COMMIT: a0d2890
+
+-rw------- 1 hype hype 464 Aug 16 18:57 /home/hype/.ssh/campus_lms_azure
+-rw-r--r-- 1 hype hype  98 Aug 16 18:57 /home/hype/.ssh/campus_lms_azure.pub

@@ -1,0 +1,7 @@
+CLAIM: The local .env file is ignored by Git.
+EVIDENCE: docs/progress/evidence/week-00/env-gitignore.txt
+COMMAND: git check-ignore -v .env
+RUN AT: 2026-08-16T20:30:57+08:00
+COMMIT: a0d2890
+
+.gitignore:2:.env	.env

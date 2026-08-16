@@ -1,0 +1,37 @@
+CLAIM: The repository Makefile todo target runs successfully in the Week 0 development environment.
+EVIDENCE: docs/progress/evidence/week-00/make-todo.txt
+COMMAND: make todo
+RUN AT: 2026-08-16T20:30:40+08:00
+COMMIT: a0d2890
+
+./.github/workflows/ai-eval.yml:28:# TODO Minggu 9
+./.github/workflows/ai-eval.yml:33:      - run: echo "TODO Minggu 9"
+./.github/workflows/cd.yml:22:# TODO Minggu 5
+./.github/workflows/cd.yml:27:      - run: echo "TODO Minggu 5"
+./.github/workflows/ci.yml:35:# TODO Minggu 5: hapus placeholder di bawah, tulis pipeline sungguhan.
+./.github/workflows/ci.yml:41:          echo "TODO Minggu 5: pipeline belum ditulis"
+./apps/api/cmd/api/main.go:58:	// TODO Week 1: implement per the brief above.
+./apps/api/Dockerfile:29:# TODO Week 2
+./apps/api/go.mod:5:// TODO Week 0: replace CHANGE_ME with the owner's GitHub username.
+./apps/web/README.md:10:TODO Week 1: `npx create-next-app@latest . --ts --tailwind --app --eslint`
+./deploy/caddy/Caddyfile:23:# TODO Week 4
+./deploy/compose/docker-compose.override.yml:12:# TODO Week 2
+./deploy/compose/docker-compose.yml:29:# TODO Week 2
+./deploy/scripts/backup.sh:19:echo "TODO Week 4" >&2
+./deploy/scripts/deploy.sh:20:echo "TODO Week 4" >&2
+./deploy/scripts/restore.sh:17:echo "TODO Week 4" >&2
+./docs/adr/README.md:22:| 0001 | Pilihan stack | 1 | ⬜ TODO |
+./docs/adr/README.md:23:| 0002 | Strategi multi-tenancy | 3 | ⬜ TODO |
+./docs/adr/README.md:24:| 0002b | Arsitektur hemat biaya (Azure + Neon + Pages) | 4 | ⬜ TODO |
+./docs/adr/README.md:25:| 0002c | Konvensi Azure (region, naming, tagging) | Day-0 | ⬜ TODO |
+./docs/adr/README.md:26:| 0003 | LLM routing & token budget | 7 | ⬜ TODO |
+./docs/adr/README.md:27:| 0004 | Compose vs Kubernetes untuk produksi | 11 | ⬜ TODO |
+./docs/domain.md:43:TODO: ERD sederhana. Boleh ASCII dulu, diperbagus di Minggu 12.
+./docs/progress/week-00.md:28:| 3 | Mengulang acceptance test setelah environment diperbaiki manusia, menjalankan `make todo`, dan merangkum pekerjaan Minggu 1 berdasarkan repo | `AGENTS.md`, `Makefile` dan file TODO terkait | —      | Belum disimpan sebagai evidence |
+./docs/progress/week-00.md:197:### Masalah: Agent mengganti `make todo` dengan pencarian TODO pada percobaan pertama
+./docs/progress/week-00.md:199:* **Gejala:** Karena command asli tidak tersedia, agent mencoba memperoleh hasil ekuivalen dengan membaca pola TODO dari repository.
+./Makefile:71:	@echo "TODO Week 3: install goose/golang-migrate, then fill this target"
+./Makefile:76:	@echo "TODO Week 3"
+./Makefile:81:	@echo "TODO Week 3: 3 tenants, 50 lecturers, 2000 students, 200 courses"
+./Makefile:114:todo: ## List all outstanding TODOs
+./Makefile:115:	@grep -rn "TODO" --include="*.go" --include="*.py" --include="*.yml" \

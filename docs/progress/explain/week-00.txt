@@ -1,0 +1,17 @@
+# Explain-Back Minggu 00 — Persiapan Akun & Agent
+
+Pada Minggu 0 saya belum masuk ke implementasi utama `campus-lms`. Fokus saya adalah menyiapkan fondasi agar proses development pada minggu berikutnya aman, terukur, dan tidak bergantung sepenuhnya pada AI agent.
+
+Untuk Azure, saya menggunakan Azure for Students dengan spending limit tetap aktif. Saya memahami bahwa spending limit dan budget alert bukan hal yang sama. Spending limit berfungsi sebagai guardrail agar penggunaan tidak melewati batas kredit yang tersedia, sedangkan budget alert hanya memberi peringatan ketika penggunaan biaya mencapai threshold tertentu. Di project ini saya membuat budget dengan alert pada 50%, 80%, dan 100% agar penggunaan cloud dapat dipantau lebih awal.
+
+Saya juga memahami perbedaan antara `az vm stop` dan `az vm deallocate`. Ketika VM hanya di-stop, sistem operasinya berhenti tetapi alokasi compute masih dapat tetap diberikan untuk VM tersebut sehingga compute billing masih dapat berjalan. Deallocate berarti VM dihentikan sekaligus alokasi compute-nya dilepas kembali ke Azure, sehingga billing untuk compute berhenti. Ini penting karena VM nanti tidak seharusnya terus menggunakan kredit ketika sedang tidak digunakan.
+
+Untuk akses VM, saya membuat SSH key ED25519. Public key nantinya boleh ditempatkan di server, sedangkan private key harus tetap berada di komputer lokal dan tidak boleh masuk repository. Server tidak membutuhkan private key saya; autentikasi bekerja dengan membuktikan secara kriptografis bahwa client memiliki private key yang sesuai dengan public key yang terdaftar.
+
+Saya juga belajar bahwa secret seperti API key dan JWT secret tidak boleh di-hard-code atau dimasukkan ke Git. Pada development, secret disimpan di environment lokal seperti `.env`. Production sebaiknya menggunakan credential tersendiri dan aplikasi mendapatkan secret tersebut dari environment atau secret management pada runtime, bukan dari source code.
+
+Karena laptop saya memiliki RAM 8 GB, WSL juga perlu dibatasi agar tidak mengambil seluruh resource host. Saya menggunakan `.wslconfig` untuk membatasi resource sehingga Windows dan workload lain tetap memiliki ruang yang cukup.
+
+Terakhir, saya memahami konsep agent-first, evidence-verified. AI agent boleh membantu banyak pekerjaan lokal, tetapi hasilnya tidak boleh dipercaya hanya berdasarkan klaim agent. Saya tetap harus melihat file yang berubah, menjalankan command verifikasi, memeriksa raw output, dan menyimpan evidence. Contohnya, acceptance test `make todo` awalnya gagal karena GNU Make belum terpasang. Setelah environment diperbaiki oleh manusia, test dijalankan ulang sampai benar-benar berhasil.
+
+Kesimpulan saya dari Minggu 0 adalah bahwa persiapan environment, keamanan credential, disiplin biaya cloud, dan proses verifikasi agent sama pentingnya dengan menulis kode. Tujuan project ini bukan hanya menghasilkan sistem yang berjalan, tetapi membuat saya mampu menjelaskan mengapa setiap keputusan teknis diambil.

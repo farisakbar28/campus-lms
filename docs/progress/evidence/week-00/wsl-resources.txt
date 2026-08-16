@@ -1,0 +1,13 @@
+CLAIM: WSL2 runtime reflects the configured memory, swap, and CPU limits.
+EVIDENCE: docs/progress/evidence/week-00/wsl-resources.txt
+COMMAND: free -h && nproc
+RUN AT: 2026-08-16T20:29:45+08:00
+COMMIT: a0d2890
+
+=== free -h ===
+               total        used        free      shared  buff/cache   available
+Mem:           4.8Gi       524Mi       4.2Gi       3.5Mi       225Mi       4.3Gi
+Swap:          8.0Gi          0B       8.0Gi
+
+=== nproc ===
+8
