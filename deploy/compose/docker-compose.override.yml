@@ -1,0 +1,12 @@
+# -----------------------------------------------------------------------------
+# TASK BRIEF — Week 2 — DEV ONLY (auto-loaded by docker compose locally)
+# -----------------------------------------------------------------------------
+#
+# Purpose: hot reload.
+#   - Go   : air (github.com/air-verse/air)
+#   - Next : next dev
+#
+# This file must never reach production. Production uses an explicit
+# docker-compose.prod.yml (Week 4).
+
+# TODO Week 2

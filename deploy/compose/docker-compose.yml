@@ -1,0 +1,29 @@
+# -----------------------------------------------------------------------------
+# TASK BRIEF — Week 2
+# Agent: read agent/rules/30-docker-deploy.md. Respect the RAM constraint:
+# the development laptop may have only 8 GB.
+# -----------------------------------------------------------------------------
+#
+# PROFILES (mandatory — never start everything at once)
+#   core    : api, web, postgres, redis
+#   storage : minio
+#   obs     : otel-collector, prometheus, grafana, loki, tempo
+#
+# EVERY SERVICE MUST HAVE
+#   - healthcheck, and depends_on with condition: service_healthy
+#   - a memory limit (non-negotiable on this hardware)
+#   - restart policy
+#   - configuration via env_file, never hardcoded
+#
+# QUESTIONS THE HUMAN MUST BE ABLE TO ANSWER AFTERWARDS
+#   - Why can `api` reach `postgres` by service name, and why is `localhost`
+#     inside a container not the laptop?
+#   - Bind mount vs named volume: which for Postgres data, which for hot
+#     reload, and why?
+#   - Why is depends_on insufficient without a healthcheck?
+#
+# EVIDENCE REQUIRED
+#   docs/progress/evidence/week-02/compose-ps-healthy.txt
+#   docs/progress/evidence/week-02/oom-kill-demo.txt
+
+# TODO Week 2

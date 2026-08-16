@@ -1,0 +1,16 @@
+# CONTOH FORMAT — dibuat saat scaffolding di workspace, BUKAN dari laptopmu.
+# Hapus file ini kapan saja. Disimpan hanya supaya kamu melihat bentuk yang benar,
+# termasuk bahwa output disimpan APA ADANYA (perhatikan escape code warna tidak dibersihkan).
+
+=== EVIDENCE ===
+CLAIM:    Makefile has a working help target
+COMMAND:  make help | head -3
+CWD:      /home/user/campus-lms
+RUN AT:   2026-08-16T08:54:19+00:00
+COMMIT:   no-git
+EXIT:     0
+=== RAW OUTPUT ===
+make[1]: Entering directory '/home/user/campus-lms'
+  [36mhelp              [0m Show available commands
+  [36mup                [0m Start dev stack (core profile)
+=== END ===

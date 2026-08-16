@@ -1,0 +1,23 @@
+# -----------------------------------------------------------------------------
+# TASK BRIEF — Week 4
+# Agent: read agent/rules/30-docker-deploy.md and agent/rules/60-security.md.
+# -----------------------------------------------------------------------------
+#
+# REQUIREMENTS
+#   - automatic TLS (Caddy handles ACME/Let's Encrypt itself)
+#   - reverse_proxy to api-go
+#   - security headers: HSTS, X-Content-Type-Options, Referrer-Policy,
+#     X-Frame-Options, basic CSP
+#   - compression (gzip + zstd)
+#   - basic rate limiting
+#   - JSON access logs (so Loki can parse them in Week 6)
+#
+# WORTHWHILE EXTRA
+#   Also write an equivalent Nginx config at nginx.conf.reference. It will not
+#   be used, but the human must be able to READ Nginx — most companies run it.
+#
+# EVIDENCE REQUIRED
+#   docs/progress/evidence/week-04/tls-check.txt
+#   docs/progress/evidence/week-04/security-headers.txt
+
+# TODO Week 4

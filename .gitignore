@@ -1,0 +1,52 @@
+# secrets — JANGAN PERNAH di-commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+!**/testdata/*.key
+secrets/
+*.tfvars
+!*.tfvars.example
+
+# build artifacts
+/bin/
+/dist/
+apps/api/bin/
+apps/web/.next/
+apps/web/out/
+apps/web/node_modules/
+node_modules/
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# go
+*.test
+*.out
+coverage.out
+coverage.html
+
+# terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+
+# editor & os
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# data lokal
+data/
+tmp/
+*.dump
+*.sql.gz

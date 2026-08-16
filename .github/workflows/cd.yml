@@ -1,0 +1,27 @@
+# ============================================================================
+# MINGGU 5 — TULIS SENDIRI.
+#
+# Trigger: merge ke main (setelah CI hijau).
+# Langkah: SSH ke VM Azure -> jalankan deploy/scripts/deploy.sh -> smoke test.
+#
+# Keamanan:
+#   - SSH private key disimpan di GitHub Secrets, JANGAN di repo
+#   - pakai environment "production" dengan required reviewer (dirimu sendiri)
+#     supaya kamu terbiasa dengan gate persetujuan seperti di perusahaan
+#   - jangan pernah echo secret ke log
+# ============================================================================
+
+name: CD
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+# TODO Minggu 5
+jobs:
+  placeholder:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "TODO Minggu 5"

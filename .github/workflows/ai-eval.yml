@@ -1,0 +1,33 @@
+# ============================================================================
+# MINGGU 9 — TULIS SENDIRI. Ini workflow paling bernilai di repo ini.
+#
+# Trigger: PR yang menyentuh apps/ai/** atau prompts/**
+#
+# Langkah:
+#   1. jalankan golden dataset (>= 80 kasus) lewat pipeline RAG
+#   2. hitung metrik ragas: faithfulness, answer relevancy,
+#      context precision, context recall
+#   3. bandingkan dengan baseline yang tersimpan di repo
+#   4. GAGALKAN PR kalau faithfulness turun > 5% atau ada regresi
+#      pada kasus kritis
+#   5. posting tabel hasil sebagai komentar di PR
+#
+# Kenapa ini penting: ribuan pelamar bisa membuat RAG. Sangat sedikit yang
+# bisa MEMBUKTIKAN RAG-nya bagus dengan angka dan mencegah regresinya
+# secara otomatis. Ini pembeda terbesarmu di pasar 2026.
+# ============================================================================
+
+name: AI Eval
+
+on:
+  pull_request:
+    paths:
+      - 'apps/ai/**'
+      - 'prompts/**'
+
+# TODO Minggu 9
+jobs:
+  placeholder:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "TODO Minggu 9"

@@ -1,0 +1,42 @@
+# ============================================================================
+# MINGGU 5 — TULIS SENDIRI.
+#
+# Pipeline target (urutan penting — yang cepat dan murah dulu):
+#   1. lint      : golangci-lint, gofmt check, ruff (nanti), tsc (nanti)
+#   2. unit      : go test -race
+#   3. integration: testcontainers (Postgres ASLI, bukan mock)
+#   4. build     : docker buildx multi-arch (amd64 + arm64)
+#   5. scan      : Trivy pada image, gosec + govulncheck pada source
+#   6. push      : ke GHCR, tag dengan git SHA
+#
+# Target waktu total: < 8 menit. Kalau lebih lama, orang berhenti menunggu
+# dan mulai men-skip CI — itu awal dari kerusakan budaya engineering.
+#
+# Teknik yang harus dipakai:
+#   - actions/cache untuk Go module cache
+#   - concurrency group: batalkan run lama saat ada push baru
+#   - pin action pakai commit SHA, bukan tag (supply chain security)
+#   - permissions minimal (contents: read, packages: write hanya di job push)
+#
+# DoD Minggu 5:
+#   [ ] PR yang merusak test TIDAK BISA di-merge (branch protection)
+#   [ ] integration test memakai Postgres asli via testcontainers
+#   [ ] Trivy bersih dari HIGH/CRITICAL (atau ada justifikasi tertulis)
+#   [ ] push -> produksi < 12 menit, dan kamu tahu angka persisnya
+# ============================================================================
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# TODO Minggu 5: hapus placeholder di bawah, tulis pipeline sungguhan.
+jobs:
+  placeholder:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "TODO Minggu 5: pipeline belum ditulis"
+          exit 1
