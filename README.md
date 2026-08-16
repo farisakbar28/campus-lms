@@ -80,6 +80,7 @@ deploy/
   scripts/        deploy, backup, restore
 agent/            agent operating rules, prompts, templates, checklists
 docs/
+  roadmap.md      the 12-week curriculum (source of truth for what to build when)
   adr/            architecture decision records
   setup/          human-only setup checklists
   progress/       weekly reports, evidence, quizzes (the learning record)
@@ -113,6 +114,8 @@ Prerequisites: Docker + Compose v2, Go 1.23+, Node 20+, Python 3.12+.
 
 ## The learning system
 
+**New here? Read `WORKFLOW.md` first** — one page, explains the whole loop.
+
 | Command | Purpose |
 |---|---|
 | `make week-init W=01` | Scaffold the week's report, quiz, and evidence directory |
@@ -130,7 +133,7 @@ See `agent/evidence-protocol.md`.
 
 | Week | Focus | Status |
 |---|---|---|
-| 0 | Cloud account hardening, agent setup | 🟢 done |
+| 0 | Cloud account hardening, agent setup | 🟡 in progress |
 | 1 | Linux, networking, Git, repo foundation | ⬜ |
 | 2 | Docker and Compose | ⬜ |
 | 3 | PostgreSQL, multi-tenancy with RLS | ⬜ |

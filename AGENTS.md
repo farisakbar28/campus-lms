@@ -52,7 +52,8 @@ Azure Portal actions · student/identity verification · claiming Student Pack o
 ## 3. The task loop (follow this every time)
 
 ```
-1. ORIENT   read AGENTS.md + agent/rules/ relevant to the area + current week in roadmap
+1. ORIENT   read AGENTS.md + agent/policy.md + agent/rules/ for the area
+            + your week's section in docs/roadmap.md + the file's TASK BRIEF
 2. PLAN     restate the task, list files you will touch, state the DoD you are targeting
 3. CONFIRM  if the task is ambiguous or touches a hard stop -> STOP and ask
 4. IMPLEMENT smallest coherent change; keep the tree runnable
@@ -146,6 +147,7 @@ Detailed per-area rules live in `agent/rules/`. **Read the relevant one before t
 | `agent/checklists/` | Human verification checklists |
 | `docs/progress/` | Weekly reports, evidence, quizzes (the learning record) |
 | `docs/adr/` | Architecture Decision Records (human-owned decisions) |
+| `docs/roadmap.md` | The 12-week curriculum. Find the current week before starting |
 | `docs/setup/` | Human-only setup checklists (Azure, accounts) |
 | `docs/runbook/` | Incident procedures |
 | `docs/notes/` | Experiment notes with measurements |

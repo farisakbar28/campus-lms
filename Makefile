@@ -102,7 +102,7 @@ docker-size: ## Check image size (Week 2 target: < 25MB)
 .PHONY: buildx
 buildx: ## Multi-arch build amd64+arm64 (Week 2)
 	docker buildx build --platform linux/amd64,linux/arm64 \
-		-t ghcr.io/farisakbar28/campus-lms-api:dev -f apps/api/Dockerfile apps/api
+		-t ghcr.io/CHANGE_ME/campus-lms-api:dev -f apps/api/Dockerfile apps/api
 
 .PHONY: prune
 prune: ## Clean Docker junk - run every Friday (256GB disk!)
@@ -159,10 +159,23 @@ gate: ## Show the week-completion gate checklist
 	@echo ""
 
 .PHONY: agent-context
-agent-context: ## Print the files an agent must read before starting work
-	@echo "Required reading before any task:"
-	@echo "  AGENTS.md"
-	@echo "  agent/policy.md"
-	@echo "  agent/evidence-protocol.md"
-	@echo "  agent/rules/00-global.md + the rule file for your area"
-	@echo "  the current week section of the roadmap"
+agent-context: ## Print the exact files an agent must read before starting work
+	@echo ""
+	@echo "ALWAYS READ (every task, no exceptions):"
+	@echo "  AGENTS.md                      operating contract"
+	@echo "  agent/policy.md                permissions and hard stops"
+	@echo "  agent/evidence-protocol.md     how to prove claims"
+	@echo "  agent/rules/00-global.md       cross-cutting rules"
+	@echo "  docs/roadmap.md                find your week, read its section"
+	@echo ""
+	@echo "THEN READ the rule file for the area you are touching:"
+	@echo "  apps/api/**            -> agent/rules/10-go-api.md"
+	@echo "  migrations/, SQL       -> agent/rules/20-database.md"
+	@echo "  Dockerfile, deploy/**  -> agent/rules/30-docker-deploy.md"
+	@echo "  .github/workflows/**   -> agent/rules/40-ci-cd.md"
+	@echo "  apps/ai/**             -> agent/rules/50-python-ai.md"
+	@echo "  auth, tenancy, upload  -> agent/rules/60-security.md"
+	@echo "  docs/**, reports       -> agent/rules/70-docs.md"
+	@echo ""
+	@echo "AND the task brief in the file you are implementing (look for TASK BRIEF)."
+	@echo ""
