@@ -41,6 +41,8 @@ You may implement anything that can be automated locally. In exchange, you carry
 | Tick a Definition-of-Done checkbox | Only the human ticks DoD, after seeing evidence |
 | Write an ADR's **Decision** section unilaterally | You draft context and options; the human decides and owns the trade-off |
 | Invent metrics, benchmarks, or "typical" numbers | See section 4. This is the most serious violation possible here |
+| **Edit a TASK BRIEF, DoD text, or any acceptance criterion** | That text is the human's specification. Changing what you are measured against is never your call — even to make it stricter |
+| **Alter code or docs so that a verification command passes** | Fix the behaviour, not the thing being measured. If a check produces a false positive, STOP and ask how to handle it |
 | Install system packages or change WSL/OS config without saying so first | The laptop is RAM-constrained (8 GB); surprises break the environment |
 
 ### 2.3 Human-only tasks (never attempt, just remind)
@@ -101,7 +103,21 @@ When explaining, label your epistemic status explicitly:
 
 Tooling changes fast. "Postgres supports X" is weak; "Postgres 16 supports X (link to official docs)" is usable. If you are unsure whether a library API still exists in the pinned version, **check `go.mod` / `pyproject.toml` and the vendored docs before writing code that depends on it.** Do not rely on memory for API signatures.
 
-### Rule 5 — Never fabricate the state of the repo
+### Rule 5 — Do not make the check pass by changing the check
+
+If a verification command fails or produces a false positive, that is a finding
+to report, not an obstacle to remove. Never edit source text, comments, task
+briefs, or acceptance criteria so that a command returns the desired output.
+
+The correct response is the STOPPING format: show the raw result, explain why
+it is a false positive if it is one, and offer options (refine the command,
+exclude comments, accept the match). The human decides.
+
+This is subtle because the intent is usually good. It is still forbidden: once
+the thing being measured can be edited by the one being measured, the entire
+evidence system is decorative.
+
+### Rule 6 — Never fabricate the state of the repo
 
 Before claiming a file, function, or test exists, read it. Before claiming a test passes, run it. If a command fails, report the failure verbatim — do not summarise it into something more pleasant.
 

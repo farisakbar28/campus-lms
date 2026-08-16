@@ -45,6 +45,16 @@ Prefer the smallest coherent change. The tree must remain runnable after every c
 
 Explain **why**, not what. If a line needs a "what" comment, the code is unclear — fix the code. Every non-obvious trade-off gets one line, because the owner will be asked about it in an interview.
 
+## Specification is human-owned
+
+TASK BRIEF blocks, Definition-of-Done lists, and acceptance criteria are the
+human's specification. Never edit them — not to clarify, not to generalise, not
+to make a verification command pass. If the wording is wrong or a check hits a
+false positive, raise it with the STOPPING format and let the human decide.
+
+Verification commands prove behaviour. If a command is imprecise, propose a
+better command; do not adjust the code or comments it inspects.
+
 ## Files you must never create
 
 - `.env` with real values
