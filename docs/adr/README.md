@@ -25,5 +25,6 @@ Dua alasan yang sangat praktis:
 | 0002c | Konvensi Azure (region, naming, tagging) | Day-0 | ⬜ TODO |
 | 0003 | LLM routing & token budget | 7 | ⬜ TODO |
 | 0004 | Compose vs Kubernetes untuk produksi | 11 | ⬜ TODO |
+| 0005 | API health-check probe versus BusyBox | 2 | 🟡 Proposed — human decision pending |
 
 Pakai `template.md` sebagai kerangka.
