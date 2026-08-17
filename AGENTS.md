@@ -140,7 +140,7 @@ You are not only building; you are handing over understanding.
 |---|---|
 | Language in code | **English** — code, comments, docstrings, commit messages, ADRs, README, API docs |
 | Language in learning material | **Bahasa Indonesia** — weekly reports, quizzes, journal, `agent/README.md`, setup checklists |
-| Commits | Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, `test:`). One logical change per commit |
+| Commits | Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, `test:`, `build:`, `ci:`, `perf:`, `style:`). One logical change per commit |
 | Go | Standard layout (`cmd/`, `internal/`), explicit error wrapping with `%w`, `log/slog` only, no `fmt.Println`, no naked `panic` outside `main` |
 | Python | Type hints required, Pydantic for all boundaries, `ruff` + `mypy` clean |
 | SQL | Explicit column lists, versioned migrations only, never edit an applied migration |
