@@ -1,0 +1,35 @@
+=== EVIDENCE ===
+CLAIM:    Multi-arch image is published to GHCR and manifest lists both platforms
+COMMAND:  docker buildx imagetools inspect ghcr.io/farisakbar28/campus-lms-api:latest
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-18T03:51:43+08:00
+COMMIT:   50f7fc1
+EXIT:     0
+=== RAW OUTPUT ===
+Name:      ghcr.io/farisakbar28/campus-lms-api:latest
+MediaType: application/vnd.oci.image.index.v1+json
+Digest:    sha256:0ae006fc186d31226b36d64bd43ac071715aab64fc44ef5b9c58bd46d086fc7d
+           
+Manifests: 
+  Name:        ghcr.io/farisakbar28/campus-lms-api:latest@sha256:17dfc6800ef53c69c904ec32d49e6be9407cfe4030911636d11601b807e81fe6
+  MediaType:   application/vnd.oci.image.manifest.v1+json
+  Platform:    linux/amd64
+               
+  Name:        ghcr.io/farisakbar28/campus-lms-api:latest@sha256:59d16ef8b468d302cd37d441b14ddce03173710a4c078bb0e6abef3474f9e1f6
+  MediaType:   application/vnd.oci.image.manifest.v1+json
+  Platform:    linux/arm64
+               
+  Name:        ghcr.io/farisakbar28/campus-lms-api:latest@sha256:476466c1b4eaeec18f799fd002e526a1dc1fe312aedf3fe8ada9587599c901cb
+  MediaType:   application/vnd.oci.image.manifest.v1+json
+  Platform:    unknown/unknown
+  Annotations: 
+    vnd.docker.reference.digest: sha256:17dfc6800ef53c69c904ec32d49e6be9407cfe4030911636d11601b807e81fe6
+    vnd.docker.reference.type:   attestation-manifest
+               
+  Name:        ghcr.io/farisakbar28/campus-lms-api:latest@sha256:6781158dcb480859a54435fc034184665d0fdb835170f89dfbc89d9d12d95b57
+  MediaType:   application/vnd.oci.image.manifest.v1+json
+  Platform:    unknown/unknown
+  Annotations: 
+    vnd.docker.reference.digest: sha256:59d16ef8b468d302cd37d441b14ddce03173710a4c078bb0e6abef3474f9e1f6
+    vnd.docker.reference.type:   attestation-manifest
+=== END ===
