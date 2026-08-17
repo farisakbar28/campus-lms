@@ -133,8 +133,8 @@ See `agent/evidence-protocol.md`.
 
 | Week | Focus | Status |
 |---|---|---|
-| 0 | Cloud account hardening, agent setup | 🟡 in progress |
-| 1 | Linux, networking, Git, repo foundation | ⬜ |
+| 0 | Cloud account hardening, agent setup | ✅ |
+| 1 | Linux, networking, Git, repo foundation | ✅ |
 | 2 | Docker and Compose | ⬜ |
 | 3 | PostgreSQL, multi-tenancy with RLS | ⬜ |
 | 4 | Azure deployment, TLS, hardening | ⬜ |
