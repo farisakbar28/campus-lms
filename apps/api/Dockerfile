@@ -26,4 +26,51 @@
 #   docs/progress/evidence/week-02/docker-inspect-user.txt
 #   docs/progress/evidence/week-02/buildx-multiarch.txt
 
-# TODO Week 2
+FROM --platform=$BUILDPLATFORM golang:1.23.6-alpine3.21 AS builder
+
+ARG TARGETOS
+ARG TARGETARCH
+
+WORKDIR /src
+
+# Copy the module definition before application source so dependency downloads
+# remain cached when only Go source files change.
+COPY go.mod ./
+RUN go mod download
+
+COPY . ./
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
+    go build -trimpath -ldflags="-s -w" -o /out/api ./cmd/api
+
+# distroless intentionally has neither a shell nor an HTTP client. BusyBox is
+# copied solely to run the Docker health probe without adding a full OS layer.
+FROM busybox:1.37.0-musl AS healthcheck
+
+# This target is retained only for the Week 2 size comparison. It deliberately
+# keeps the Go toolchain in the runtime image; production uses the final stage.
+FROM golang:1.23.6-alpine3.21 AS alpine-runtime
+
+COPY --from=builder /out/api /api
+
+USER 65532:65532
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD ["wget", "--spider", "--quiet", "http://127.0.0.1:8080/healthz"]
+
+ENTRYPOINT ["/api"]
+
+FROM gcr.io/distroless/static-debian12:nonroot
+
+COPY --from=builder /out/api /api
+COPY --from=healthcheck /bin/busybox /busybox
+
+USER nonroot:nonroot
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD ["/busybox", "wget", "--spider", "--quiet", "http://127.0.0.1:8080/healthz"]
+
+ENTRYPOINT ["/api"]
