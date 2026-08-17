@@ -5,7 +5,7 @@
 # -----------------------------------------------------------------------------
 #
 # PROFILES (mandatory — never start everything at once)
-#   core    : api, web, postgres, redis
+#   core    : api, postgres, redis   (web ditunda ke Minggu 4 - Cloudflare Pages)
 #   storage : minio
 #   obs     : otel-collector, prometheus, grafana, loki, tempo
 #
