@@ -1,14 +1,11 @@
 === EVIDENCE ===
-CLAIM:    Current API probe image is below the 25 MB target and remains comparable with BusyBox and Alpine targets
-COMMAND:  docker images campus-lms-api --format={{.Repository}}:{{.Tag}}={{.Size}}
+CLAIM:    API image is 14.6MB after removing busybox, non-root, self-probing healthcheck
+COMMAND:  docker images campus-lms-api:dev --format '{{.Size}}'; docker inspect campus-lms-api:dev --format 'User={{.Config.User}} HC={{.Config.Healthcheck.Test}}'
 CWD:      /home/hype/projects/campus-lms
-RUN AT:   2026-08-18T01:01:12+08:00
-COMMIT:   3bb7565
+RUN AT:   2026-08-18T03:27:28+08:00
+COMMIT:   9eb9dd8
 EXIT:     0
 === RAW OUTPUT ===
-campus-lms-api:api-probe=14.6MB
-campus-lms-api:dev=14.6MB
-campus-lms-api:busybox-probe=16.6MB
-campus-lms-api:context-before=15.9MB
-campus-lms-api:alpine-runtime=377MB
+14.6MB
+User=nonroot:nonroot HC=[CMD /api -healthcheck]
 === END ===

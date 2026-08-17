@@ -1,0 +1,13 @@
+=== EVIDENCE ===
+CLAIM:    Postgres named volume survives make down
+COMMAND:  docker compose -f deploy/compose/docker-compose.yml exec -T postgres psql -U campus -d campus_lms -c 'SELECT * FROM persist_test;'
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-18T03:16:01+08:00
+COMMIT:   9eb9dd8
+EXIT:     0
+=== RAW OUTPUT ===
+ id 
+----
+ 42
+(1 row)
+=== END ===

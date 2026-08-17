@@ -1,0 +1,12 @@
+=== EVIDENCE ===
+CLAIM:    Memory limits are enforced on all three core services
+COMMAND:  docker compose -f deploy/compose/docker-compose.yml ps -q | xargs -r docker inspect --format '{{.Name}} Memory={{.HostConfig.Memory}}'
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-18T03:31:13+08:00
+COMMIT:   9eb9dd8
+EXIT:     0
+=== RAW OUTPUT ===
+/campus-lms-api-1 Memory=134217728
+/campus-lms-postgres-1 Memory=536870912
+/campus-lms-redis-1 Memory=134217728
+=== END ===

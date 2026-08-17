@@ -105,7 +105,16 @@ buildx: ## Multi-arch build amd64+arm64 (Week 2)
 		-t ghcr.io/farisakbar28/campus-lms-api:dev -f apps/api/Dockerfile apps/api
 
 .PHONY: prune
-prune: ## Clean Docker junk - run every Friday (256GB disk!)
+prune: ## Clean Docker junk safely - keeps volumes (run every Friday)
+	docker system prune -af
+	@echo ""
+	@echo "  Volumes were NOT touched. Database data is safe."
+	@echo "  Use 'make prune-hard' only if you intend to DESTROY all data."
+
+.PHONY: prune-hard
+prune-hard: ## DANGER - also deletes volumes, including the database
+	@echo "This deletes ALL volumes, including campus-lms_postgres-data."
+	@read -p "Type DESTROY to confirm: " c && [ "$$c" = "DESTROY" ] || (echo "aborted"; exit 1)
 	docker system prune -af --volumes
 
 # ---------------------------------------------------------------- utilities

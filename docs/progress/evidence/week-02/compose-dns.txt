@@ -1,0 +1,11 @@
+=== EVIDENCE ===
+CLAIM:    Service name DNS resolution works inside the compose network
+COMMAND:  docker run --rm --network campus-lms_default alpine getent hosts postgres redis
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-18T03:26:31+08:00
+COMMIT:   9eb9dd8
+EXIT:     0
+=== RAW OUTPUT ===
+172.18.0.2        postgres  postgres
+172.18.0.3        redis  redis
+=== END ===
