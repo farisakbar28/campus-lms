@@ -1,0 +1,17 @@
+=== EVIDENCE ===
+CLAIM:    SSH localhost: key auth succeeds, password auth is rejected
+COMMAND:  ssh -o BatchMode=yes localhost 'whoami; hostname'; echo '--- password attempt (must fail) ---'; ssh -o PreferredAuthentications=password -o PubkeyAuthentication=no -o BatchMode=yes localhost 'echo SHOULD_NOT_APPEAR' 2>&1; echo '--- effective config ---'; sudo sshd -T | grep -iE '^(passwordauthentication|kbdinteractiveauthentication|permitrootlogin)'
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-17T13:58:13+08:00
+COMMIT:   e7db51a
+EXIT:     0
+=== RAW OUTPUT ===
+hype
+HYPE
+--- password attempt (must fail) ---
+hype@localhost: Permission denied (publickey).
+--- effective config ---
+permitrootlogin no
+passwordauthentication no
+kbdinteractiveauthentication no
+=== END ===
