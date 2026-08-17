@@ -19,12 +19,12 @@ Dua alasan yang sangat praktis:
 
 | No | Judul | Minggu | Status |
 |---|---|---|---|
-| 0001 | Pilihan stack | 1 | ⬜ TODO |
+| 0001 | Pilihan stack | 1 | ✅ |
 | 0002 | Strategi multi-tenancy | 3 | ⬜ TODO |
 | 0002b | Arsitektur hemat biaya (Azure + Neon + Pages) | 4 | ⬜ TODO |
-| 0002c | Konvensi Azure (region, naming, tagging) | Day-0 | ⬜ TODO |
+| 0002c | Konvensi Azure (region, naming, tagging) | Day-0 | ✅ |
 | 0003 | LLM routing & token budget | 7 | ⬜ TODO |
 | 0004 | Compose vs Kubernetes untuk produksi | 11 | ⬜ TODO |
-| 0005 | API health-check probe versus BusyBox | 2 | 🟡 Proposed — human decision pending |
+| 0005 | API health-check probe versus BusyBox | 2 | ✅ |
 
 Pakai `template.md` sebagai kerangka.
