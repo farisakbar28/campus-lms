@@ -1,0 +1,14 @@
+# Send only module metadata and production Go source to the build context.
+*
+!go.mod
+!go.sum
+!cmd/
+!cmd/**
+!internal/
+!internal/**
+
+# Test inputs and local build artefacts never participate in `go build`.
+**/*_test.go
+**/testdata/
+bin/
+coverage.out
