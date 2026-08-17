@@ -1,0 +1,12 @@
+=== EVIDENCE ===
+CLAIM:    Exact image sizes compare the BusyBox runtime and API probe runtime from the same healthcheck commit
+COMMAND:  docker image inspect --format={{.RepoTags}}={{.Size}} campus-lms-api:busybox-probe campus-lms-api:api-probe; docker run --rm --entrypoint /busybox campus-lms-api:busybox-probe stat -c%s /busybox
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-18T00:57:45+08:00
+COMMIT:   3bb7565
+EXIT:     0
+=== RAW OUTPUT ===
+[campus-lms-api:busybox-probe]=4054678
+[campus-lms-api:api-probe]=3285268
+1214736
+=== END ===

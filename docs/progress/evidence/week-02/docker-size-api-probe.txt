@@ -1,0 +1,12 @@
+=== EVIDENCE ===
+CLAIM:    make docker-size confirms the current API probe image is under the 25 MB target
+COMMAND:  make docker-size
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-18T01:04:11+08:00
+COMMIT:   3bb7565
+EXIT:     0
+=== RAW OUTPUT ===
+make[1]: Entering directory '/home/hype/projects/campus-lms'
+campus-lms-api:dev = 14.6MB
+make[1]: Leaving directory '/home/hype/projects/campus-lms'
+=== END ===

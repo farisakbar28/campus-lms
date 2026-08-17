@@ -1,0 +1,11 @@
+=== EVIDENCE ===
+CLAIM:    API container is configured and runs as a non-root UID
+COMMAND:  docker inspect --format={{.Config.User}} campus-lms-api-verify; docker exec campus-lms-api-verify /busybox id -u
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-18T00:18:02+08:00
+COMMIT:   ad1bc11
+EXIT:     0
+=== RAW OUTPUT ===
+nonroot:nonroot
+65532
+=== END ===

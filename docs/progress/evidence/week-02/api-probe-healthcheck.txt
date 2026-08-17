@@ -1,0 +1,13 @@
+=== EVIDENCE ===
+CLAIM:    API binary healthcheck is healthy without BusyBox and the API process runs as UID 65532
+COMMAND:  docker inspect --format={{.Config.User}}/{{.State.Health.Status}} campus-lms-api-probe-verify; docker top campus-lms-api-probe-verify -eo user,pid,comm; curl --silent --show-error --fail http://127.0.0.1:18080/healthz
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-18T00:56:51+08:00
+COMMIT:   3bb7565
+EXIT:     0
+=== RAW OUTPUT ===
+nonroot:nonroot/healthy
+USER                PID                 COMMAND
+65532               58339               api
+{"status":"ok"}
+=== END ===

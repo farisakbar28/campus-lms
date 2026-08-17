@@ -1,0 +1,12 @@
+=== EVIDENCE ===
+CLAIM:    Distroless API container is healthy and runs as a non-root UID through the copied BusyBox probe
+COMMAND:  docker inspect --format={{.Config.User}}/{{.State.Health.Status}} campus-lms-api-healthcheck-verify; docker exec campus-lms-api-healthcheck-verify /busybox id -u; curl --silent --show-error --fail http://127.0.0.1:18080/healthz
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-18T00:35:23+08:00
+COMMIT:   8ac8e6b
+EXIT:     0
+=== RAW OUTPUT ===
+nonroot:nonroot/healthy
+65532
+{"status":"ok"}
+=== END ===

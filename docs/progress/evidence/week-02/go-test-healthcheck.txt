@@ -1,0 +1,13 @@
+=== EVIDENCE ===
+CLAIM:    API healthcheck probe unit tests pass with the Go race detector
+COMMAND:  cd apps/api && go test -race -count=1 ./...
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-18T01:02:27+08:00
+COMMIT:   3bb7565
+EXIT:     0
+=== RAW OUTPUT ===
+?   	github.com/farisakbar28/campus-lms/apps/api/cmd/api	[no test files]
+ok  	github.com/farisakbar28/campus-lms/apps/api/internal/config	1.026s
+ok  	github.com/farisakbar28/campus-lms/apps/api/internal/healthcheck	1.032s
+ok  	github.com/farisakbar28/campus-lms/apps/api/internal/http	1.030s
+=== END ===

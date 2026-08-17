@@ -1,0 +1,113 @@
+=== EVIDENCE ===
+CLAIM:    API image builds for linux/amd64 and linux/arm64 without a registry push
+COMMAND:  docker buildx build --platform linux/amd64,linux/arm64 --output type=oci,dest=/tmp/campus-lms-api-multiarch.tar -f apps/api/Dockerfile apps/api
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-18T00:18:17+08:00
+COMMIT:   ad1bc11
+EXIT:     0
+=== RAW OUTPUT ===
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 2.62kB done
+#1 DONE 0.0s
+
+#2 [linux/amd64 internal] load metadata for docker.io/library/golang:1.23.6-alpine3.21
+#2 ...
+
+#3 [linux/arm64 internal] load metadata for gcr.io/distroless/static-debian12:nonroot
+#3 DONE 1.4s
+
+#4 [linux/amd64 internal] load metadata for gcr.io/distroless/static-debian12:nonroot
+#4 DONE 1.4s
+
+#5 [linux/amd64 internal] load metadata for docker.io/library/busybox:1.37.0-musl
+#5 DONE 2.1s
+
+#6 [linux/arm64 internal] load metadata for docker.io/library/busybox:1.37.0-musl
+#6 DONE 2.1s
+
+#2 [linux/amd64 internal] load metadata for docker.io/library/golang:1.23.6-alpine3.21
+#2 DONE 2.1s
+
+#7 [internal] load .dockerignore
+#7 transferring context: 2B done
+#7 DONE 0.0s
+
+#8 [internal] load build context
+#8 DONE 0.0s
+
+#9 [linux/amd64 stage-3 1/3] FROM gcr.io/distroless/static-debian12:nonroot@sha256:1b7b9f0f0e0a1d2155f531db587cc48ec26aaf97ab64364225f5bf18a054e66a
+#9 resolve gcr.io/distroless/static-debian12:nonroot@sha256:1b7b9f0f0e0a1d2155f531db587cc48ec26aaf97ab64364225f5bf18a054e66a 0.1s done
+#9 DONE 0.1s
+
+#10 [linux/amd64 builder 1/6] FROM docker.io/library/golang:1.23.6-alpine3.21@sha256:f8113c4b13e2a8b3a168dceaee88ac27743cc84e959f43b9dbd2291e9c3f57a0
+#10 resolve docker.io/library/golang:1.23.6-alpine3.21@sha256:f8113c4b13e2a8b3a168dceaee88ac27743cc84e959f43b9dbd2291e9c3f57a0 0.1s done
+#10 DONE 0.1s
+
+#11 [linux/amd64 healthcheck 1/1] FROM docker.io/library/busybox:1.37.0-musl@sha256:fc6dddc4c44b1bfe37f41cae8e67d1693828e8f42a91862816d7953e2c9d3f23
+#11 resolve docker.io/library/busybox:1.37.0-musl@sha256:fc6dddc4c44b1bfe37f41cae8e67d1693828e8f42a91862816d7953e2c9d3f23 0.1s done
+#11 DONE 0.1s
+
+#12 [linux/arm64 stage-3 1/3] FROM gcr.io/distroless/static-debian12:nonroot@sha256:1b7b9f0f0e0a1d2155f531db587cc48ec26aaf97ab64364225f5bf18a054e66a
+#12 resolve gcr.io/distroless/static-debian12:nonroot@sha256:1b7b9f0f0e0a1d2155f531db587cc48ec26aaf97ab64364225f5bf18a054e66a 0.1s done
+#12 DONE 0.1s
+
+#13 [linux/arm64 healthcheck 1/1] FROM docker.io/library/busybox:1.37.0-musl@sha256:fc6dddc4c44b1bfe37f41cae8e67d1693828e8f42a91862816d7953e2c9d3f23
+#13 resolve docker.io/library/busybox:1.37.0-musl@sha256:fc6dddc4c44b1bfe37f41cae8e67d1693828e8f42a91862816d7953e2c9d3f23 0.1s done
+#13 DONE 0.1s
+
+#8 [internal] load build context
+#8 transferring context: 942B done
+#8 DONE 0.0s
+
+#14 [linux/amd64->arm64 builder 5/6] COPY . ./
+#14 CACHED
+
+#15 [linux/arm64 stage-3 2/3] COPY --from=builder /out/api /api
+#15 CACHED
+
+#16 [linux/amd64->arm64 builder 4/6] RUN go mod download
+#16 CACHED
+
+#17 [linux/amd64->arm64 builder 6/6] RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64     go build -trimpath -ldflags="-s -w" -o /out/api ./cmd/api
+#17 CACHED
+
+#18 [linux/amd64->arm64 builder 3/6] COPY go.mod ./
+#18 CACHED
+
+#19 [linux/amd64 stage-3 2/3] COPY --from=builder /out/api /api
+#19 CACHED
+
+#20 [linux/amd64 builder 4/6] RUN go mod download
+#20 CACHED
+
+#21 [linux/amd64 builder 6/6] RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64     go build -trimpath -ldflags="-s -w" -o /out/api ./cmd/api
+#21 CACHED
+
+#22 [linux/amd64 builder 5/6] COPY . ./
+#22 CACHED
+
+#23 [linux/amd64->arm64 builder 2/6] WORKDIR /src
+#23 CACHED
+
+#24 [linux/arm64 stage-3 3/3] COPY --from=healthcheck /bin/busybox /busybox
+#24 CACHED
+
+#25 [linux/amd64 stage-3 3/3] COPY --from=healthcheck /bin/busybox /busybox
+#25 CACHED
+
+#26 exporting to oci image format
+#26 exporting layers done
+#26 exporting manifest sha256:cf424bfcf2eda7100bce7973bc366e57426f5fe6794e0df76aac3b0f33240d2c done
+#26 exporting config sha256:f8d02edb625d0bafb4277b8b59495081dec900ca1f238424154acb7ee2afd53b done
+#26 exporting attestation manifest sha256:85236006df613085a40e47e2e1c4de0bb89eb18b694f9fd961be9d31b094051f 0.0s done
+#26 exporting manifest sha256:234d6cc769a5ae3eb701d12c785361720b6401a5e7851bf0d6b043fc72adfca8 done
+#26 exporting config sha256:900583d1c7753b36a6ea003d13b1293a4f0eb8b5071cbd69a770e9814f57e0ce done
+#26 exporting attestation manifest sha256:ece74a5106f02297841afc94c2064f4efd5fbb2a269f5d3c84152ca569f7b7f7
+#26 exporting attestation manifest sha256:ece74a5106f02297841afc94c2064f4efd5fbb2a269f5d3c84152ca569f7b7f7 0.0s done
+#26 exporting manifest list sha256:1188de19281f71f1c13acb74bd83d467d4c25801e856ba027ae6c35505476749 0.0s done
+#26 sending tarball
+#26 sending tarball 0.3s done
+#26 DONE 0.4s
+=== END ===

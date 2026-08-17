@@ -1,0 +1,46 @@
+=== EVIDENCE ===
+CLAIM:    BusyBox runtime adds a 1.22 MB COPY layer according to Docker layer history
+COMMAND:  docker history --no-trunc campus-lms-api:busybox-probe; docker history --no-trunc campus-lms-api:api-probe
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-18T00:59:01+08:00
+COMMIT:   3bb7565
+EXIT:     0
+=== RAW OUTPUT ===
+IMAGE                                                                     CREATED         CREATED BY                                                                                                                                                SIZE      COMMENT
+sha256:10680a92ca9c4b1c7b7444d33f164479ecd537eee0e125ed5fa96c5df8bb1038   5 minutes ago   ENTRYPOINT ["/api"]                                                                                                                                       0B        buildkit.dockerfile.v0
+<missing>                                                                 5 minutes ago   HEALTHCHECK {Test:[CMD /busybox wget --spider --quiet http://127.0.0.1:8080/healthz] Interval:30s Timeout:3s StartPeriod:5s StartInterval:0s Retries:3}   0B        buildkit.dockerfile.v0
+<missing>                                                                 5 minutes ago   EXPOSE [8080/tcp]                                                                                                                                         0B        buildkit.dockerfile.v0
+<missing>                                                                 5 minutes ago   USER nonroot:nonroot                                                                                                                                      0B        buildkit.dockerfile.v0
+<missing>                                                                 5 minutes ago   COPY /bin/busybox /busybox # buildkit                                                                                                                     1.22MB    buildkit.dockerfile.v0
+<missing>                                                                 5 minutes ago   COPY /out/api /api # buildkit                                                                                                                             5.9MB     buildkit.dockerfile.v0
+<missing>                                                                 N/A             bazel build //common:cacerts_debian12_amd64                                                                                                               279kB     
+<missing>                                                                 N/A             bazel build //common:os_release_debian12                                                                                                                  16.4kB    
+<missing>                                                                 N/A             bazel build //static:nsswitch                                                                                                                             12.3kB    
+<missing>                                                                 N/A             bazel build //common:tmp                                                                                                                                  8.19kB    
+<missing>                                                                 N/A             bazel build //common:group                                                                                                                                12.3kB    
+<missing>                                                                 N/A             bazel build //common:home                                                                                                                                 16.4kB    
+<missing>                                                                 N/A             bazel build //common:passwd                                                                                                                               12.3kB    
+<missing>                                                                 N/A             bazel build //common:rootfs                                                                                                                               4.1kB     
+<missing>                                                                 N/A             bazel build @bookworm//media-types/amd64:data_statusd                                                                                                     152kB     
+<missing>                                                                 N/A             bazel build @bookworm//tzdata/amd64:data_statusd                                                                                                          4.24MB    
+<missing>                                                                 N/A             bazel build @bookworm//netbase/amd64:data_statusd                                                                                                         86kB      
+<missing>                                                                 N/A             bazel build @bookworm//base-files/amd64:data_statusd                                                                                                      582kB     
+IMAGE                                                                     CREATED         CREATED BY                                                                                                     SIZE      COMMENT
+sha256:58fe232decb9dd75ee0def525187c0e04585ecd08d0e1a893801272d10715998   4 minutes ago   ENTRYPOINT ["/api"]                                                                                            0B        buildkit.dockerfile.v0
+<missing>                                                                 4 minutes ago   HEALTHCHECK {Test:[CMD /api -healthcheck] Interval:30s Timeout:3s StartPeriod:5s StartInterval:0s Retries:3}   0B        buildkit.dockerfile.v0
+<missing>                                                                 4 minutes ago   EXPOSE [8080/tcp]                                                                                              0B        buildkit.dockerfile.v0
+<missing>                                                                 4 minutes ago   USER nonroot:nonroot                                                                                           0B        buildkit.dockerfile.v0
+<missing>                                                                 4 minutes ago   COPY /out/api /api # buildkit                                                                                  5.9MB     buildkit.dockerfile.v0
+<missing>                                                                 N/A             bazel build //common:cacerts_debian12_amd64                                                                    279kB     
+<missing>                                                                 N/A             bazel build //common:os_release_debian12                                                                       16.4kB    
+<missing>                                                                 N/A             bazel build //static:nsswitch                                                                                  12.3kB    
+<missing>                                                                 N/A             bazel build //common:tmp                                                                                       8.19kB    
+<missing>                                                                 N/A             bazel build //common:group                                                                                     12.3kB    
+<missing>                                                                 N/A             bazel build //common:home                                                                                      16.4kB    
+<missing>                                                                 N/A             bazel build //common:passwd                                                                                    12.3kB    
+<missing>                                                                 N/A             bazel build //common:rootfs                                                                                    4.1kB     
+<missing>                                                                 N/A             bazel build @bookworm//media-types/amd64:data_statusd                                                          152kB     
+<missing>                                                                 N/A             bazel build @bookworm//tzdata/amd64:data_statusd                                                               4.24MB    
+<missing>                                                                 N/A             bazel build @bookworm//netbase/amd64:data_statusd                                                              86kB      
+<missing>                                                                 N/A             bazel build @bookworm//base-files/amd64:data_statusd                                                           582kB     
+=== END ===
