@@ -2,7 +2,7 @@ module github.com/farisakbar28/campus-lms/apps/api
 
 go 1.23
 
-// TODO Week 0: replace CHANGE_ME with the owner's GitHub username.
+// TODO Week 0: replace farisakbar28 with the owner's GitHub username.
 //
 // Dependency policy (agent/policy.md §4): add dependencies one at a time,
 // only when the standard library genuinely cannot do the job, and justify
