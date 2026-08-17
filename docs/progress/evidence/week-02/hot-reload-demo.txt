@@ -1,0 +1,49 @@
+=== EVIDENCE ===
+CLAIM:    Air rebuilds and restarts the API when a source file changes
+COMMAND:  docker compose -f deploy/compose/docker-compose.yml logs --tail=40 api
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-18T03:37:51+08:00
+COMMIT:   8119f74
+EXIT:     0
+=== RAW OUTPUT ===
+api-1  |  / /\  | | | |_) 
+api-1  | /_/--\ |_| |_| \_ v1.61.7, built with Go go1.23.6
+api-1  | 
+api-1  | mkdir /tmp/air
+api-1  | watching .
+api-1  | watching cmd
+api-1  | watching cmd/api
+api-1  | watching internal
+api-1  | watching internal/config
+api-1  | watching internal/domain
+api-1  | watching internal/healthcheck
+api-1  | watching internal/http
+api-1  | watching internal/middleware
+api-1  | watching internal/repository
+api-1  | watching migrations
+api-1  | watching scripts
+api-1  | building...
+api-1  | running...
+api-1  | {"time":"2026-08-17T19:34:58.124592694Z","level":"INFO","msg":"HTTP server started","service":"campus-api","env":"development","version":"(devel)","address":":8080"}
+api-1  | {"time":"2026-08-17T19:35:02.377210132Z","level":"INFO","msg":"liveness check passed","service":"campus-api","env":"development","version":"(devel)"}
+api-1  | {"time":"2026-08-17T19:35:12.424524416Z","level":"INFO","msg":"liveness check passed","service":"campus-api","env":"development","version":"(devel)"}
+api-1  | {"time":"2026-08-17T19:35:22.472692145Z","level":"INFO","msg":"liveness check passed","service":"campus-api","env":"development","version":"(devel)"}
+api-1  | {"time":"2026-08-17T19:35:32.574117928Z","level":"INFO","msg":"liveness check passed","service":"campus-api","env":"development","version":"(devel)"}
+api-1  | {"time":"2026-08-17T19:35:42.638202196Z","level":"INFO","msg":"liveness check passed","service":"campus-api","env":"development","version":"(devel)"}
+api-1  | {"time":"2026-08-17T19:35:52.716192559Z","level":"INFO","msg":"liveness check passed","service":"campus-api","env":"development","version":"(devel)"}
+api-1  | {"time":"2026-08-17T19:36:02.80502627Z","level":"INFO","msg":"liveness check passed","service":"campus-api","env":"development","version":"(devel)"}
+api-1  | {"time":"2026-08-17T19:36:12.863959836Z","level":"INFO","msg":"liveness check passed","service":"campus-api","env":"development","version":"(devel)"}
+api-1  | {"time":"2026-08-17T19:36:22.914115084Z","level":"INFO","msg":"liveness check passed","service":"campus-api","env":"development","version":"(devel)"}
+api-1  | {"time":"2026-08-17T19:36:32.96529506Z","level":"INFO","msg":"liveness check passed","service":"campus-api","env":"development","version":"(devel)"}
+api-1  | {"time":"2026-08-17T19:36:43.019275978Z","level":"INFO","msg":"liveness check passed","service":"campus-api","env":"development","version":"(devel)"}
+api-1  | {"time":"2026-08-17T19:36:53.068642102Z","level":"INFO","msg":"liveness check passed","service":"campus-api","env":"development","version":"(devel)"}
+api-1  | cmd/api/main.go has changed
+api-1  | building...
+api-1  | running...
+api-1  | {"time":"2026-08-17T19:36:59.388023942Z","level":"INFO","msg":"HTTP server started (hot reload works)","service":"campus-api","env":"development","version":"(devel)","address":":8080"}
+api-1  | {"time":"2026-08-17T19:37:03.12026328Z","level":"INFO","msg":"liveness check passed","service":"campus-api","env":"development","version":"(devel)"}
+api-1  | {"time":"2026-08-17T19:37:13.178107409Z","level":"INFO","msg":"liveness check passed","service":"campus-api","env":"development","version":"(devel)"}
+api-1  | {"time":"2026-08-17T19:37:23.234423209Z","level":"INFO","msg":"liveness check passed","service":"campus-api","env":"development","version":"(devel)"}
+api-1  | {"time":"2026-08-17T19:37:33.293456754Z","level":"INFO","msg":"liveness check passed","service":"campus-api","env":"development","version":"(devel)"}
+api-1  | {"time":"2026-08-17T19:37:43.545582495Z","level":"INFO","msg":"liveness check passed","service":"campus-api","env":"development","version":"(devel)"}
+=== END ===

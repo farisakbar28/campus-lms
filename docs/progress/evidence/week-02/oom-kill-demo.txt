@@ -1,0 +1,10 @@
+=== EVIDENCE ===
+CLAIM:    Container exceeding its memory limit is OOM-killed with exit code 137
+COMMAND:  docker run -d --name oomtest --memory=32m alpine sh -c 'sleep 2; tail /dev/zero' >/dev/null; sleep 8; docker inspect oomtest --format 'OOMKilled={{.State.OOMKilled}} ExitCode={{.State.ExitCode}}'; docker rm -f oomtest >/dev/null
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-18T03:38:45+08:00
+COMMIT:   8119f74
+EXIT:     0
+=== RAW OUTPUT ===
+OOMKilled=true ExitCode=137
+=== END ===
