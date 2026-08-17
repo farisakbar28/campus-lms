@@ -58,21 +58,40 @@ package main
 import (
 	"context"
 	"errors"
+	"flag"
+	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
 	"runtime/debug"
 	"syscall"
+	"time"
 
 	"github.com/farisakbar28/campus-lms/apps/api/internal/config"
+	"github.com/farisakbar28/campus-lms/apps/api/internal/healthcheck"
 	apphttp "github.com/farisakbar28/campus-lms/apps/api/internal/http"
 )
 
 func main() {
+	healthcheckMode := flag.Bool("healthcheck", false, "probe the local health endpoint and exit")
+	flag.Parse()
+
 	cfg, err := config.Load()
 	if err != nil {
 		bootstrapLogger().Error("load configuration", "error", err)
 		os.Exit(1)
+	}
+	if *healthcheckMode {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+
+		endpoint := fmt.Sprintf("http://127.0.0.1:%d/healthz", cfg.Port)
+		if err := healthcheck.Probe(ctx, endpoint); err != nil {
+			bootstrapLogger().Error("healthcheck failed", "error", err)
+			os.Exit(1)
+		}
+
+		return
 	}
 
 	logger := newLogger(cfg)

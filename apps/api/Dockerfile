@@ -35,7 +35,7 @@ WORKDIR /src
 
 # Copy the module definition before application source so dependency downloads
 # remain cached when only Go source files change.
-COPY go.mod ./
+COPY go.mod go.sum* ./
 RUN go mod download
 
 COPY . ./
@@ -61,7 +61,7 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 
 ENTRYPOINT ["/api"]
 
-FROM gcr.io/distroless/static-debian12:nonroot
+FROM gcr.io/distroless/static-debian12:nonroot AS busybox-runtime
 
 COPY --from=builder /out/api /api
 COPY --from=healthcheck /bin/busybox /busybox
@@ -72,5 +72,18 @@ EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD ["/busybox", "wget", "--spider", "--quiet", "http://127.0.0.1:8080/healthz"]
+
+ENTRYPOINT ["/api"]
+
+FROM gcr.io/distroless/static-debian12:nonroot
+
+COPY --from=builder /out/api /api
+
+USER nonroot:nonroot
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD ["/api", "-healthcheck"]
 
 ENTRYPOINT ["/api"]
