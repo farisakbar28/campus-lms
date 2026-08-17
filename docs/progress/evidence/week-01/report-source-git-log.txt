@@ -1,0 +1,16 @@
+=== EVIDENCE ===
+CLAIM:    Seven commits exist in the Week 1 report period
+COMMAND:  git log --since='2026-08-17 00:00:00 +0800' --until='2026-08-17 23:59:59 +0800' --date=iso-strict --pretty=format:'%H%x09%ad%x09%s'
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-17T14:38:00+08:00
+COMMIT:   73f24f7
+EXIT:     0
+=== RAW OUTPUT ===
+73f24f7731afdb43785b558536c8abe76b973d96	2026-08-17T14:00:02+08:00	docs(evidence): capture SSH key-only auth verification
+e7db51a76bee9cee0d94f90584c6faafa9564d16	2026-08-17T02:59:30+08:00	docs(domain): add implementation tiers, amendments, and AI layer
+e4556de6b7e9717aeeb57e7dd9b6a7797d547e3a	2026-08-17T01:22:53+08:00	docs(agent): forbid editing task briefs and metric-gaming
+3195c7b9ca12f6b916c152733c6afe07459bfa06	2026-08-17T01:19:34+08:00	docs(evidence): refine Week 1 stdout check
+eda3ba3c572bc12004b4bf6056356fe06cd24c8d	2026-08-17T01:19:17+08:00	fix(api): restore task brief text and use precise stdout check
+fe7133125d7c31f918dde9b8dacd6d0f2f5718b0	2026-08-17T01:02:00+08:00	docs(evidence): capture Week 1 API verification
+46939229967c5569369e3d4de764dc27981e4ef7	2026-08-17T01:00:26+08:00	feat(api): add Week 1 HTTP server
+=== END ===
