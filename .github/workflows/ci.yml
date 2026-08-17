@@ -29,7 +29,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
 
 # TODO Minggu 5: hapus placeholder di bawah, tulis pipeline sungguhan.
