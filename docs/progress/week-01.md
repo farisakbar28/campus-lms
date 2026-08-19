@@ -180,7 +180,7 @@ Tidak ada optimasi dengan pengukuran sebelum/sesudah minggu ini.
 ## 11. Verifikasi Manusia
 
 - [x] Saya sudah spot-check 3 file bukti secara acak dan isinya cocok dengan klaim
-- [ ] Skor quiz: 70 / 100 (minimal 70% untuk lanjut)
+- [x] Skor quiz: 70 / 100 (minimal 70% untuk lanjut)
 - [x] Explain-back 3 menit sudah direkam: docs/progress/explain/week-01.<mp3|txt>
 - [x] Saya bisa menjelaskan setiap keputusan di section 4 tanpa membuka catatan
 

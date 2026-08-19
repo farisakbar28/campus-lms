@@ -217,7 +217,7 @@ Empat kali alat ukur menghasilkan sinyal yang tidak menjawab pertanyaan sebenarn
 
 - [x] Saya sudah spot-check 3 file bukti secara acak dan isinya cocok dengan klaim
 - [x] Skor quiz: 100% / 100% (minimal 70% untuk lanjut)
-- [ ] Explain-back 3 menit sudah direkam: `docs/progress/explain/week-02.<mp3|txt>`
+- [x] Explain-back 3 menit sudah direkam: `docs/progress/explain/week-02.<mp3|txt>`
 - [x] Saya bisa menjelaskan setiap keputusan di section 4 tanpa membuka catatan
 
 **Self-audit agent (dari `agent/evidence-protocol.md` §8):** Sudah dijalankan. Semua angka pengukuran di laporan memiliki link bukti; seluruh file bukti Week 02, sumber code quiz, git log, dan file yang diklaim telah dibaca; `make test` dicoba ulang tetapi tidak dapat dinyatakan lulus karena sandbox menolak socket `httptest` ([raw output](evidence/week-02/report-test-rerun.txt)); Belum Terverifikasi berisi gap nyata; agent tidak mencentang DoD; FACT/INFERENCE/RECOMMENDATION diberi label; dan 10 pertanyaan quiz diverifikasi terhadap file sumber yang ada. Karena test pengulangan tidak selesai di sandbox, self-audit ini **tidak sepenuhnya lulus** dan memerlukan verifikasi manusia.
