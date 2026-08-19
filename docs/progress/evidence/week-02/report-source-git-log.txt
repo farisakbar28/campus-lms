@@ -1,0 +1,24 @@
+=== EVIDENCE ===
+CLAIM:    Fourteen Week 2 commits exist from the first Docker-related commit through the latest commit at report preparation.
+COMMAND:  git log --reverse --format='%H %ad %s' --date=iso-strict a8c99bf83bce677dcff71eb1a7bcd95c55d0cd92^..2fbb3b467f2f464f7b901832813f538bf76823f6; git rev-list --count a8c99bf83bce677dcff71eb1a7bcd95c55d0cd92^..2fbb3b467f2f464f7b901832813f538bf76823f6
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-18T04:01:19+08:00
+COMMIT:   2fbb3b467f2f464f7b901832813f538bf76823f6
+EXIT:     0
+=== RAW OUTPUT ===
+a8c99bf83bce677dcff71eb1a7bcd95c55d0cd92 2026-08-18T00:15:41+08:00 docs: add go.mod for dependency guide.
+ad1bc11aed2885bc106fb8a29943121af6753d57 2026-08-18T00:17:41+08:00 feat(api): add production Dockerfile
+8ac8e6bf4a5c8073048c11b8dd886da8c595b70b 2026-08-18T00:29:15+08:00 build(api): restrict Docker build context
+3bb7565beacd38dffca7e94666e7a1d73ed38040 2026-08-18T00:52:58+08:00 fix(api): replace busybox health probe
+db71c5c96ed92f2b4b68a85dcb28d403890ca645 2026-08-18T01:06:07+08:00 docs(adr): draft healthcheck probe options
+ae32c04627e18a63164f712725d193e975e9804c 2026-08-18T01:09:10+08:00 docs(compose): defer web from core profile to Week 4
+4543ceda90e97abbee40424f7e470d94e33f2381 2026-08-18T01:54:00+08:00 docs(week-02): add Docker internals notes, evidence, and report draft
+3f559f56e922131dd8dc5daf4719384462186b56 2026-08-18T01:56:48+08:00 docs: update placeholder ci/cd from main to master
+0419f5fe7adbe84189f0c257ebb986968d2f0087 2026-08-18T02:04:30+08:00 docs: update ADR-0005 for adding decision, consequence, and note. update tabel in ADR readme
+335ff7b9acb9629228b83e0b8621f649395161d6 2026-08-18T02:25:59+08:00 docs: add build, ci, perf, style to conventional commits on AGENTS.md
+9eb9dd8793004c36af7872247b0b080645eb441a 2026-08-18T02:43:20+08:00 docs: add postgres environment variables
+8119f74845b5e3ac72f6dee89cb0e37e0103ba3f 2026-08-18T03:34:00+08:00 feat(compose): add core stack with dev override; fix(make): prevent volume loss on prune
+50f7fc1a9f5629398843e842359b4fb4dff970e7 2026-08-18T03:43:10+08:00 docs: delete audit report, create hot reload, create oom kill demo
+2fbb3b467f2f464f7b901832813f538bf76823f6 2026-08-18T03:52:40+08:00 docs: add ghcr push documentation
+14
+=== END ===

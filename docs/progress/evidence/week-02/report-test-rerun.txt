@@ -1,0 +1,40 @@
+=== EVIDENCE ===
+CLAIM:    The report-preparation test rerun could not open an httptest listener because the agent sandbox denies socket creation.
+COMMAND:  GOCACHE=/tmp/campus-lms-go-build-cache make test
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-18T04:01:19+08:00
+COMMIT:   2fbb3b467f2f464f7b901832813f538bf76823f6
+EXIT:     2
+=== RAW OUTPUT ===
+cd apps/api && go test -race -count=1 ./...
+?   	github.com/farisakbar28/campus-lms/apps/api/cmd/api	[no test files]
+ok  	github.com/farisakbar28/campus-lms/apps/api/internal/config	1.033s
+--- FAIL: TestProbe (0.00s)
+    --- FAIL: TestProbe/service_unavailable (0.00s)
+panic: httptest: failed to listen on a port: listen tcp6 [::1]:0: socket: operation not permitted [recovered]
+	panic: httptest: failed to listen on a port: listen tcp6 [::1]:0: socket: operation not permitted
+
+goroutine 9 [running]:
+testing.tRunner.func1.2({0x8e2d00, 0xc000030440})
+	/usr/local/go/src/testing/testing.go:1632 +0x3fc
+testing.tRunner.func1()
+	/usr/local/go/src/testing/testing.go:1635 +0x6b6
+panic({0x8e2d00?, 0xc000030440?})
+	/usr/local/go/src/runtime/panic.go:785 +0x132
+net/http/httptest.newLocalListener()
+	/usr/local/go/src/net/http/httptest/server.go:71 +0x165
+net/http/httptest.NewUnstartedServer(...)
+	/usr/local/go/src/net/http/httptest/server.go:119
+net/http/httptest.NewServer({0x9fc280, 0xc0000a6f00})
+	/usr/local/go/src/net/http/httptest/server.go:106 +0x2c
+github.com/farisakbar28/campus-lms/apps/api/internal/healthcheck.TestProbe.func1(0xc0000bcb60)
+	/home/hype/projects/campus-lms/apps/api/internal/healthcheck/probe_test.go:26 +0x14a
+testing.tRunner(0xc0000bcb60, 0xc0000a6e70)
+	/usr/local/go/src/testing/testing.go:1690 +0x227
+created by testing.(*T).Run in goroutine 7
+	/usr/local/go/src/testing/testing.go:1743 +0x826
+FAIL	github.com/farisakbar28/campus-lms/apps/api/internal/healthcheck	0.029s
+ok  	github.com/farisakbar28/campus-lms/apps/api/internal/http	1.027s
+FAIL
+make: *** [Makefile:49: test] Error 1
+=== END ===

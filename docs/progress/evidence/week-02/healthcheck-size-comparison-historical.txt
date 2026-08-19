@@ -1,0 +1,23 @@
+=== EVIDENCE ===
+CLAIM:    The historical image-size evidence recorded the 15.9MB pre-replacement runtime and the 14.6MB API-probe runtime.
+COMMAND:  git show 4543ceda90e97abbee40424f7e470d94e33f2381:docs/progress/evidence/week-02/image-size.txt
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-18T04:01:19+08:00
+COMMIT:   2fbb3b467f2f464f7b901832813f538bf76823f6
+EXIT:     0
+=== RAW OUTPUT ===
+=== EVIDENCE ===
+CLAIM:    Current API probe image is below the 25 MB target and remains comparable with BusyBox and Alpine targets
+COMMAND:  docker images campus-lms-api --format={{.Repository}}:{{.Tag}}={{.Size}}
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-18T01:01:12+08:00
+COMMIT:   3bb7565
+EXIT:     0
+=== RAW OUTPUT ===
+campus-lms-api:api-probe=14.6MB
+campus-lms-api:dev=14.6MB
+campus-lms-api:busybox-probe=16.6MB
+campus-lms-api:context-before=15.9MB
+campus-lms-api:alpine-runtime=377MB
+=== END ===
+=== END ===
