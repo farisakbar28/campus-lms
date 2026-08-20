@@ -101,8 +101,11 @@ migrate-version: ## Show the current migration version and dirty state (Week 3)
 
 .PHONY: seed
 seed: ## Seed dummy data (Week 3)
-	@echo "TODO Week 3: 3 tenants, 50 lecturers, 2000 students, 200 courses"
-	@exit 1
+	@echo "Running seed script..."
+	@cat apps/api/testdata/week-03/seed.sql | $(COMPOSE_DEV) exec -T postgres sh -ec '\
+		psql -v ON_ERROR_STOP=1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" \
+	'
+	@echo "Seeding completed."
 
 .PHONY: db-backup
 db-backup: ## Back up the database (Week 4)
