@@ -5,7 +5,12 @@
 --   rls_enabled = 8
 --   a7_fk = 1
 --   term_range_check = 1
---   audit_policies = 2
+--   audit_policy_total = 2
+--   audit_policy_select = 1
+--   audit_policy_insert = 1
+--   audit_policy_update = 0
+--   audit_policy_delete = 0
+--   audit_policy_all = 0
 --   rls_verifier = 0
 --   fixture_rows_remaining = 0
 
@@ -61,13 +66,17 @@ WITH week3_tables AS (
     AND contype = 'c'
     AND conrelid = 'academic_terms'::regclass
 )
--- 5. audit_logs has only expected normal tenant policies: SELECT (r) and INSERT (a)
---    and no normal UPDATE/DELETE policy
+-- 5. audit_logs policy breakdown: prove exactly 2 policies (SELECT + INSERT) and no UPDATE/DELETE/ALL
 , audit_policies AS (
-  SELECT count(*) AS audit_policies
+  SELECT
+    count(*) AS audit_policy_total,
+    count(*) FILTER (WHERE polcmd = 'r') AS audit_policy_select,
+    count(*) FILTER (WHERE polcmd = 'a') AS audit_policy_insert,
+    count(*) FILTER (WHERE polcmd = 'w') AS audit_policy_update,
+    count(*) FILTER (WHERE polcmd = 'd') AS audit_policy_delete,
+    count(*) FILTER (WHERE polcmd = '*') AS audit_policy_all
   FROM pg_policy
   WHERE polrelid = 'audit_logs'::regclass
-    AND polcmd IN ('r', 'a')
 )
 -- 6. rls_verifier role count is zero
 , rls_verifier AS (
@@ -97,7 +106,12 @@ SELECT 'tables' AS chk, tables::text AS count FROM week3_tables
 UNION ALL SELECT 'rls_enabled', rls_enabled::text FROM rls_enabled
 UNION ALL SELECT 'a7_fk', a7_fk::text FROM a7_fk
 UNION ALL SELECT 'term_range_check', term_range_check::text FROM term_range_check
-UNION ALL SELECT 'audit_policies', audit_policies::text FROM audit_policies
+UNION ALL SELECT 'audit_policy_total', audit_policy_total::text FROM audit_policies
+UNION ALL SELECT 'audit_policy_select', audit_policy_select::text FROM audit_policies
+UNION ALL SELECT 'audit_policy_insert', audit_policy_insert::text FROM audit_policies
+UNION ALL SELECT 'audit_policy_update', audit_policy_update::text FROM audit_policies
+UNION ALL SELECT 'audit_policy_delete', audit_policy_delete::text FROM audit_policies
+UNION ALL SELECT 'audit_policy_all', audit_policy_all::text FROM audit_policies
 UNION ALL SELECT 'rls_verifier', rls_verifier::text FROM rls_verifier
 UNION ALL SELECT 'fixture_rows_remaining', fixture_rows_remaining::text FROM fixture_rows_remaining
 ORDER BY chk;
