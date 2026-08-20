@@ -1,0 +1,16 @@
+=== EVIDENCE ===
+CLAIM:    Cleanup rls_verifier role: DROP OWNED + DROP ROLE, verify count 0
+COMMAND:  cat /home/hype/projects/campus-lms/tmp_cleanup_verifier.sql | docker compose -f /home/hype/projects/campus-lms/deploy/compose/docker-compose.yml exec -T postgres psql -U campus -d campus_lms_week03_verify
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T03:35:03+08:00
+COMMIT:   2860bca
+EXIT:     0
+=== RAW OUTPUT ===
+ERROR:  role "rls_verifier" does not exist
+DROP ROLE
+NOTICE:  role "rls_verifier" does not exist, skipping
+ count 
+-------
+     0
+(1 row)
+=== END ===

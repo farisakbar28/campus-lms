@@ -1,0 +1,25 @@
+=== EVIDENCE ===
+CLAIM:    Recovery cleanup drops all 11 Week 3 tables in reverse dependency order, no CASCADE, verifies 0 tables remain
+COMMAND:  cat /home/hype/projects/campus-lms/tmp_recovery_cleanup.sql | docker compose -f /home/hype/projects/campus-lms/deploy/compose/docker-compose.yml exec -T postgres psql -U campus -d campus_lms
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T03:28:12+08:00
+COMMIT:   2860bca
+EXIT:     0
+=== RAW OUTPUT ===
+BEGIN
+DROP TABLE
+DROP TABLE
+DROP TABLE
+DROP TABLE
+DROP TABLE
+DROP TABLE
+DROP TABLE
+DROP TABLE
+DROP TABLE
+DROP TABLE
+DROP TABLE
+COMMIT
+ tablename 
+-----------
+(0 rows)
+=== END ===

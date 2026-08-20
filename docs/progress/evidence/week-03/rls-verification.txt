@@ -1,0 +1,71 @@
+=== EVIDENCE ===
+CLAIM:    RLS behavioral verification: SELECT isolation, INSERT WITH CHECK violation, UPDATE USING 0 rows, UPDATE WITH CHECK violation, audit_logs immutability UPDATE/DELETE 0 rows
+COMMAND:  cat /home/hype/projects/campus-lms/tmp_rls_select.sql /home/hype/projects/campus-lms/tmp_rls_insert.sql /home/hype/projects/campus-lms/tmp_rls_update_using2.sql /home/hype/projects/campus-lms/tmp_rls_update_with_check.sql /home/hype/projects/campus-lms/tmp_audit_immutability.sql | docker compose -f /home/hype/projects/campus-lms/deploy/compose/docker-compose.yml exec -T postgres psql -U campus -d campus_lms_week03_verify
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T03:31:15+08:00
+COMMIT:   2860bca
+EXIT:     0
+=== RAW OUTPUT ===
+BEGIN
+ERROR:  role "rls_verifier" does not exist
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ROLLBACK
+BEGIN
+ERROR:  role "rls_verifier" does not exist
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ROLLBACK
+BEGIN
+ERROR:  role "rls_verifier" does not exist
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ROLLBACK
+BEGIN
+ERROR:  role "rls_verifier" does not exist
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ROLLBACK
+ERROR:  role "rls_verifier" does not exist
+BEGIN
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ROLLBACK
+                             result                             
+----------------------------------------------------------------
+ RLS INSERT UNEXPECTED SUCCESS: Cross-tenant insert should fail
+(1 row)
+
+BEGIN
+ERROR:  role "rls_verifier" does not exist
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ROLLBACK
+BEGIN
+ERROR:  role "rls_verifier" does not exist
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ROLLBACK
+                                       result                                        
+-------------------------------------------------------------------------------------
+ RLS UPDATE WITH CHECK UNEXPECTED SUCCESS: Cross-tenant tenant_id change should fail
+(1 row)
+
+BEGIN
+ERROR:  role "rls_verifier" does not exist
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ROLLBACK
+BEGIN
+ERROR:  role "rls_verifier" does not exist
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ROLLBACK
+ audit_log_count 
+-----------------
+               0
+(1 row)
+=== END ===

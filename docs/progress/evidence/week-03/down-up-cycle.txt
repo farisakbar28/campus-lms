@@ -1,0 +1,73 @@
+=== EVIDENCE ===
+CLAIM:    Down cycle (0003, 0002, 0001) all 11 tables dropped, Re-up cycle all 11 tables recreated
+COMMAND:  cat /home/hype/projects/campus-lms/tmp_down_cycle.sql | docker compose -f /home/hype/projects/campus-lms/deploy/compose/docker-compose.yml exec -T postgres psql -v ON_ERROR_STOP=1 -U campus -d campus_lms_week03_verify; cat /home/hype/projects/campus-lms/apps/api/migrations/0001_tenant_identity_schema.up.sql | docker compose -f /home/hype/projects/campus-lms/deploy/compose/docker-compose.yml exec -T postgres psql -v ON_ERROR_STOP=1 -1 -U campus -d campus_lms_week03_verify; cat /home/hype/projects/campus-lms/apps/api/migrations/0002_academic_core_schema.up.sql | docker compose -f /home/hype/projects/campus-lms/deploy/compose/docker-compose.yml exec -T postgres psql -v ON_ERROR_STOP=1 -1 -U campus -d campus_lms_week03_verify; cat /home/hype/projects/campus-lms/apps/api/migrations/0003_auth_membership_schema.up.sql | docker compose -f /home/hype/projects/campus-lms/deploy/compose/docker-compose.yml exec -T postgres psql -v ON_ERROR_STOP=1 -1 -U campus -d campus_lms_week03_verify; cat /home/hype/projects/campus-lms/tmp_verify_tables.sql | docker compose -f /home/hype/projects/campus-lms/deploy/compose/docker-compose.yml exec -T postgres psql -U campus -d campus_lms_week03_verify
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T03:34:08+08:00
+COMMIT:   2860bca
+EXIT:     0
+=== RAW OUTPUT ===
+BEGIN
+DROP TABLE
+DROP TABLE
+DROP TABLE
+DROP TABLE
+DROP TABLE
+COMMIT
+BEGIN
+DROP TABLE
+DROP TABLE
+DROP TABLE
+COMMIT
+BEGIN
+DROP TABLE
+DROP TABLE
+DROP TABLE
+COMMIT
+ tablename 
+-----------
+(0 rows)
+
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+CREATE POLICY
+ALTER TABLE
+CREATE POLICY
+ALTER TABLE
+CREATE POLICY
+CREATE TABLE
+CREATE TABLE
+CREATE INDEX
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+CREATE POLICY
+ALTER TABLE
+CREATE POLICY
+ALTER TABLE
+CREATE POLICY
+CREATE POLICY
+ALTER TABLE
+CREATE POLICY
+ALTER TABLE
+CREATE POLICY
+    tablename     
+------------------
+ academic_terms
+ audit_logs
+ auth_identities
+ course_offerings
+ course_staff
+ courses
+ enrollments
+ membership_roles
+ memberships
+ tenants
+ users
+(11 rows)
+=== END ===

@@ -1,0 +1,19 @@
+=== EVIDENCE ===
+CLAIM:    RLS negative control: DISABLE RLS -> cross-tenant visible -> ROLLBACK -> RLS enabled
+COMMAND:  cat /home/hype/projects/campus-lms/tmp_rls_negative_control.sql | docker compose -f /home/hype/projects/campus-lms/deploy/compose/docker-compose.yml exec -T postgres psql -U campus -d campus_lms_week03_verify
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T03:33:58+08:00
+COMMIT:   2860bca
+EXIT:     0
+=== RAW OUTPUT ===
+BEGIN
+ALTER TABLE
+ERROR:  role "rls_verifier" does not exist
+ROLLBACK
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
+  relname   | relrowsecurity 
+------------+----------------
+ audit_logs | t
+(1 row)
+=== END ===

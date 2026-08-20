@@ -1,0 +1,43 @@
+=== EVIDENCE ===
+CLAIM:    A2 cross-tenant FK verification: 5 FK violations captured (course_offerings, membership_roles, course_staff, audit_logs, enrollments)
+COMMAND:  cat /home/hype/projects/campus-lms/tmp_a2_a.sql /home/hype/projects/campus-lms/tmp_a2_b.sql /home/hype/projects/campus-lms/tmp_a2_c.sql /home/hype/projects/campus-lms/tmp_a2_d.sql /home/hype/projects/campus-lms/tmp_a2_e.sql | docker compose -f /home/hype/projects/campus-lms/deploy/compose/docker-compose.yml exec -T postgres psql -U campus -d campus_lms_week03_verify
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T03:30:44+08:00
+COMMIT:   2860bca
+EXIT:     0
+=== RAW OUTPUT ===
+ERROR:  insert or update on table "course_offerings" violates foreign key constraint "course_offerings_tenant_id_fkey"
+DETAIL:  Key (tenant_id)=(aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa) is not present in table "tenants".
+                               result                               
+--------------------------------------------------------------------
+ A2-A UNEXPECTED SUCCESS: Cross-tenant course reference should fail
+(1 row)
+
+ERROR:  insert or update on table "membership_roles" violates foreign key constraint "membership_roles_tenant_id_fkey"
+DETAIL:  Key (tenant_id)=(aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa) is not present in table "tenants".
+                                 result                                 
+------------------------------------------------------------------------
+ A2-B UNEXPECTED SUCCESS: Cross-tenant membership reference should fail
+(1 row)
+
+ERROR:  insert or update on table "course_staff" violates foreign key constraint "course_staff_tenant_id_fkey"
+DETAIL:  Key (tenant_id)=(aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa) is not present in table "tenants".
+                                   result                                    
+-----------------------------------------------------------------------------
+ A2-C UNEXPECTED SUCCESS: Cross-tenant course_offering reference should fail
+(1 row)
+
+ERROR:  insert or update on table "audit_logs" violates foreign key constraint "audit_logs_tenant_id_fkey"
+DETAIL:  Key (tenant_id)=(aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa) is not present in table "tenants".
+                                result                                 
+-----------------------------------------------------------------------
+ A2-D UNEXPECTED SUCCESS: Cross-tenant audit log reference should fail
+(1 row)
+
+ERROR:  insert or update on table "enrollments" violates foreign key constraint "enrollments_tenant_id_fkey"
+DETAIL:  Key (tenant_id)=(aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa) is not present in table "tenants".
+                                 result                                 
+------------------------------------------------------------------------
+ A2-E UNEXPECTED SUCCESS: Cross-tenant enrollment reference should fail
+(1 row)
+=== END ===

@@ -1,0 +1,58 @@
+=== EVIDENCE ===
+CLAIM:    Main dev DB final state: 11 tables, 8 RLS enabled, A7 FK correct, audit_logs policies SELECT/INSERT only, no rls_verifier, no fixtures
+COMMAND:  cat /home/hype/projects/campus-lms/tmp_final_verify.sql | docker compose -f /home/hype/projects/campus-lms/deploy/compose/docker-compose.yml exec -T postgres psql -U campus -d campus_lms
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T04:01:52+08:00
+COMMIT:   2860bca
+EXIT:     0
+=== RAW OUTPUT ===
+    tablename     
+------------------
+ academic_terms
+ audit_logs
+ auth_identities
+ course_offerings
+ course_staff
+ courses
+ enrollments
+ membership_roles
+ memberships
+ tenants
+ users
+(11 rows)
+
+    table_name    | rls_enabled 
+------------------+-------------
+ academic_terms   | t
+ audit_logs       | t
+ course_offerings | t
+ course_staff     | t
+ courses          | t
+ enrollments      | t
+ membership_roles | t
+ memberships      | t
+(8 rows)
+
+                  conname                   |  conrelid   |  confrelid  | conkey | confkey 
+--------------------------------------------+-------------+-------------+--------+---------
+ enrollments_tenant_id_student_user_id_fkey | enrollments | memberships | {2,4}  | {2,3}
+(1 row)
+
+         polname          | polcmd 
+--------------------------+--------
+ audit_logs_tenant_select | r
+ audit_logs_tenant_insert | a
+(2 rows)
+
+ count 
+-------
+     0
+(1 row)
+
+      t      | c 
+-------------+---
+ tenants     | 0
+ memberships | 0
+ audit_logs  | 0
+(3 rows)
+=== END ===

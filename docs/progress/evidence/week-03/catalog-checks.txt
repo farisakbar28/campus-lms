@@ -1,0 +1,102 @@
+=== EVIDENCE ===
+CLAIM:    Catalog assertions: PK, UNIQUE, domain unique, composite FKs, A7 mapping, partial index, RLS enabled, audit_logs policies
+COMMAND:  cat /home/hype/projects/campus-lms/tmp_catalog_checks.sql | docker compose -f /home/hype/projects/campus-lms/deploy/compose/docker-compose.yml exec -T postgres psql -U campus -d campus_lms_week03_verify
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T03:29:41+08:00
+COMMIT:   2860bca
+EXIT:     0
+=== RAW OUTPUT ===
+    table_name    | pk_columns 
+------------------+------------
+ academic_terms   | id
+ audit_logs       | id
+ auth_identities  | id
+ course_offerings | id
+ course_staff     | id
+ courses          | id
+ enrollments      | id
+ membership_roles | id
+ memberships      | id
+ tenants          | id
+ users            | id
+(11 rows)
+
+    table_name    | unique_columns 
+------------------+----------------
+ academic_terms   | tenant_id, id
+ audit_logs       | tenant_id, id
+ course_offerings | tenant_id, id
+ course_staff     | tenant_id, id
+ courses          | tenant_id, id
+ enrollments      | tenant_id, id
+ membership_roles | tenant_id, id
+ memberships      | tenant_id, id
+(8 rows)
+
+  table_name  |                  constraint_name                   |           unique_columns            
+--------------+----------------------------------------------------+-------------------------------------
+ course_staff | course_staff_course_offering_id_user_id_key        | course_offering_id, user_id
+ enrollments  | enrollments_course_offering_id_student_user_id_key | course_offering_id, student_user_id
+ memberships  | memberships_tenant_id_user_id_key                  | tenant_id, user_id
+(3 rows)
+
+    table_name    |                 constraint_name                  |   constrained_cols   |    ref_table     |      ref_cols      
+------------------+--------------------------------------------------+----------------------+------------------+--------------------
+ academic_terms   | academic_terms_tenant_id_fkey                    | tenant_id            | tenants          | id
+ audit_logs       | audit_logs_tenant_id_course_offering_id_fkey     | tenant_id, tenant_id | course_offerings | tenant_id, id
+ audit_logs       | audit_logs_tenant_id_fkey                        | tenant_id            | tenants          | id
+ course_offerings | course_offerings_tenant_id_academic_term_id_fkey | tenant_id, tenant_id | academic_terms   | id, tenant_id
+ course_offerings | course_offerings_tenant_id_course_id_fkey        | tenant_id, tenant_id | courses          | tenant_id, id
+ course_offerings | course_offerings_tenant_id_fkey                  | tenant_id            | tenants          | id
+ course_staff     | course_staff_tenant_id_course_offering_id_fkey   | tenant_id, tenant_id | course_offerings | id, tenant_id
+ course_staff     | course_staff_tenant_id_fkey                      | tenant_id            | tenants          | id
+ courses          | courses_tenant_id_fkey                           | tenant_id            | tenants          | id
+ enrollments      | enrollments_tenant_id_course_offering_id_fkey    | tenant_id, tenant_id | course_offerings | tenant_id, id
+ enrollments      | enrollments_tenant_id_fkey                       | tenant_id            | tenants          | id
+ enrollments      | enrollments_tenant_id_student_user_id_fkey       | tenant_id, tenant_id | memberships      | user_id, tenant_id
+ membership_roles | membership_roles_tenant_id_fkey                  | tenant_id            | tenants          | id
+ membership_roles | membership_roles_tenant_id_membership_id_fkey    | tenant_id, tenant_id | memberships      | id, tenant_id
+ memberships      | memberships_tenant_id_fkey                       | tenant_id            | tenants          | id
+(15 rows)
+
+              constraint_name               | table_name  | ref_table_name | constrained_cols | referenced_cols 
+--------------------------------------------+-------------+----------------+------------------+-----------------
+ enrollments_tenant_id_student_user_id_fkey | enrollments | memberships    | {2,4}            | {2,3}
+(1 row)
+
+            index_name            |    table_name    |                                                                  index_def                                                                   
+----------------------------------+------------------+----------------------------------------------------------------------------------------------------------------------------------------------
+ membership_roles_active_role_idx | membership_roles | CREATE UNIQUE INDEX membership_roles_active_role_idx ON public.membership_roles USING btree (membership_id, role) WHERE (revoked_at IS NULL)
+(1 row)
+
+    table_name    | rls_enabled 
+------------------+-------------
+ academic_terms   | t
+ audit_logs       | t
+ course_offerings | t
+ course_staff     | t
+ courses          | t
+ enrollments      | t
+ membership_roles | t
+ memberships      | t
+(8 rows)
+
+            policy_name            |    table_name    | cmd | command 
+-----------------------------------+------------------+-----+---------
+ academic_terms_tenant_isolation   | academic_terms   | *   | ALL
+ audit_logs_tenant_insert          | audit_logs       | a   | INSERT
+ audit_logs_tenant_select          | audit_logs       | r   | SELECT
+ course_offerings_tenant_isolation | course_offerings | *   | ALL
+ course_staff_tenant_isolation     | course_staff     | *   | ALL
+ courses_tenant_isolation          | courses          | *   | ALL
+ enrollments_tenant_isolation      | enrollments      | *   | ALL
+ membership_roles_tenant_isolation | membership_roles | *   | ALL
+ memberships_tenant_isolation      | memberships      | *   | ALL
+(9 rows)
+
+       policy_name        | cmd 
+--------------------------+-----
+ audit_logs_tenant_select | r
+ audit_logs_tenant_insert | a
+(2 rows)
+=== END ===

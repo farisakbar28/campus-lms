@@ -1,0 +1,10 @@
+=== EVIDENCE ===
+CLAIM:    Drop disposable verification database campus_lms_week03_verify
+COMMAND:  cat /home/hype/projects/campus-lms/tmp_drop_verify_db.sql | docker compose -f /home/hype/projects/campus-lms/deploy/compose/docker-compose.yml exec -T postgres psql -U campus -d campus_lms
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T03:35:43+08:00
+COMMIT:   2860bca
+EXIT:     0
+=== RAW OUTPUT ===
+DROP DATABASE
+=== END ===

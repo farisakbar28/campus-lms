@@ -1,0 +1,77 @@
+=== EVIDENCE ===
+CLAIM:    Pre-recovery database state shows 4 tables from 0001/0002, all empty, RLS enabled on 3 tenant-scoped tables, no 0003 tables
+COMMAND:  cat /home/hype/projects/campus-lms/tmp_pre_recovery_inspection.sql | docker compose -f /home/hype/projects/campus-lms/deploy/compose/docker-compose.yml exec -T postgres psql -U campus -d campus_lms
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T02:56:31+08:00
+COMMIT:   2860bca
+EXIT:     0
+=== RAW OUTPUT ===
+ current_user | current_database 
+--------------+------------------
+ campus       | campus_lms
+(1 row)
+
+    tablename     
+------------------
+ academic_terms
+ course_offerings
+ courses
+ tenants
+(4 rows)
+
+    table_name    | row_count 
+------------------+-----------
+ tenants          |         0
+ academic_terms   |         0
+ courses          |         0
+ course_offerings |         0
+(4 rows)
+
+    table_name    |                 constraint_name                  | constraint_type |           columns           
+------------------+--------------------------------------------------+-----------------+-----------------------------
+ academic_terms   | academic_terms_pkey                              | PRIMARY KEY     | id
+ academic_terms   | academic_terms_tenant_id_fkey                    | FOREIGN KEY     | tenant_id
+ academic_terms   | academic_terms_tenant_id_id_key                  | UNIQUE          | tenant_id, id
+ course_offerings | course_offerings_pkey                            | PRIMARY KEY     | id
+ course_offerings | course_offerings_tenant_id_academic_term_id_fkey | FOREIGN KEY     | tenant_id, academic_term_id
+ course_offerings | course_offerings_tenant_id_course_id_fkey        | FOREIGN KEY     | tenant_id, course_id
+ course_offerings | course_offerings_tenant_id_fkey                  | FOREIGN KEY     | tenant_id
+ course_offerings | course_offerings_tenant_id_id_key                | UNIQUE          | tenant_id, id
+ courses          | courses_pkey                                     | PRIMARY KEY     | id
+ courses          | courses_tenant_id_fkey                           | FOREIGN KEY     | tenant_id
+ courses          | courses_tenant_id_id_key                         | UNIQUE          | tenant_id, id
+ tenants          | tenants_pkey                                     | PRIMARY KEY     | id
+ tenants          | tenants_slug_key                                 | UNIQUE          | slug
+(13 rows)
+
+    table_name    | rls_enabled 
+------------------+-------------
+ academic_terms   | t
+ course_offerings | t
+ courses          | t
+ tenants          | f
+(4 rows)
+
+            policy_name            |    table_name    | cmd 
+-----------------------------------+------------------+-----
+ academic_terms_tenant_isolation   | academic_terms   | *
+ course_offerings_tenant_isolation | course_offerings | *
+ courses_tenant_isolation          | courses          | *
+(3 rows)
+
+ dependent_object | referenced_table 
+------------------+------------------
+ 16522            | tenants
+ 16555            | courses
+ 16565            | academic_terms
+ 16560            | academic_terms
+ 16566            | courses
+ 16567            | course_offerings
+ 16550            | tenants
+ 16536            | tenants
+(8 rows)
+
+ tablename 
+-----------
+(0 rows)
+=== END ===

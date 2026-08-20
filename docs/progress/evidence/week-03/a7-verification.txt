@@ -1,0 +1,22 @@
+=== EVIDENCE ===
+CLAIM:    A7 verification: valid enrollment (Tenant A + User A with membership) OK, invalid enrollment (Tenant A + User B no membership) FK violation
+COMMAND:  cat /home/hype/projects/campus-lms/tmp_a7_test1.sql /home/hype/projects/campus-lms/tmp_a7_test2.sql | docker compose -f /home/hype/projects/campus-lms/deploy/compose/docker-compose.yml exec -T postgres psql -U campus -d campus_lms_week03_verify
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T03:31:03+08:00
+COMMIT:   2860bca
+EXIT:     0
+=== RAW OUTPUT ===
+ERROR:  insert or update on table "enrollments" violates foreign key constraint "enrollments_tenant_id_fkey"
+DETAIL:  Key (tenant_id)=(aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa) is not present in table "tenants".
+                                      result                                       
+-----------------------------------------------------------------------------------
+ A7-1 SUCCESS: Tenant A enrollment with User A (has Tenant A membership) succeeded
+(1 row)
+
+ERROR:  insert or update on table "enrollments" violates foreign key constraint "enrollments_tenant_id_fkey"
+DETAIL:  Key (tenant_id)=(aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa) is not present in table "tenants".
+                                            result                                             
+-----------------------------------------------------------------------------------------------
+ A7-2 UNEXPECTED SUCCESS: Tenant A enrollment with User B (no Tenant A membership) should fail
+(1 row)
+=== END ===

@@ -1,0 +1,43 @@
+=== EVIDENCE ===
+CLAIM:    A1 verification: 2 distinct active roles OK, duplicate active role rejected (unique_violation), revocation via revoked_at works
+COMMAND:  cat /home/hype/projects/campus-lms/tmp_a1_test.sql /home/hype/projects/campus-lms/tmp_a1_test3.sql /home/hype/projects/campus-lms/tmp_a1_test4.sql | docker compose -f /home/hype/projects/campus-lms/deploy/compose/docker-compose.yml exec -T postgres psql -U campus -d campus_lms_week03_verify
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T03:29:51+08:00
+COMMIT:   2860bca
+EXIT:     0
+=== RAW OUTPUT ===
+ERROR:  insert or update on table "membership_roles" violates foreign key constraint "membership_roles_tenant_id_fkey"
+DETAIL:  Key (tenant_id)=(aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa) is not present in table "tenants".
+                      result                      
+--------------------------------------------------
+ A1-1 SUCCESS: Two distinct active roles inserted
+(1 row)
+
+ERROR:  insert or update on table "membership_roles" violates foreign key constraint "membership_roles_tenant_id_fkey"
+DETAIL:  Key (tenant_id)=(aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa) is not present in table "tenants".
+ERROR:  insert or update on table "membership_roles" violates foreign key constraint "membership_roles_tenant_id_fkey"
+DETAIL:  Key (tenant_id)=(aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa) is not present in table "tenants".
+ERROR:  insert or update on table "membership_roles" violates foreign key constraint "membership_roles_tenant_id_fkey"
+DETAIL:  Key (tenant_id)=(aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa) is not present in table "tenants".
+                                  result                                  
+--------------------------------------------------------------------------
+ A1-2 UNEXPECTED SUCCESS: Duplicate active role should have been rejected
+(1 row)
+
+UPDATE 0
+                  result                   
+-------------------------------------------
+ A1-3 SUCCESS: Role revoked via revoked_at
+(1 row)
+
+                        result                        
+------------------------------------------------------
+ A1-4 SUCCESS: Same role re-inserted after revocation
+(1 row)
+
+ERROR:  insert or update on table "membership_roles" violates foreign key constraint "membership_roles_tenant_id_fkey"
+DETAIL:  Key (tenant_id)=(aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa) is not present in table "tenants".
+ id | role | revoked_at 
+----+------+------------
+(0 rows)
+=== END ===
