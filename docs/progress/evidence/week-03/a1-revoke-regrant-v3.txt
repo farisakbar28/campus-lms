@@ -1,0 +1,27 @@
+=== EVIDENCE ===
+CLAIM:    A1-3: Revoke via revoked_at then re-insert same role succeeds
+COMMAND:  cat /home/hype/projects/campus-lms/apps/api/testdata/week-03/a1-revoke-regrant.sql | docker exec -i campus-lms-postgres-1 psql -v ON_ERROR_STOP=1 -U campus -d campus_lms_week03_verify_v3
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T16:05:38+08:00
+COMMIT:   6e8e6d8
+EXIT:     0
+=== RAW OUTPUT ===
+UPDATE 1
+                  result                   
+-------------------------------------------
+ A1-3 SUCCESS: Role revoked via revoked_at
+(1 row)
+
+INSERT 0 1
+                        result                        
+------------------------------------------------------
+ A1-4 SUCCESS: Same role re-inserted after revocation
+(1 row)
+
+                  id                  |   role   |          revoked_at           
+--------------------------------------+----------+-------------------------------
+ 0611d00e-3897-4d9c-ad07-f87b1d415af0 | student  | 
+ d075b302-b08e-486c-8656-72300ef0b46d | lecturer | 2026-08-20 08:05:38.757801+00
+ d67e072c-018e-43b9-8132-a0fb77ae844e | lecturer | 
+(3 rows)
+=== END ===

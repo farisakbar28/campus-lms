@@ -1,0 +1,11 @@
+=== EVIDENCE ===
+CLAIM:    A2-D: Cross-tenant audit_log rejected on audit_logs_tenant_id_course_offering_id_fkey
+COMMAND:  cat /home/hype/projects/campus-lms/apps/api/testdata/week-03/a2-audit-log.sql | docker exec -i campus-lms-postgres-1 psql -v ON_ERROR_STOP=1 -U campus -d campus_lms_week03_verify_v3
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T16:06:19+08:00
+COMMIT:   6e8e6d8
+EXIT:     3
+=== RAW OUTPUT ===
+ERROR:  insert or update on table "audit_logs" violates foreign key constraint "audit_logs_tenant_id_course_offering_id_fkey"
+DETAIL:  Key (tenant_id, course_offering_id)=(aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa, 44444444-4444-4444-4444-444444444444) is not present in table "course_offerings".
+=== END ===

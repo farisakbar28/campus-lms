@@ -1,0 +1,24 @@
+=== EVIDENCE ===
+CLAIM:    rls_verifier role created with NOLOGIN, NOSUPERUSER, NOBYPASSRLS; granted minimal privileges; not owner of audit_logs or memberships
+COMMAND:  wsl bash -c 'cat /home/hype/projects/campus-lms/tmp_rls_verifier.sql | docker exec -i campus-lms-postgres-1 psql -v ON_ERROR_STOP=1 -1 -U campus -d campus_lms_week03_verify_v2'
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T14:57:00+08:00
+COMMIT:   68ab28f
+EXIT:     0
+=== RAW OUTPUT ===
+CREATE ROLE
+GRANT
+GRANT
+GRANT
+   rolname    | rolcanlogin | rolsuper | rolbypassrls 
+--------------+-------------+----------+--------------
+ rls_verifier | f           | f        | f
+(1 row)
+
+   relname   | owner  
+-------------+--------
+ audit_logs  | campus
+ memberships | campus
+(2 rows)
+
+=== END ===

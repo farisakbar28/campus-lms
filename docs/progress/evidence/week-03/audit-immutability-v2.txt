@@ -1,0 +1,27 @@
+=== EVIDENCE ===
+CLAIM:    audit_logs immutability: UPDATE and DELETE on own audit log return 0 rows (no RLS UPDATE/DELETE policy), row remains unchanged
+COMMAND:  wsl bash -c 'cat /home/hype/projects/campus-lms/tmp_audit_immutability.sql | docker exec -i campus-lms-postgres-1 psql -v ON_ERROR_STOP=1 -1 -U campus -d campus_lms_week03_verify_v2'
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T15:02:00+08:00
+COMMIT:   68ab28f
+EXIT:     0
+=== RAW OUTPUT ===
+GRANT
+BEGIN
+SET
+WARNING:  there is already a transaction in progress
+SET
+UPDATE 0
+COMMIT
+BEGIN
+SET
+SET
+DELETE 0
+COMMIT
+WARNING:  there is no transaction in progress
+                  id                  | reason  
+--------------------------------------+---------
+ 77777777-7777-7777-7777-777777777777 | initial
+(1 row)
+
+=== END ===

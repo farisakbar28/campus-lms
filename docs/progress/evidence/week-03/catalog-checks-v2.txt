@@ -1,0 +1,180 @@
+=== EVIDENCE ===
+CLAIM:    Catalog verification: 11 tables, 11 PKs, 8 UNIQUE (tenant_id,id), 3 domain uniques, partial index, 7 composite FKs, A7 correct, 8 RLS enabled, audit_logs SELECT+INSERT only, term-range CHECK
+COMMAND:  wsl docker exec campus-lms-postgres-1 psql -U campus -d campus_lms_week03_verify_v2 -c "
+-- 1. Count Week 3 Tier-1 tables
+SELECT count(*) as tier1_tables
+FROM pg_tables
+WHERE schemaname = 'public'
+  AND tablename IN ('tenants','users','auth_identities','memberships','membership_roles','audit_logs','academic_terms','courses','course_offerings','course_staff','enrollments');
+
+-- 2. Primary keys on all 11 tables
+SELECT t.tablename, c.conname as pk_name
+FROM pg_tables t
+JOIN pg_constraint c ON c.conrelid = t.tablename::regclass
+WHERE t.schemaname = 'public'
+  AND t.tablename IN ('tenants','users','auth_identities','memberships','membership_roles','audit_logs','academic_terms','courses','course_offerings','course_staff','enrollments')
+  AND c.contype = 'p'
+ORDER BY t.tablename;
+
+-- 3. UNIQUE (tenant_id, id) on all 8 tenant-scoped tables
+SELECT t.tablename, c.conname
+FROM pg_tables t
+JOIN pg_constraint c ON c.conrelid = t.tablename::regclass
+WHERE t.schemaname = 'public'
+  AND t.tablename IN ('memberships','membership_roles','audit_logs','academic_terms','courses','course_offerings','course_staff','enrollments')
+  AND c.contype = 'u'
+  AND pg_get_constraintdef(c.oid) LIKE '%tenant_id%id%'
+ORDER BY t.tablename;
+
+-- 4. Domain unique constraints
+SELECT t.tablename, c.conname, pg_get_constraintdef(c.oid)
+FROM pg_tables t
+JOIN pg_constraint c ON c.conrelid = t.tablename::regclass
+WHERE t.schemaname = 'public'
+  AND t.tablename IN ('memberships','course_staff','enrollments')
+  AND c.contype = 'u'
+  AND pg_get_constraintdef(c.oid) NOT LIKE '%tenant_id%id%'
+ORDER BY t.tablename, c.conname;
+
+-- 5. Partial unique index on membership_roles
+SELECT indexname, indexdef
+FROM pg_indexes
+WHERE schemaname = 'public'
+  AND tablename = 'membership_roles'
+  AND indexname = 'membership_roles_active_role_idx';
+
+-- 6. Composite FKs tenant-aware (tenant_id first)
+SELECT
+    tc.table_name,
+    tc.constraint_name,
+    pg_get_constraintdef(c.oid) as fk_def
+FROM information_schema.table_constraints tc
+JOIN pg_constraint c ON c.conname = tc.constraint_name
+WHERE tc.constraint_type = 'FOREIGN KEY'
+  AND tc.table_schema = 'public'
+  AND tc.table_name IN ('course_offerings','membership_roles','course_staff','audit_logs','enrollments')
+  AND pg_get_constraintdef(c.oid) LIKE '%tenant_id%'
+ORDER BY tc.table_name, tc.constraint_name;
+
+-- 7. A7 FK exact definition
+SELECT
+    conname,
+    pg_get_constraintdef(oid)
+FROM pg_constraint
+WHERE conname = 'enrollments_tenant_id_student_user_id_fkey';
+
+-- 8. RLS enabled on all 8 tenant-scoped tables
+SELECT c.relname, c.relrowsecurity
+FROM pg_class c
+JOIN pg_namespace n ON n.oid = c.relnamespace
+WHERE n.nspname = 'public'
+  AND c.relname IN ('memberships','membership_roles','audit_logs','academic_terms','courses','course_offerings','course_staff','enrollments')
+  AND c.relkind = 'r'
+ORDER BY c.relname;
+
+-- 9. audit_logs policies
+SELECT polname, polcmd, pg_get_expr(polqual, polrelid) as using_expr, pg_get_expr(polwithcheck, polrelid) as with_check_expr
+FROM pg_policy
+WHERE polrelid = 'audit_logs'::regclass
+ORDER BY polname;
+
+-- 10. CHECK constraint on academic_terms
+SELECT conname, pg_get_constraintdef(oid)
+FROM pg_constraint
+WHERE conrelid = 'academic_terms'::regclass
+  AND contype = 'c';
+"
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T14:40:00+08:00
+COMMIT:   68ab28f
+EXIT:     0
+=== RAW OUTPUT ===
+ tier1_tables 
+--------------
+           11
+(1 row)
+
+    tablename     |        pk_name        
+------------------+-----------------------
+ academic_terms   | academic_terms_pkey
+ audit_logs       | audit_logs_pkey
+ auth_identities  | auth_identities_pkey
+ course_offerings | course_offerings_pkey
+ course_staff     | course_staff_pkey
+ courses          | courses_pkey
+ enrollments      | enrollments_pkey
+ membership_roles | membership_roles_pkey
+ memberships      | memberships_pkey
+ tenants          | tenants_pkey
+ users            | users_pkey
+(11 rows)
+
+    tablename     |              conname              
+------------------+-----------------------------------
+ academic_terms   | academic_terms_tenant_id_id_key
+ audit_logs       | audit_logs_tenant_id_id_key
+ course_offerings | course_offerings_tenant_id_id_key
+ course_staff     | course_staff_tenant_id_id_key
+ courses          | courses_tenant_id_id_key
+ enrollments      | enrollments_tenant_id_id_key
+ membership_roles | membership_roles_tenant_id_id_key
+ memberships      | memberships_tenant_id_id_key
+ memberships      | memberships_tenant_id_user_id_key
+(9 rows)
+
+  tablename   |                      conname                       |             pg_get_constraintdef             
+--------------+----------------------------------------------------+----------------------------------------------
+ course_staff | course_staff_course_offering_id_user_id_key        | UNIQUE (course_offering_id, user_id)
+ enrollments  | enrollments_course_offering_id_student_user_id_key | UNIQUE (course_offering_id, student_user_id)
+(2 rows)
+
+            indexname             |                                                                   indexdef                                                                   
+----------------------------------+----------------------------------------------------------------------------------------------------------------------------------------------
+ membership_roles_active_role_idx | CREATE UNIQUE INDEX membership_roles_active_role_idx ON public.membership_roles USING btree (membership_id, role) WHERE (revoked_at IS NULL)
+(1 row)
+
+    table_name    |                 constraint_name                  |                                         fk_def                                         
+------------------+--------------------------------------------------+----------------------------------------------------------------------------------------
+ audit_logs       | audit_logs_tenant_id_course_offering_id_fkey     | FOREIGN KEY (tenant_id, course_offering_id) REFERENCES course_offerings(tenant_id, id)
+ audit_logs       | audit_logs_tenant_id_fkey                        | FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+ course_offerings | course_offerings_tenant_id_academic_term_id_fkey | FOREIGN KEY (tenant_id, academic_term_id) REFERENCES academic_terms(tenant_id, id)
+ course_offerings | course_offerings_tenant_id_course_id_fkey        | FOREIGN KEY (tenant_id, course_id) REFERENCES courses(tenant_id, id)
+ course_offerings | course_offerings_tenant_id_fkey                  | FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+ course_staff     | course_staff_tenant_id_course_offering_id_fkey   | FOREIGN KEY (tenant_id, course_offering_id) REFERENCES course_offerings(tenant_id, id)
+ course_staff     | course_staff_tenant_id_fkey                      | FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+ enrollments      | enrollments_tenant_id_course_offering_id_fkey    | FOREIGN KEY (tenant_id, course_offering_id) REFERENCES course_offerings(tenant_id, id)
+ enrollments      | enrollments_tenant_id_fkey                       | FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+ enrollments      | enrollments_tenant_id_student_user_id_fkey       | FOREIGN KEY (tenant_id, student_user_id) REFERENCES memberships(tenant_id, user_id)
+ membership_roles | membership_roles_tenant_id_fkey                  | FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+ membership_roles | membership_roles_tenant_id_membership_id_fkey    | FOREIGN KEY (tenant_id, membership_id) REFERENCES memberships(tenant_id, id)
+(12 rows)
+
+                  conname                   |                                pg_get_constraintdef                                 
+--------------------------------------------+-------------------------------------------------------------------------------------
+ enrollments_tenant_id_student_user_id_fkey | FOREIGN KEY (tenant_id, student_user_id) REFERENCES memberships(tenant_id, user_id)
+(1 row)
+
+     relname      | relrowsecurity 
+------------------+----------------
+ academic_terms   | t
+ audit_logs       | t
+ course_offerings | t
+ course_staff     | t
+ courses          | t
+ enrollments      | t
+ membership_roles | t
+ memberships      | t
+(8 rows)
+
+         polname          | polcmd |                          using_expr                          |                       with_check_expr                        
+--------------------------+--------+--------------------------------------------------------------+--------------------------------------------------------------
+ audit_logs_tenant_insert | a      |                                                              | (tenant_id = (current_setting('app.tenant_id'::text))::uuid)
+ audit_logs_tenant_select | r      | (tenant_id = (current_setting('app.tenant_id'::text))::uuid) | 
+(2 rows)
+
+             conname             |     pg_get_constraintdef      
+---------------------------------+-------------------------------
+ academic_terms_valid_time_range | CHECK ((starts_at < ends_at))
+(1 row)
+
+=== END ===

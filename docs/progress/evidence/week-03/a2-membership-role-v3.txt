@@ -1,0 +1,11 @@
+=== EVIDENCE ===
+CLAIM:    A2-B: Cross-tenant membership_role rejected on membership_roles_tenant_id_membership_id_fkey
+COMMAND:  cat /home/hype/projects/campus-lms/apps/api/testdata/week-03/a2-membership-role.sql | docker exec -i campus-lms-postgres-1 psql -v ON_ERROR_STOP=1 -U campus -d campus_lms_week03_verify_v3
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T16:05:58+08:00
+COMMIT:   6e8e6d8
+EXIT:     3
+=== RAW OUTPUT ===
+ERROR:  insert or update on table "membership_roles" violates foreign key constraint "membership_roles_tenant_id_membership_id_fkey"
+DETAIL:  Key (tenant_id, membership_id)=(aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa, 66666666-6666-6666-6666-666666666666) is not present in table "memberships".
+=== END ===

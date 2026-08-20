@@ -1,0 +1,17 @@
+=== EVIDENCE ===
+CLAIM:    Fixture setup: all prerequisite data inserted successfully (2 tenants, 2 users, 2 academic terms, 2 courses, 2 course offerings, 2 memberships, 2 audit logs)
+COMMAND:  wsl bash -c 'cat /home/hype/projects/campus-lms/tmp_fixtures.sql | docker exec -i campus-lms-postgres-1 psql -v ON_ERROR_STOP=1 -1 -U campus -d campus_lms_week03_verify_v2'
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T14:45:00+08:00
+COMMIT:   68ab28f
+EXIT:     0
+=== RAW OUTPUT ===
+INSERT 0 2
+INSERT 0 2
+INSERT 0 2
+INSERT 0 2
+INSERT 0 2
+INSERT 0 2
+INSERT 0 2
+
+=== END ===

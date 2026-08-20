@@ -1,0 +1,26 @@
+=== EVIDENCE ===
+CLAIM:    RLS SELECT isolation: Tenant A sees own audit log (1), not Tenant B audit log (0)
+COMMAND:  wsl bash -c 'cat /home/hype/projects/campus-lms/tmp_rls_select.sql | docker exec -i campus-lms-postgres-1 psql -v ON_ERROR_STOP=1 -1 -U campus -d campus_lms_week03_verify_v2'
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T14:58:00+08:00
+COMMIT:   68ab28f
+EXIT:     0
+=== RAW OUTPUT ===
+WARNING:  there is already a transaction in progress
+BEGIN
+SET
+SET
+ tenant_a_sees_own 
+-------------------
+                 1
+(1 row)
+
+WARNING:  there is no transaction in progress
+ tenant_a_sees_other 
+---------------------
+                   0
+(1 row)
+
+COMMIT
+
+=== END ===

@@ -1,0 +1,26 @@
+=== EVIDENCE ===
+CLAIM:    RLS negative control: DISABLE RLS -> Tenant B row visible (1) -> ROLLBACK -> RLS re-enabled
+COMMAND:  wsl bash -c 'cat /home/hype/projects/campus-lms/tmp_rls_negative.sql | docker exec -i campus-lms-postgres-1 psql -v ON_ERROR_STOP=1 -1 -U campus -d campus_lms_week03_verify_v2'
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T15:03:00+08:00
+COMMIT:   68ab28f
+EXIT:     0
+=== RAW OUTPUT ===
+BEGIN
+WARNING:  there is already a transaction in progress
+ALTER TABLE
+SET
+SET
+ tenant_b_visible_when_rls_disabled 
+------------------------------------
+                                  1
+(1 row)
+
+ROLLBACK
+WARNING:  there is no transaction in progress
+  relname   | relrowsecurity 
+------------+----------------
+ audit_logs | t
+(1 row)
+
+=== END ===

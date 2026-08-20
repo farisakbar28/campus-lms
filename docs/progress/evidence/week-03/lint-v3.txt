@@ -1,0 +1,10 @@
+=== EVIDENCE ===
+CLAIM:    Lint: Go toolchain not available in WSL environment (NOT MEASURED)
+COMMAND:  echo Go toolchain not available
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T16:20:02+08:00
+COMMIT:   6e8e6d8
+EXIT:     0
+=== RAW OUTPUT ===
+Go toolchain not available
+=== END ===

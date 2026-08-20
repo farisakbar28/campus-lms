@@ -1,0 +1,20 @@
+=== EVIDENCE ===
+CLAIM:    A1-1: Insert two DISTINCT active roles for membership A succeeds
+COMMAND:  cat /home/hype/projects/campus-lms/apps/api/testdata/week-03/a1-two-active.sql | docker exec -i campus-lms-postgres-1 psql -v ON_ERROR_STOP=1 -U campus -d campus_lms_week03_verify_v3
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T16:05:19+08:00
+COMMIT:   6e8e6d8
+EXIT:     0
+=== RAW OUTPUT ===
+INSERT 0 2
+                      result                      
+--------------------------------------------------
+ A1-1 SUCCESS: Two distinct active roles inserted
+(1 row)
+
+                  id                  |   role   | revoked_at 
+--------------------------------------+----------+------------
+ d075b302-b08e-486c-8656-72300ef0b46d | lecturer | 
+ 0611d00e-3897-4d9c-ad07-f87b1d415af0 | student  | 
+(2 rows)
+=== END ===

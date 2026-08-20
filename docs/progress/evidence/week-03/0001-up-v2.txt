@@ -1,0 +1,12 @@
+=== EVIDENCE ===
+CLAIM:    0001 migration creates 3 global tables
+COMMAND:  wsl bash -c 'cat /home/hype/projects/campus-lms/apps/api/migrations/0001_tenant_identity_schema.up.sql | docker exec -i campus-lms-postgres-1 psql -v ON_ERROR_STOP=1 -1 -U campus -d campus_lms_week03_verify_v2'
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T14:35:00+08:00
+COMMIT:   68ab28f
+EXIT:     0
+=== RAW OUTPUT ===
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+=== END ===

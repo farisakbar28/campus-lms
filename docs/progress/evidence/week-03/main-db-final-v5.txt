@@ -1,0 +1,24 @@
+=== EVIDENCE ===
+CLAIM:    Main dev DB final Week 3 migration-foundation state is structurally correct, has exact audit_logs policy scope, no verifier role, and no verification fixtures
+COMMAND:  cat apps/api/testdata/week-03/main-db-final-check.sql | docker exec -i campus-lms-postgres-1 psql -U campus -d campus_lms
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T17:31:18+08:00
+COMMIT:   ef9ad0d
+EXIT:     0
+=== RAW OUTPUT ===
+          chk           | count 
+------------------------+-------
+ a7_fk                  | 1
+ audit_policy_all       | 0
+ audit_policy_delete    | 0
+ audit_policy_insert    | 1
+ audit_policy_select    | 1
+ audit_policy_total     | 2
+ audit_policy_update    | 0
+ fixture_rows_remaining | 0
+ rls_enabled            | 8
+ rls_verifier           | 0
+ tables                 | 11
+ term_range_check       | 1
+(12 rows)
+=== END ===

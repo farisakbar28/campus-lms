@@ -1,0 +1,15 @@
+=== EVIDENCE ===
+CLAIM:    Cleanup rls_verifier role: count 0
+COMMAND:  cat /home/hype/projects/campus-lms/apps/api/testdata/week-03/rls-verifier-cleanup.sql | docker exec -i campus-lms-postgres-1 psql -v ON_ERROR_STOP=1 -1 -U campus -d campus_lms_week03_verify_v3
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T16:10:05+08:00
+COMMIT:   6e8e6d8
+EXIT:     0
+=== RAW OUTPUT ===
+DROP OWNED
+DROP ROLE
+ role_count 
+------------
+          0
+(1 row)
+=== END ===

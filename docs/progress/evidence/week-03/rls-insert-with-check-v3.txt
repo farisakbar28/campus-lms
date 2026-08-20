@@ -1,0 +1,13 @@
+=== EVIDENCE ===
+CLAIM:    RLS INSERT WITH CHECK: Cross-tenant INSERT rejected by RLS
+COMMAND:  cat /home/hype/projects/campus-lms/apps/api/testdata/week-03/rls-insert-with-check.sql | docker exec -i campus-lms-postgres-1 psql -v ON_ERROR_STOP=1 -U campus -d campus_lms_week03_verify_v3
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T16:08:02+08:00
+COMMIT:   6e8e6d8
+EXIT:     3
+=== RAW OUTPUT ===
+BEGIN
+SET
+SET
+ERROR:  new row violates row-level security policy for table "audit_logs"
+=== END ===

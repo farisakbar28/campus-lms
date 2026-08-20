@@ -1,0 +1,20 @@
+=== EVIDENCE ===
+CLAIM:    A7-1: Valid enrollment (Tenant A course offering + User A with Tenant A membership) succeeds
+COMMAND:  wsl bash -c 'cat /home/hype/projects/campus-lms/tmp_a7_valid.sql | docker exec -i campus-lms-postgres-1 psql -v ON_ERROR_STOP=1 -1 -U campus -d campus_lms_week03_verify_v2'
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T14:55:00+08:00
+COMMIT:   68ab28f
+EXIT:     0
+=== RAW OUTPUT ===
+INSERT 0 1
+                 result                  
+-----------------------------------------
+ A7-1 SUCCESS: Valid enrollment inserted
+(1 row)
+
+                  id                  |              tenant_id               |          course_offering_id          |           student_user_id            
+--------------------------------------+--------------------------------------+--------------------------------------+--------------------------------------
+ 2ddcea2b-91ab-43a2-a04d-b06b13fa5052 | aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa | 33333333-3333-3333-3333-333333333333 | cccccccc-cccc-cccc-cccc-cccccccccccc
+(1 row)
+
+=== END ===

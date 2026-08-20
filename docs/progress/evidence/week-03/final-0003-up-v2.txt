@@ -1,0 +1,27 @@
+=== EVIDENCE ===
+CLAIM:    Final re-apply: 0003 up creates 5 tenant-scoped tables with composite FKs, partial index, and RLS policies
+COMMAND:  wsl bash -c 'cat /home/hype/projects/campus-lms/apps/api/migrations/0003_auth_membership_schema.up.sql | docker exec -i campus-lms-postgres-1 psql -v ON_ERROR_STOP=1 -1 -U campus -d campus_lms_week03_verify_v2'
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T15:12:00+08:00
+COMMIT:   68ab28f
+EXIT:     0
+=== RAW OUTPUT ===
+CREATE TABLE
+CREATE TABLE
+CREATE INDEX
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+CREATE POLICY
+ALTER TABLE
+CREATE POLICY
+ALTER TABLE
+CREATE POLICY
+CREATE POLICY
+ALTER TABLE
+CREATE POLICY
+ALTER TABLE
+CREATE POLICY
+
+=== END ===

@@ -1,0 +1,17 @@
+=== EVIDENCE ===
+CLAIM:    RLS UPDATE USING: As Tenant A targeting Tenant B membership returns UPDATE 0 (hidden row)
+COMMAND:  wsl bash -c 'cat /home/hype/projects/campus-lms/tmp_rls_update_using.sql | docker exec -i campus-lms-postgres-1 psql -v ON_ERROR_STOP=1 -1 -U campus -d campus_lms_week03_verify_v2'
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T15:00:00+08:00
+COMMIT:   68ab28f
+EXIT:     0
+=== RAW OUTPUT ===
+BEGIN
+WARNING:  there is already a transaction in progress
+WARNING:  there is no transaction in progress
+SET
+SET
+UPDATE 0
+COMMIT
+
+=== END ===

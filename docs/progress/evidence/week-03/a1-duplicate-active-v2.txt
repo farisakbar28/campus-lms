@@ -1,0 +1,12 @@
+=== EVIDENCE ===
+CLAIM:    A1-2: Insert duplicate active role for same membership fails with unique violation on membership_roles_active_role_idx
+COMMAND:  wsl bash -c 'cat /home/hype/projects/campus-lms/tmp_a1_dup.sql | docker exec -i campus-lms-postgres-1 psql -v ON_ERROR_STOP=1 -1 -U campus -d campus_lms_week03_verify_v2'
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T14:48:00+08:00
+COMMIT:   68ab28f
+EXIT:     1
+=== RAW OUTPUT ===
+ERROR:  duplicate key value violates unique constraint "membership_roles_active_role_idx"
+DETAIL:  Key (membership_id, role)=(55555555-5555-5555-5555-555555555555, lecturer) already exists.
+
+=== END ===

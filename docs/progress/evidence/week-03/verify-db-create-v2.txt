@@ -1,0 +1,10 @@
+=== EVIDENCE ===
+CLAIM:    Verify database created
+COMMAND:  wsl docker exec campus-lms-postgres-1 psql -U campus -d campus_lms -c "CREATE DATABASE campus_lms_week03_verify_v2;"
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T14:32:11+08:00
+COMMIT:   68ab28f
+EXIT:     0
+=== RAW OUTPUT ===
+CREATE DATABASE
+=== END ===

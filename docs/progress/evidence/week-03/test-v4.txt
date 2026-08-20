@@ -1,0 +1,10 @@
+=== EVIDENCE ===
+CLAIM:    Week 3 pre-commit test check
+COMMAND:  cd apps/api && go test -race -count=1 ./...
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T16:56:10+08:00
+COMMIT:   d1d6adf
+EXIT:     127
+=== RAW OUTPUT ===
+/bin/bash: line 1: go: command not found
+=== END ===

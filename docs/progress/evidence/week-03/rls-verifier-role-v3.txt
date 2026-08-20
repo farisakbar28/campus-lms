@@ -1,0 +1,23 @@
+=== EVIDENCE ===
+CLAIM:    Create and verify rls_verifier role (NOLOGIN, NOSUPERUSER, NOBYPASSRLS, not owner)
+COMMAND:  cat /home/hype/projects/campus-lms/apps/api/testdata/week-03/rls-verifier-create.sql | docker exec -i campus-lms-postgres-1 psql -v ON_ERROR_STOP=1 -1 -U campus -d campus_lms_week03_verify_v3
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T16:06:58+08:00
+COMMIT:   6e8e6d8
+EXIT:     0
+=== RAW OUTPUT ===
+CREATE ROLE
+GRANT
+GRANT
+GRANT
+   rolname    | rolcanlogin | rolsuper | rolbypassrls 
+--------------+-------------+----------+--------------
+ rls_verifier | f           | f        | f
+(1 row)
+
+   relname   | owner  
+-------------+--------
+ audit_logs  | campus
+ memberships | campus
+(2 rows)
+=== END ===

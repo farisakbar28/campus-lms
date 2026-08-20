@@ -1,0 +1,14 @@
+=== EVIDENCE ===
+CLAIM:    RLS UPDATE USING: Hidden tenant B row updates 0 rows
+COMMAND:  cat /home/hype/projects/campus-lms/apps/api/testdata/week-03/rls-update-hidden.sql | docker exec -i campus-lms-postgres-1 psql -v ON_ERROR_STOP=1 -U campus -d campus_lms_week03_verify_v3
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T16:08:17+08:00
+COMMIT:   6e8e6d8
+EXIT:     0
+=== RAW OUTPUT ===
+BEGIN
+SET
+SET
+UPDATE 0
+COMMIT
+=== END ===

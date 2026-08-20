@@ -1,0 +1,12 @@
+=== EVIDENCE ===
+CLAIM:    A7-2: Invalid enrollment (Tenant A course offering + User B with only Tenant B membership) fails on A7 composite FK enrollments_tenant_id_student_user_id_fkey
+COMMAND:  wsl bash -c 'cat /home/hype/projects/campus-lms/tmp_a7_invalid.sql | docker exec -i campus-lms-postgres-1 psql -v ON_ERROR_STOP=1 -1 -U campus -d campus_lms_week03_verify_v2'
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T14:56:00+08:00
+COMMIT:   68ab28f
+EXIT:     1
+=== RAW OUTPUT ===
+ERROR:  insert or update on table "enrollments" violates foreign key constraint "enrollments_tenant_id_student_user_id_fkey"
+DETAIL:  Key (tenant_id, student_user_id)=(aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa, dddddddd-dddd-dddd-dddd-dddddddddddd) is not present in table "memberships".
+
+=== END ===

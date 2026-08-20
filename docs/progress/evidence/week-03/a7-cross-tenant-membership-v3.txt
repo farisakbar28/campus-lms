@@ -1,0 +1,11 @@
+=== EVIDENCE ===
+CLAIM:    A7-2: Cross-tenant enrollment rejected on enrollments_tenant_id_student_user_id_fkey
+COMMAND:  cat /home/hype/projects/campus-lms/apps/api/testdata/week-03/a7-cross-tenant-membership.sql | docker exec -i campus-lms-postgres-1 psql -v ON_ERROR_STOP=1 -U campus -d campus_lms_week03_verify_v3
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T16:06:40+08:00
+COMMIT:   6e8e6d8
+EXIT:     3
+=== RAW OUTPUT ===
+ERROR:  insert or update on table "enrollments" violates foreign key constraint "enrollments_tenant_id_student_user_id_fkey"
+DETAIL:  Key (tenant_id, student_user_id)=(aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa, dddddddd-dddd-dddd-dddd-dddddddddddd) is not present in table "memberships".
+=== END ===

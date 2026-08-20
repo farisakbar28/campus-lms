@@ -1,0 +1,15 @@
+=== EVIDENCE ===
+CLAIM:    RLS UPDATE WITH CHECK: As Tenant A changing own membership tenant_id to Tenant B fails with RLS violation
+COMMAND:  wsl bash -c 'cat /home/hype/projects/campus-lms/tmp_rls_update_wc.sql | docker exec -i campus-lms-postgres-1 psql -v ON_ERROR_STOP=1 -1 -U campus -d campus_lms_week03_verify_v2'
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T15:01:00+08:00
+COMMIT:   68ab28f
+EXIT:     1
+=== RAW OUTPUT ===
+WARNING:  there is already a transaction in progress
+BEGIN
+SET
+SET
+ERROR:  new row violates row-level security policy for table "memberships"
+
+=== END ===

@@ -1,0 +1,23 @@
+=== EVIDENCE ===
+CLAIM:    RLS SELECT isolation: Tenant A sees own audit log (1), not Tenant B audit log (0)
+COMMAND:  cat /home/hype/projects/campus-lms/apps/api/testdata/week-03/rls-select-isolation.sql | docker exec -i campus-lms-postgres-1 psql -v ON_ERROR_STOP=1 -U campus -d campus_lms_week03_verify_v3
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T16:07:30+08:00
+COMMIT:   6e8e6d8
+EXIT:     0
+=== RAW OUTPUT ===
+BEGIN
+SET
+SET
+ tenant_a_sees_own 
+-------------------
+                 1
+(1 row)
+
+ tenant_a_sees_other 
+---------------------
+                   0
+(1 row)
+
+COMMIT
+=== END ===

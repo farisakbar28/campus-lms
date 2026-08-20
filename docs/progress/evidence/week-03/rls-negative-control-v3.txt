@@ -1,0 +1,23 @@
+=== EVIDENCE ===
+CLAIM:    RLS negative control: RLS disabled cross-tenant visible (1), rollback re-enables RLS
+COMMAND:  cat /home/hype/projects/campus-lms/apps/api/testdata/week-03/rls-negative-control.sql | docker exec -i campus-lms-postgres-1 psql -v ON_ERROR_STOP=1 -U campus -d campus_lms_week03_verify_v3
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T16:09:46+08:00
+COMMIT:   6e8e6d8
+EXIT:     0
+=== RAW OUTPUT ===
+BEGIN
+ALTER TABLE
+SET
+SET
+ tenant_b_visible_when_rls_disabled 
+------------------------------------
+                                  1
+(1 row)
+
+ROLLBACK
+  relname   | relrowsecurity 
+------------+----------------
+ audit_logs | t
+(1 row)
+=== END ===

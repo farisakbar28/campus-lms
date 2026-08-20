@@ -1,0 +1,14 @@
+=== EVIDENCE ===
+CLAIM:    Week 3 pre-commit make lint result
+COMMAND:  make lint
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T17:31:45+08:00
+COMMIT:   ef9ad0d
+EXIT:     2
+=== RAW OUTPUT ===
+make[1]: Entering directory '/home/hype/projects/campus-lms'
+cd apps/api && golangci-lint run ./...
+/bin/bash: line 1: golangci-lint: command not found
+make[1]: *** [Makefile:57: lint] Error 127
+make[1]: Leaving directory '/home/hype/projects/campus-lms'
+=== END ===

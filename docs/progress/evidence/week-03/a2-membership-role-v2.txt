@@ -1,0 +1,12 @@
+=== EVIDENCE ===
+CLAIM:    A2-B: Tenant A membership_role references Tenant B membership fails on composite FK membership_roles_tenant_id_membership_id_fkey
+COMMAND:  wsl bash -c 'cat /home/hype/projects/campus-lms/tmp_a2_b.sql | docker exec -i campus-lms-postgres-1 psql -v ON_ERROR_STOP=1 -1 -U campus -d campus_lms_week03_verify_v2'
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T14:51:00+08:00
+COMMIT:   68ab28f
+EXIT:     1
+=== RAW OUTPUT ===
+ERROR:  insert or update on table "membership_roles" violates foreign key constraint "membership_roles_tenant_id_membership_id_fkey"
+DETAIL:  Key (tenant_id, membership_id)=(aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa, 66666666-6666-6666-6666-666666666666) is not present in table "memberships".
+
+=== END ===

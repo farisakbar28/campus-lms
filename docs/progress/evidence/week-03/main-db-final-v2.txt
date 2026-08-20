@@ -1,0 +1,51 @@
+=== EVIDENCE ===
+CLAIM:    Main dev DB final state: 11 tables, 8 RLS enabled, A7 correct, term-range CHECK exists, audit_logs SELECT+INSERT only, no rls_verifier, no verification fixtures
+COMMAND:  wsl docker exec campus-lms-postgres-1 psql -U campus -d campus_lms -c "
+SELECT 'tables' as check, count(*) as count
+FROM pg_tables
+WHERE schemaname = 'public'
+  AND tablename IN ('tenants','users','auth_identities','memberships','membership_roles','audit_logs','academic_terms','courses','course_offerings','course_staff','enrollments')
+UNION ALL
+SELECT 'rls_enabled', count(*)
+FROM pg_class c
+JOIN pg_namespace n ON n.oid = c.relnamespace
+WHERE n.nspname = 'public'
+  AND c.relname IN ('memberships','membership_roles','audit_logs','academic_terms','courses','course_offerings','course_staff','enrollments')
+  AND c.relkind = 'r'
+  AND c.relrowsecurity
+UNION ALL
+SELECT 'a7_fk', count(*)
+FROM pg_constraint
+WHERE conname = 'enrollments_tenant_id_student_user_id_fkey'
+  AND pg_get_constraintdef(oid) = 'FOREIGN KEY (tenant_id, student_user_id) REFERENCES memberships(tenant_id, user_id)'
+UNION ALL
+SELECT 'term_range_check', count(*)
+FROM pg_constraint
+WHERE conname = 'academic_terms_valid_time_range'
+  AND pg_get_constraintdef(oid) = 'CHECK ((starts_at < ends_at))'
+UNION ALL
+SELECT 'audit_policies', count(*)
+FROM pg_policy
+WHERE polrelid = 'audit_logs'::regclass
+  AND polcmd IN ('r','a')
+UNION ALL
+SELECT 'rls_verifier', count(*)
+FROM pg_roles
+WHERE rolname = 'rls_verifier';
+"
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T15:17:00+08:00
+COMMIT:   68ab28f
+EXIT:     0
+=== RAW OUTPUT ===
+      check       | count 
+------------------+-------
+ tables           |    11
+ rls_enabled      |     8
+ a7_fk            |     1
+ term_range_check |     1
+ audit_policies   |     2
+ rls_verifier     |     0
+(6 rows)
+
+=== END ===

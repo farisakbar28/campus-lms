@@ -1,0 +1,24 @@
+=== EVIDENCE ===
+CLAIM:    Audit log immutability: UPDATE 0, DELETE 0, row unchanged
+COMMAND:  cat /home/hype/projects/campus-lms/apps/api/testdata/week-03/audit-immutability.sql | docker exec -i campus-lms-postgres-1 psql -v ON_ERROR_STOP=1 -U campus -d campus_lms_week03_verify_v3
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T16:09:19+08:00
+COMMIT:   6e8e6d8
+EXIT:     0
+=== RAW OUTPUT ===
+GRANT
+BEGIN
+SET
+SET
+UPDATE 0
+COMMIT
+BEGIN
+SET
+SET
+DELETE 0
+COMMIT
+                  id                  | reason  
+--------------------------------------+---------
+ 77777777-7777-7777-7777-777777777777 | initial
+(1 row)
+=== END ===

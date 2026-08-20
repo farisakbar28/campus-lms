@@ -1,0 +1,12 @@
+=== EVIDENCE ===
+CLAIM:    A2-A: Tenant A course_offering references Tenant B course fails on composite FK course_offerings_tenant_id_course_id_fkey
+COMMAND:  wsl bash -c 'cat /home/hype/projects/campus-lms/tmp_a2_a.sql | docker exec -i campus-lms-postgres-1 psql -v ON_ERROR_STOP=1 -1 -U campus -d campus_lms_week03_verify_v2'
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T14:50:00+08:00
+COMMIT:   68ab28f
+EXIT:     1
+=== RAW OUTPUT ===
+ERROR:  insert or update on table "course_offerings" violates foreign key constraint "course_offerings_tenant_id_course_id_fkey"
+DETAIL:  Key (tenant_id, course_id)=(aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa, 22222222-2222-2222-2222-222222222222) is not present in table "courses".
+
+=== END ===

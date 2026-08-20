@@ -1,0 +1,28 @@
+=== EVIDENCE ===
+CLAIM:    A1-3: Revoke existing role via revoked_at, then re-insert same role as new active row succeeds
+COMMAND:  wsl bash -c 'cat /home/hype/projects/campus-lms/tmp_a1_revoke.sql | docker exec -i campus-lms-postgres-1 psql -v ON_ERROR_STOP=1 -1 -U campus -d campus_lms_week03_verify_v2'
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T14:49:00+08:00
+COMMIT:   68ab28f
+EXIT:     0
+=== RAW OUTPUT ===
+UPDATE 1
+                  result                   
+-------------------------------------------
+ A1-3 SUCCESS: Role revoked via revoked_at
+(1 row)
+
+INSERT 0 1
+                        result                        
+------------------------------------------------------
+ A1-4 SUCCESS: Same role re-inserted after revocation
+(1 row)
+
+                  id                  |   role   |          revoked_at           
+--------------------------------------+----------+-------------------------------
+ 9bb26f5b-e2d2-4aaf-8537-5dc50dec34c0 | student  | 
+ 66ec2c90-816a-45ef-8db6-929e4dea4bfd | lecturer | 2026-08-20 07:01:27.321481+00
+ 03422719-2177-4228-9c01-1648e2123d0d | lecturer | 
+(3 rows)
+
+=== END ===

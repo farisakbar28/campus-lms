@@ -1,0 +1,19 @@
+=== EVIDENCE ===
+CLAIM:    Main dev DB final state: 11 tables, 8 RLS, A7 correct, term-range CHECK, audit SELECT+INSERT only, no rls_verifier, fixture_rows_remaining=0
+COMMAND:  cat /home/hype/projects/campus-lms/apps/api/testdata/week-03/main-db-final-check.sql | docker exec -i campus-lms-postgres-1 psql -U campus -d campus_lms
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T16:15:36+08:00
+COMMIT:   6e8e6d8
+EXIT:     0
+=== RAW OUTPUT ===
+         check          | count 
+------------------------+-------
+ tables                 |    11
+ rls_enabled            |     8
+ a7_fk                  |     1
+ term_range_check       |     1
+ audit_policies         |     2
+ rls_verifier           |     0
+ fixture_rows_remaining |     0
+(7 rows)
+=== END ===
