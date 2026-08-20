@@ -69,7 +69,16 @@ db-shell: ## Open psql in the container
 .PHONY: migrate-up
 migrate-up: ## Apply all pending migrations (Week 3)
 	@$(COMPOSE_DEV) exec -T api sh -ec '\
-		if [ ! -x /go/bin/migrate ]; then \
+		MIGRATE_PATH="/go/bin/migrate"; \
+		WANT_VER="github.com/golang-migrate/migrate/v4 v4.18.3"; \
+		if [ -x "$$MIGRATE_PATH" ]; then \
+			CUR_VER=$$(go version -m "$$MIGRATE_PATH" 2>/dev/null | grep "$$WANT_VER" || true); \
+			if [ -z "$$CUR_VER" ]; then \
+				echo "migrate binary found but version mismatch or error. Reinstalling..."; \
+				rm -f "$$MIGRATE_PATH"; \
+			fi; \
+		fi; \
+		if [ ! -x "$$MIGRATE_PATH" ]; then \
 			echo "Installing golang-migrate..."; \
 			go install -tags postgres github.com/golang-migrate/migrate/v4/cmd/migrate@v4.18.3; \
 		fi; \
@@ -80,7 +89,16 @@ migrate-up: ## Apply all pending migrations (Week 3)
 .PHONY: migrate-down
 migrate-down: ## Roll back EXACTLY one migration (Week 3)
 	@$(COMPOSE_DEV) exec -T api sh -ec '\
-		if [ ! -x /go/bin/migrate ]; then \
+		MIGRATE_PATH="/go/bin/migrate"; \
+		WANT_VER="github.com/golang-migrate/migrate/v4 v4.18.3"; \
+		if [ -x "$$MIGRATE_PATH" ]; then \
+			CUR_VER=$$(go version -m "$$MIGRATE_PATH" 2>/dev/null | grep "$$WANT_VER" || true); \
+			if [ -z "$$CUR_VER" ]; then \
+				echo "migrate binary found but version mismatch or error. Reinstalling..."; \
+				rm -f "$$MIGRATE_PATH"; \
+			fi; \
+		fi; \
+		if [ ! -x "$$MIGRATE_PATH" ]; then \
 			echo "Installing golang-migrate..."; \
 			go install -tags postgres github.com/golang-migrate/migrate/v4/cmd/migrate@v4.18.3; \
 		fi; \
@@ -91,7 +109,16 @@ migrate-down: ## Roll back EXACTLY one migration (Week 3)
 .PHONY: migrate-version
 migrate-version: ## Show the current migration version and dirty state (Week 3)
 	@$(COMPOSE_DEV) exec -T api sh -ec '\
-		if [ ! -x /go/bin/migrate ]; then \
+		MIGRATE_PATH="/go/bin/migrate"; \
+		WANT_VER="github.com/golang-migrate/migrate/v4 v4.18.3"; \
+		if [ -x "$$MIGRATE_PATH" ]; then \
+			CUR_VER=$$(go version -m "$$MIGRATE_PATH" 2>/dev/null | grep "$$WANT_VER" || true); \
+			if [ -z "$$CUR_VER" ]; then \
+				echo "migrate binary found but version mismatch or error. Reinstalling..."; \
+				rm -f "$$MIGRATE_PATH"; \
+			fi; \
+		fi; \
+		if [ ! -x "$$MIGRATE_PATH" ]; then \
 			echo "Installing golang-migrate..."; \
 			go install -tags postgres github.com/golang-migrate/migrate/v4/cmd/migrate@v4.18.3; \
 		fi; \

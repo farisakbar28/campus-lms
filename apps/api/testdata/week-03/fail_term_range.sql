@@ -5,7 +5,7 @@ BEGIN;
 
 INSERT INTO academic_terms (id, tenant_id, external_id, code, name, starts_at, ends_at, status)
 VALUES (
-  gen_random_uuid(),
+  'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'::uuid,
   md5('seed-tenant-a')::uuid,
   'invalid-time-range',
   'INV',
