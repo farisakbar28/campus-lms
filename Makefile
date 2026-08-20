@@ -67,14 +67,37 @@ db-shell: ## Open psql in the container
 	$(COMPOSE) exec postgres psql -U campus -d campus_lms
 
 .PHONY: migrate-up
-migrate-up: ## Run migrations (Week 3)
-	@echo "TODO Week 3: install goose/golang-migrate, then fill this target"
-	@exit 1
+migrate-up: ## Apply all pending migrations (Week 3)
+	@$(COMPOSE_DEV) exec -T api sh -ec '\
+		if [ ! -x /go/bin/migrate ]; then \
+			echo "Installing golang-migrate..."; \
+			go install -tags postgres github.com/golang-migrate/migrate/v4/cmd/migrate@v4.18.3; \
+		fi; \
+		test -n "$$MIGRATE_DATABASE_URL" || (echo "MIGRATE_DATABASE_URL is not set" && exit 1); \
+		exec /go/bin/migrate -path /src/migrations -database "$$MIGRATE_DATABASE_URL" up \
+	'
 
 .PHONY: migrate-down
-migrate-down: ## Roll back one migration (Week 3)
-	@echo "TODO Week 3"
-	@exit 1
+migrate-down: ## Roll back EXACTLY one migration (Week 3)
+	@$(COMPOSE_DEV) exec -T api sh -ec '\
+		if [ ! -x /go/bin/migrate ]; then \
+			echo "Installing golang-migrate..."; \
+			go install -tags postgres github.com/golang-migrate/migrate/v4/cmd/migrate@v4.18.3; \
+		fi; \
+		test -n "$$MIGRATE_DATABASE_URL" || (echo "MIGRATE_DATABASE_URL is not set" && exit 1); \
+		exec /go/bin/migrate -path /src/migrations -database "$$MIGRATE_DATABASE_URL" down 1 \
+	'
+
+.PHONY: migrate-version
+migrate-version: ## Show the current migration version and dirty state (Week 3)
+	@$(COMPOSE_DEV) exec -T api sh -ec '\
+		if [ ! -x /go/bin/migrate ]; then \
+			echo "Installing golang-migrate..."; \
+			go install -tags postgres github.com/golang-migrate/migrate/v4/cmd/migrate@v4.18.3; \
+		fi; \
+		test -n "$$MIGRATE_DATABASE_URL" || (echo "MIGRATE_DATABASE_URL is not set" && exit 1); \
+		exec /go/bin/migrate -path /src/migrations -database "$$MIGRATE_DATABASE_URL" version \
+	'
 
 .PHONY: seed
 seed: ## Seed dummy data (Week 3)
