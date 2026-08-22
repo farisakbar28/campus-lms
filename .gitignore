@@ -50,3 +50,4 @@ data/
 tmp/
 *.dump
 *.sql.gz
+opencode.json
