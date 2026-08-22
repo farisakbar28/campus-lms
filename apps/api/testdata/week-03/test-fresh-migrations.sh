@@ -5,7 +5,29 @@
 set -euo pipefail
 
 COMPOSE=(docker compose -f deploy/compose/docker-compose.yml -f deploy/compose/docker-compose.override.yml)
-DB_NAME="campus_lms_week03_migrate_verify_$(date +%s)"
+DB_NAME="week03_migrate_$(date +%s%N)_$$_${RANDOM}"
+
+cleanup() {
+    local original_status="$1"
+
+    if "${COMPOSE[@]}" exec -T postgres psql -v ON_ERROR_STOP=1 -U campus -d postgres -c "DROP DATABASE IF EXISTS ${DB_NAME};" >/dev/null; then
+        echo "cleanup=success"
+        return "$original_status"
+    fi
+
+    echo "cleanup=failure" >&2
+    if [ "$original_status" -eq 0 ]; then
+        return 1
+    fi
+    return "$original_status"
+}
+
+on_exit() {
+    local original_status="$?"
+    trap - EXIT
+    cleanup "$original_status"
+    exit "$?"
+}
 
 run_migrate() {
     "${COMPOSE[@]}" exec -T api sh -ec '
@@ -20,14 +42,27 @@ run_migrate() {
         authority=${remainder%%/*}; path_and_query=${remainder#*/}; source_database=${path_and_query%%\?*}; suffix=${path_and_query#"$source_database"}
         case "$authority:$source_database" in :*|*:|*/*) echo "MIGRATE_DATABASE_URL has an invalid database component" >&2; exit 1;; esac
         migrate_url="${scheme}://${authority}/${target_db}${suffix}"
-        test -x /go/bin/migrate || go install -tags postgres github.com/golang-migrate/migrate/v4/cmd/migrate@v4.18.3
-        exec /go/bin/migrate -path /src/migrations -database "$migrate_url" "$@"
+        migrate_path="/go/bin/migrate"
+        migrate_metadata_valid() {
+            go version -m "$migrate_path" 2>/dev/null | awk "
+                \$1 == \"path\" && \$2 == \"github.com/golang-migrate/migrate/v4/cmd/migrate\" { path = 1 }
+                \$1 == \"mod\" && \$2 == \"github.com/golang-migrate/migrate/v4\" && \$3 == \"v4.18.3\" { module = 1 }
+                \$1 == \"build\" && \$2 == \"-tags=postgres\" { postgres = 1 }
+                END { exit !(path && module && postgres) }
+            "
+        }
+        if [ ! -x "$migrate_path" ] || ! migrate_metadata_valid; then
+            rm -f "$migrate_path"
+            go install -tags postgres github.com/golang-migrate/migrate/v4/cmd/migrate@v4.18.3
+        fi
+        migrate_metadata_valid || { echo "migrate binary metadata validation failed" >&2; exit 1; }
+        exec "$migrate_path" -path /src/migrations -database "$migrate_url" "$@"
     ' sh "$DB_NAME" "$@"
 }
 
 echo "disposable_db=${DB_NAME}"
 "${COMPOSE[@]}" exec -T postgres psql -v ON_ERROR_STOP=1 -U campus -d postgres -c "CREATE DATABASE $DB_NAME;"
-trap '"${COMPOSE[@]}" exec -T postgres psql -v ON_ERROR_STOP=1 -U campus -d postgres -c "DROP DATABASE IF EXISTS $DB_NAME;"' EXIT
+trap on_exit EXIT
 echo "Running migrate up..."
 run_migrate up
 version=$(run_migrate version 2>&1); printf '%s\n' "$version"; [ "$version" = "4" ] || { echo "FAIL: expected version 4"; exit 1; }

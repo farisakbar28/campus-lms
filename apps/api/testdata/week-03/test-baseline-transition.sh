@@ -4,17 +4,34 @@
 set -euo pipefail
 
 COMPOSE=(docker compose -f deploy/compose/docker-compose.yml -f deploy/compose/docker-compose.override.yml)
-DISPOSABLE_DB="test_baseline_$(date +%s)"
+DISPOSABLE_DB="week03_baseline_$(date +%s%N)_$$_${RANDOM}"
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 cleanup() {
-    "${COMPOSE[@]}" exec -T postgres psql -v ON_ERROR_STOP=1 -U campus -d postgres -c "DROP DATABASE IF EXISTS ${DISPOSABLE_DB};" >/dev/null
-    echo "cleanup=success"
+    local original_status="$1"
+
+    if "${COMPOSE[@]}" exec -T postgres psql -v ON_ERROR_STOP=1 -U campus -d postgres -c "DROP DATABASE IF EXISTS ${DISPOSABLE_DB};" >/dev/null; then
+        echo "cleanup=success"
+        return "$original_status"
+    fi
+
+    echo "cleanup=failure" >&2
+    if [ "$original_status" -eq 0 ]; then
+        return 1
+    fi
+    return "$original_status"
 }
-trap cleanup EXIT
+
+on_exit() {
+    local original_status="$?"
+    trap - EXIT
+    cleanup "$original_status"
+    exit "$?"
+}
 
 echo "disposable_db=${DISPOSABLE_DB}"
 "${COMPOSE[@]}" exec -T postgres psql -v ON_ERROR_STOP=1 -U campus -d postgres -c "CREATE DATABASE ${DISPOSABLE_DB};"
+trap on_exit EXIT
 echo "Applying committed migrations manually with ON_ERROR_STOP in a transaction..."
 for migration in apps/api/migrations/000{1_tenant_identity_schema,2_academic_core_schema,3_auth_membership_schema,4_academic_term_time_range_check}.up.sql; do
     "${COMPOSE[@]}" exec -T postgres psql -v ON_ERROR_STOP=1 -1 -U campus -d "$DISPOSABLE_DB" < "$migration"

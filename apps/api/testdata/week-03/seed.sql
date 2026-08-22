@@ -41,7 +41,9 @@ ON CONFLICT (id) DO UPDATE SET
 -- 5. Create memberships (assigning deterministic tenants)
 -- Lecturer tenants (distribute 50 lecturers across 3 tenants)
 WITH tenants_cte AS (
-  SELECT id as tenant_id, row_number() over(ORDER BY slug) - 1 as t_idx FROM tenants WHERE slug LIKE 'seed-%'
+  SELECT id as tenant_id, row_number() over(ORDER BY slug) - 1 as t_idx
+  FROM tenants
+  WHERE slug IN ('seed-campus-a', 'seed-campus-b', 'seed-campus-c')
 ),
 lecturer_members AS (
   SELECT u.id as user_id, (CAST(substring(u.email from 'seed-lecturer-([0-9]+)') AS int) - 1) % 3 as t_idx
@@ -57,7 +59,9 @@ ON CONFLICT (id) DO UPDATE SET
 
 -- Student tenants (distribute 2000 students across 3 tenants)
 WITH tenants_cte AS (
-  SELECT id as tenant_id, row_number() over(ORDER BY slug) - 1 as t_idx FROM tenants WHERE slug LIKE 'seed-%'
+  SELECT id as tenant_id, row_number() over(ORDER BY slug) - 1 as t_idx
+  FROM tenants
+  WHERE slug IN ('seed-campus-a', 'seed-campus-b', 'seed-campus-c')
 ),
 student_members AS (
   SELECT u.id as user_id, (CAST(substring(u.email from 'seed-student-([0-9]+)') AS int) - 1) % 3 as t_idx
@@ -93,7 +97,8 @@ SELECT md5('seed-term-' || t.slug || '-' || n.n)::uuid, t.id, 'seed-term-' || t.
   CASE WHEN n.n = 1 THEN '2026-08-01 00:00:00+00'::timestamptz ELSE '2027-01-01 00:00:00+00'::timestamptz END, 
   CASE WHEN n.n = 1 THEN '2026-12-01 00:00:00+00'::timestamptz ELSE '2027-05-01 00:00:00+00'::timestamptz END, 
   'active'
-FROM tenants t CROSS JOIN term_nums n WHERE t.slug LIKE 'seed-%'
+FROM tenants t CROSS JOIN term_nums n
+WHERE t.slug IN ('seed-campus-a', 'seed-campus-b', 'seed-campus-c')
 ON CONFLICT (id) DO UPDATE SET
   tenant_id = EXCLUDED.tenant_id,
   external_id = EXCLUDED.external_id,
@@ -106,7 +111,9 @@ ON CONFLICT (id) DO UPDATE SET
 -- 8. Create courses (200 courses across 3 tenants: ~67 per tenant)
 WITH course_nums AS (SELECT generate_series(1, 200) AS n),
 tenants_cte AS (
-  SELECT id as tenant_id, row_number() over(ORDER BY slug) - 1 as t_idx FROM tenants WHERE slug LIKE 'seed-%'
+  SELECT id as tenant_id, row_number() over(ORDER BY slug) - 1 as t_idx
+  FROM tenants
+  WHERE slug IN ('seed-campus-a', 'seed-campus-b', 'seed-campus-c')
 )
 INSERT INTO courses (id, tenant_id, external_id, code, name, credits, status)
 SELECT md5('seed-course-' || c.n)::uuid, t.tenant_id, 'seed-course-' || c.n, 'C' || c.n, 'Seed Course ' || c.n, 3, 'active'
@@ -122,7 +129,9 @@ ON CONFLICT (id) DO UPDATE SET
 -- 9. Create course offerings (400 offerings: 2 per course, one in each term)
 WITH term_assign AS (
   SELECT id as term_id, tenant_id, row_number() over(partition by tenant_id ORDER BY code) as t_idx
-  FROM academic_terms WHERE external_id LIKE 'seed-term-%'
+  FROM academic_terms
+  WHERE tenant_id IN (SELECT id FROM tenants WHERE slug IN ('seed-campus-a', 'seed-campus-b', 'seed-campus-c'))
+    AND external_id LIKE 'seed-term-%'
 )
 INSERT INTO course_offerings (id, tenant_id, external_id, course_id, academic_term_id, lms_status, created_at)
 SELECT md5('seed-offering-' || c.external_id || '-' || t.t_idx)::uuid, c.tenant_id, 'seed-offering-' || c.external_id || '-' || t.t_idx, c.id, t.term_id, 'published', '2026-08-01 00:00:00+00'::timestamptz
@@ -142,7 +151,9 @@ WITH lecturers AS (
 ),
 offerings AS (
   SELECT id as offering_id, tenant_id, row_number() over(partition by tenant_id ORDER BY external_id) as o_idx
-  FROM course_offerings WHERE external_id LIKE 'seed-offering-%'
+  FROM course_offerings
+  WHERE tenant_id IN (SELECT id FROM tenants WHERE slug IN ('seed-campus-a', 'seed-campus-b', 'seed-campus-c'))
+    AND external_id LIKE 'seed-offering-%'
 )
 INSERT INTO course_staff (id, tenant_id, course_offering_id, user_id, role, source, active)
 SELECT md5('seed-staff-' || o.offering_id)::uuid, o.tenant_id, o.offering_id, 
@@ -165,7 +176,9 @@ WITH students AS (
 ),
 offerings AS (
   SELECT id as offering_id, tenant_id, row_number() over(partition by tenant_id ORDER BY external_id) as o_idx
-  FROM course_offerings WHERE external_id LIKE 'seed-offering-%'
+  FROM course_offerings
+  WHERE tenant_id IN (SELECT id FROM tenants WHERE slug IN ('seed-campus-a', 'seed-campus-b', 'seed-campus-c'))
+    AND external_id LIKE 'seed-offering-%'
 ),
 enrollment_matrix AS (
   -- For each offering, generate 50 rows
