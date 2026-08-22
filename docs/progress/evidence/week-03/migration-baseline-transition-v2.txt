@@ -1,0 +1,57 @@
+=== EVIDENCE ===
+CLAIM:    Verify disposable DB baseline transition works
+COMMAND:  bash apps/api/testdata/week-03/test-baseline-transition.sh
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T23:00:56+08:00
+COMMIT:   e52d702
+EXIT:     0
+=== RAW OUTPUT ===
+Creating disposable database test_baseline_1787238056...
+CREATE DATABASE
+Applying migrations manually...
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+CREATE POLICY
+ALTER TABLE
+CREATE POLICY
+ALTER TABLE
+CREATE POLICY
+CREATE TABLE
+CREATE TABLE
+CREATE INDEX
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+CREATE POLICY
+ALTER TABLE
+CREATE POLICY
+ALTER TABLE
+CREATE POLICY
+CREATE POLICY
+ALTER TABLE
+CREATE POLICY
+ALTER TABLE
+CREATE POLICY
+ALTER TABLE
+Verifying schema_migrations absent...
+Running guarded baseline...
+Running strict structural precheck on test_baseline_1787238056...
+DO
+Structural assertions PASS.
+Checking schema_migrations state on test_baseline_1787238056...
+Applying force 4 metadata to test_baseline_1787238056...
+Verify version...
+4
+Verify no-op on up...
+Verify structural integrity remains intact...
+DO
+Baseline successful on test_baseline_1787238056.
+Disposable baseline transition test PASS.
+Cleaning up disposable database test_baseline_1787238056...
+=== END ===

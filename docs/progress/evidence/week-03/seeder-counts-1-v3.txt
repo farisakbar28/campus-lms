@@ -1,0 +1,40 @@
+=== EVIDENCE ===
+CLAIM:    After the first v3 seed run, exact seed counts and every checked invariant violation are zero.
+COMMAND:  cat apps/api/testdata/week-03/verify-seed-counts.sql | docker compose -f deploy/compose/docker-compose.yml -f deploy/compose/docker-compose.override.yml exec -T postgres psql -v ON_ERROR_STOP=1 -U campus -d campus_lms
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-22T23:01:40+08:00
+COMMIT:   23a8058
+EXIT:     0
+=== RAW OUTPUT ===
+DO
+                    line                    
+--------------------------------------------
+ tenants=3
+ lecturers=50
+ students=2000
+ users=2050
+ auth_identities=2050
+ memberships=2050
+ active_roles=2050
+ lecturer_roles=50
+ student_roles=2000
+ terms=6
+ courses=200
+ offerings=400
+ course_staff=400
+ enrollments=20000
+ violation_offering_course_mismatch=0
+ violation_offering_term_mismatch=0
+ violation_invalid_term_range=0
+ violation_enrollment_offering_mismatch=0
+ violation_missing_student_membership=0
+ violation_inactive_student_membership=0
+ violation_missing_active_student_role=0
+ violation_duplicate_offering_student=0
+ violation_course_staff_offering_mismatch=0
+ violation_missing_lecturer_membership=0
+ violation_inactive_lecturer_membership=0
+ violation_missing_active_lecturer_role=0
+(26 rows)
+
+=== END ===

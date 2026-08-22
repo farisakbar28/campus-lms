@@ -1,0 +1,14 @@
+=== EVIDENCE ===
+CLAIM:    The literal Week 3 lint command cannot run because golangci-lint is absent from this environment.
+COMMAND:  make lint
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-22T23:47:19+08:00
+COMMIT:   0081188
+EXIT:     2
+=== RAW OUTPUT ===
+make[1]: Entering directory '/home/hype/projects/campus-lms'
+cd apps/api && golangci-lint run ./...
+/bin/bash: line 1: golangci-lint: command not found
+make[1]: *** [Makefile:57: lint] Error 127
+make[1]: Leaving directory '/home/hype/projects/campus-lms'
+=== END ===

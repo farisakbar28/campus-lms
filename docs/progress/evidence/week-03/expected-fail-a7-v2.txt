@@ -1,0 +1,12 @@
+=== EVIDENCE ===
+CLAIM:    Verify A7 tenant consistency cross-tenant failure
+COMMAND:  cat apps/api/testdata/week-03/fail_a7_cross_tenant.sql | docker compose -f deploy/compose/docker-compose.yml -f deploy/compose/docker-compose.override.yml exec -T postgres psql -v ON_ERROR_STOP=1 -U campus -d campus_lms
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T23:04:02+08:00
+COMMIT:   e52d702
+EXIT:     3
+=== RAW OUTPUT ===
+BEGIN
+ERROR:  insert or update on table "enrollments" violates foreign key constraint "enrollments_tenant_id_student_user_id_fkey"
+DETAIL:  Key (tenant_id, student_user_id)=(19cd4773-2aeb-d614-028f-e21bf9b73d0c, 00c7fb2e-32ce-b321-857b-f4c9c00742ee) is not present in table "memberships".
+=== END ===

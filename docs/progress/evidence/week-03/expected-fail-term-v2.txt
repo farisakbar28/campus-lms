@@ -1,0 +1,12 @@
+=== EVIDENCE ===
+CLAIM:    Verify academic term valid time range check failure
+COMMAND:  cat apps/api/testdata/week-03/fail_term_range.sql | docker compose -f deploy/compose/docker-compose.yml -f deploy/compose/docker-compose.override.yml exec -T postgres psql -v ON_ERROR_STOP=1 -U campus -d campus_lms
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T23:04:25+08:00
+COMMIT:   e52d702
+EXIT:     3
+=== RAW OUTPUT ===
+BEGIN
+ERROR:  new row for relation "academic_terms" violates check constraint "academic_terms_valid_time_range"
+DETAIL:  Failing row contains (eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee, 19cd4773-2aeb-d614-028f-e21bf9b73d0c, invalid-time-range, INV, Invalid Term, 2026-12-01 00:00:00+00, 2026-08-01 00:00:00+00, active, null).
+=== END ===

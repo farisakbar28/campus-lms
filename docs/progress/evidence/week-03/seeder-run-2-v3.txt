@@ -1,0 +1,24 @@
+=== EVIDENCE ===
+CLAIM:    The deterministic Week 3 SQL seeder completes on its second v3 run without changing its command outcome.
+COMMAND:  make seed
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-22T23:01:40+08:00
+COMMIT:   23a8058
+EXIT:     0
+=== RAW OUTPUT ===
+Running seed script...
+BEGIN
+INSERT 0 3
+INSERT 0 2050
+INSERT 0 2050
+INSERT 0 50
+INSERT 0 2000
+INSERT 0 2050
+INSERT 0 6
+INSERT 0 200
+INSERT 0 400
+INSERT 0 400
+INSERT 0 20000
+COMMIT
+Seeding completed.
+=== END ===

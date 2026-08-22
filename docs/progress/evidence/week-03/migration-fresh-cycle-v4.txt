@@ -1,0 +1,29 @@
+=== EVIDENCE ===
+CLAIM:    Fresh disposable migration cycle validates the pinned PostgreSQL migrate binary, unique DB lifecycle, 4-to-3-to-4 transition, structural check, and cleanup.
+COMMAND:  bash apps/api/testdata/week-03/test-fresh-migrations.sh
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-22T23:46:42+08:00
+COMMIT:   0081188
+EXIT:     0
+=== RAW OUTPUT ===
+disposable_db=week03_migrate_1787413602497019185_172424_27947
+CREATE DATABASE
+Running migrate up...
+1/u tenant_identity_schema (60.349115ms)
+2/u academic_core_schema (126.491819ms)
+3/u auth_membership_schema (240.35039ms)
+4/u academic_term_time_range_check (257.131686ms)
+4
+Running migrate down 1...
+4/d academic_term_time_range_check (20.290109ms)
+3
+Verifying academic_terms CHECK constraint is absent...
+Running migrate up 1 to restore state...
+4/u academic_term_time_range_check (22.466656ms)
+4
+Verifying academic_terms CHECK constraint is restored...
+Running strict structural verification against disposable DB...
+DO
+structural_check=pass
+cleanup=success
+=== END ===

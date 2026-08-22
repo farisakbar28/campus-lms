@@ -1,0 +1,10 @@
+=== EVIDENCE ===
+CLAIM:    <fill in>
+COMMAND:  docker compose -f deploy/compose/docker-compose.yml -f deploy/compose/docker-compose.override.yml exec -T postgres psql -U campus -d campus_lms -tA < apps/api/testdata/week-03/verify-seed-counts.sql
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T19:48:26+08:00
+COMMIT:   af6a0d3
+EXIT:     0
+=== RAW OUTPUT ===
+tenants=3 lecturers=50 students=2000 users=2050 auth_identities=2050 memberships=2050 roles_total=2050 roles_lecturer=50 roles_student=2000 terms=6 courses=200 offerings=400 course_staff=400 enrollments=20000 v_ct_course=0 v_ct_term=0 v_term_range=0 v_ct_enrollment=0 v_miss_mem=0 v_inact_mem=0 v_miss_role=0 v_dup_enroll=0 v_ct_staff=0 v_miss_staff_mem=0 v_inact_staff_mem=0 v_miss_lec_role=0
+=== END ===

@@ -1,0 +1,14 @@
+=== EVIDENCE ===
+CLAIM:    Verify main DB current state is correct and tracked
+COMMAND:  bash apps/api/testdata/week-03/baseline-main-db.sh
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T23:02:11+08:00
+COMMIT:   e52d702
+EXIT:     0
+=== RAW OUTPUT ===
+Running strict structural precheck on campus_lms...
+DO
+Structural assertions PASS.
+Checking schema_migrations state on campus_lms...
+Database campus_lms is already baselined correctly to version 4.
+=== END ===

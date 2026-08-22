@@ -1,0 +1,26 @@
+=== EVIDENCE ===
+CLAIM:    Verify idempotent SQL seeder second run
+COMMAND:  make seed
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T23:03:07+08:00
+COMMIT:   e52d702
+EXIT:     0
+=== RAW OUTPUT ===
+make[1]: Entering directory '/home/hype/projects/campus-lms'
+Running seed script...
+BEGIN
+INSERT 0 3
+INSERT 0 2050
+INSERT 0 2050
+INSERT 0 50
+INSERT 0 2000
+INSERT 0 2050
+INSERT 0 6
+INSERT 0 200
+INSERT 0 400
+INSERT 0 400
+INSERT 0 20000
+COMMIT
+Seeding completed.
+make[1]: Leaving directory '/home/hype/projects/campus-lms'
+=== END ===

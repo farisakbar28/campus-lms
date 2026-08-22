@@ -1,0 +1,61 @@
+=== EVIDENCE ===
+CLAIM:    Disposable manually built v4 schema remains target-isolated, clean at version 4, unchanged by migrate up, structurally valid, and cleaned up.
+COMMAND:  bash apps/api/testdata/week-03/test-baseline-transition.sh
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-22T23:46:45+08:00
+COMMIT:   0081188
+EXIT:     0
+=== RAW OUTPUT ===
+disposable_db=week03_baseline_1787413605784094519_173161_3857
+CREATE DATABASE
+Applying committed migrations manually with ON_ERROR_STOP in a transaction...
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+CREATE POLICY
+ALTER TABLE
+CREATE POLICY
+ALTER TABLE
+CREATE POLICY
+CREATE TABLE
+CREATE TABLE
+CREATE INDEX
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+ALTER TABLE
+CREATE POLICY
+ALTER TABLE
+CREATE POLICY
+ALTER TABLE
+CREATE POLICY
+CREATE POLICY
+ALTER TABLE
+CREATE POLICY
+ALTER TABLE
+CREATE POLICY
+ALTER TABLE
+pre_schema_migrations=absent
+target=week03_baseline_1787413605784094519_173161_3857
+Running strict structural precheck...
+DO
+structural_precheck=pass
+baseline_force=4
+force_skipped=false
+version=4
+dirty=false
+no change
+migrate_up=no_change
+Running strict structural postcheck...
+DO
+structural_check=pass
+structural_postcheck=pass
+post_schema_migrations=present
+version=4
+dirty=false
+cleanup=success
+=== END ===

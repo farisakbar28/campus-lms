@@ -1,0 +1,16 @@
+=== EVIDENCE ===
+CLAIM:    The literal Week 3 Go race test command passes at the fixture reproducibility correction commit.
+COMMAND:  make test
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-22T23:47:40+08:00
+COMMIT:   0081188
+EXIT:     0
+=== RAW OUTPUT ===
+make[1]: Entering directory '/home/hype/projects/campus-lms'
+cd apps/api && go test -race -count=1 ./...
+?   	github.com/farisakbar28/campus-lms/apps/api/cmd/api	[no test files]
+ok  	github.com/farisakbar28/campus-lms/apps/api/internal/config	1.030s
+ok  	github.com/farisakbar28/campus-lms/apps/api/internal/healthcheck	1.026s
+ok  	github.com/farisakbar28/campus-lms/apps/api/internal/http	1.021s
+make[1]: Leaving directory '/home/hype/projects/campus-lms'
+=== END ===

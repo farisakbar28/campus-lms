@@ -1,0 +1,12 @@
+=== EVIDENCE ===
+CLAIM:    <fill in>
+COMMAND:  make migrate-version
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T19:46:06+08:00
+COMMIT:   af6a0d3
+EXIT:     0
+=== RAW OUTPUT ===
+make[1]: Entering directory '/home/hype/projects/campus-lms'
+4
+make[1]: Leaving directory '/home/hype/projects/campus-lms'
+=== END ===

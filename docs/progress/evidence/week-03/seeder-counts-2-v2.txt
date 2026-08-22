@@ -1,0 +1,14 @@
+=== EVIDENCE ===
+CLAIM:    Verify strict seeder invariants after second run
+COMMAND:  cat apps/api/testdata/week-03/verify-seed-counts.sql | docker compose -f deploy/compose/docker-compose.yml -f deploy/compose/docker-compose.override.yml exec -T postgres psql -v ON_ERROR_STOP=1 -U campus -d campus_lms
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-20T23:03:34+08:00
+COMMIT:   e52d702
+EXIT:     0
+=== RAW OUTPUT ===
+DO
+                       result                       
+----------------------------------------------------
+ Seed data verification passed: All invariants met.
+(1 row)
+=== END ===

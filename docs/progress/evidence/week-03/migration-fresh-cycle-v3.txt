@@ -1,0 +1,29 @@
+=== EVIDENCE ===
+CLAIM:    A fresh disposable database migrates up to 4, down to 3, restores the v4 CHECK, and passes the strict structural assertion.
+COMMAND:  bash apps/api/testdata/week-03/test-fresh-migrations.sh
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-22T23:00:04+08:00
+COMMIT:   23a8058
+EXIT:     0
+=== RAW OUTPUT ===
+disposable_db=campus_lms_week03_migrate_verify_1787410825
+CREATE DATABASE
+Running migrate up...
+1/u tenant_identity_schema (119.582873ms)
+2/u academic_core_schema (259.655724ms)
+3/u auth_membership_schema (491.760288ms)
+4/u academic_term_time_range_check (528.347178ms)
+4
+Running migrate down 1...
+4/d academic_term_time_range_check (36.924435ms)
+3
+Verifying academic_terms CHECK constraint is absent...
+Running migrate up 1 to restore state...
+4/u academic_term_time_range_check (36.173254ms)
+4
+Verifying academic_terms CHECK constraint is restored...
+Running strict structural verification against disposable DB...
+DO
+structural_check=pass
+DROP DATABASE
+=== END ===

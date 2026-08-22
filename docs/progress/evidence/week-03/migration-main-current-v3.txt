@@ -1,0 +1,22 @@
+=== EVIDENCE ===
+CLAIM:    The already-baselined main database remains version 4, clean, unchanged by migrate up, and structurally valid without force.
+COMMAND:  bash apps/api/testdata/week-03/baseline-main-db.sh
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-22T23:00:04+08:00
+COMMIT:   23a8058
+EXIT:     0
+=== RAW OUTPUT ===
+target=campus_lms
+Running strict structural precheck...
+DO
+structural_precheck=pass
+force_skipped=true
+version=4
+dirty=false
+no change
+migrate_up=no_change
+Running strict structural postcheck...
+DO
+structural_check=pass
+structural_postcheck=pass
+=== END ===

@@ -1,0 +1,26 @@
+=== EVIDENCE ===
+CLAIM:    The tightened deterministic Week 3 SQL seeder completes on its first v4 run.
+COMMAND:  make seed
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-22T23:47:05+08:00
+COMMIT:   0081188
+EXIT:     0
+=== RAW OUTPUT ===
+make[1]: Entering directory '/home/hype/projects/campus-lms'
+Running seed script...
+BEGIN
+INSERT 0 3
+INSERT 0 2050
+INSERT 0 2050
+INSERT 0 50
+INSERT 0 2000
+INSERT 0 2050
+INSERT 0 6
+INSERT 0 200
+INSERT 0 400
+INSERT 0 400
+INSERT 0 20000
+COMMIT
+Seeding completed.
+make[1]: Leaving directory '/home/hype/projects/campus-lms'
+=== END ===

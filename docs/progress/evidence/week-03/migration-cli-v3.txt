@@ -1,0 +1,23 @@
+=== EVIDENCE ===
+CLAIM:    The api container uses golang-migrate v4.18.3.
+COMMAND:  docker compose -f deploy/compose/docker-compose.yml -f deploy/compose/docker-compose.override.yml exec -T api sh -c 'go version -m /go/bin/migrate'
+CWD:      /home/hype/projects/campus-lms
+RUN AT:   2026-08-22T23:00:04+08:00
+COMMIT:   23a8058
+EXIT:     0
+=== RAW OUTPUT ===
+/go/bin/migrate: go1.23.6
+	path	github.com/golang-migrate/migrate/v4/cmd/migrate
+	mod	github.com/golang-migrate/migrate/v4	v4.18.3	h1:EYGkoOsvgHHfm5U/naS1RP/6PL/Xv3S4B/swMiAmDLs=
+	dep	github.com/hashicorp/errwrap	v1.1.0	h1:OxrOeh75EUXMY8TBjag2fzXGZ40LB6IKw45YeGUDY2I=
+	dep	github.com/hashicorp/go-multierror	v1.1.1	h1:H5DkEtf6CXdFp0N0Em5UCwQpXMWke8IA0+lD48awMYo=
+	dep	github.com/lib/pq	v1.10.9	h1:YXG7RB+JIjhP29X+OtkiDnYaXQwpS4JEWq7dtCCRUEw=
+	dep	go.uber.org/atomic	v1.7.0	h1:ADUqmZGgLDDfbSL9ZmPxKTybcoEYHgpYfELNoN+7hsw=
+	build	-buildmode=exe
+	build	-compiler=gc
+	build	-tags=postgres
+	build	CGO_ENABLED=0
+	build	GOARCH=amd64
+	build	GOOS=linux
+	build	GOAMD64=v1
+=== END ===
