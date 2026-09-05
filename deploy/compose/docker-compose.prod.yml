@@ -1,0 +1,84 @@
+name: campus-lms-prod
+
+# Current production Compose definition for the API, migrator, and Caddy.
+# Its 8443/Origin-CA ingress wiring is legacy and is not the accepted target
+# architecture; reconciliation is future authorized infrastructure work.
+# Image and memory values are supplied by the human-run deployment environment;
+# no mutable tag or unmeasured host-size claim is encoded here.
+
+services:
+  migrator:
+    image: ${CAMPUS_LMS_MIGRATOR_IMAGE:?CAMPUS_LMS_MIGRATOR_IMAGE is required}
+    env_file:
+      - ${CAMPUS_LMS_MIGRATOR_ENV_FILE:?CAMPUS_LMS_MIGRATOR_ENV_FILE is required}
+    # An env file must contain only MIGRATE_DATABASE_URL. Explicitly clearing
+    # the disposable-test escape hatch keeps the production Compose service
+    # TLS-enforced even if an operator accidentally adds that variable.
+    environment:
+      MIGRATOR_LOCAL_TEST_MODE: ""
+    restart: "no"
+    mem_limit: ${CAMPUS_LMS_MIGRATOR_MEMORY_LIMIT:?CAMPUS_LMS_MIGRATOR_MEMORY_LIMIT is required}
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/migrate", "-version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  api:
+    image: ${CAMPUS_LMS_API_IMAGE:?CAMPUS_LMS_API_IMAGE is required}
+    env_file:
+      - ${CAMPUS_LMS_API_ENV_FILE:?CAMPUS_LMS_API_ENV_FILE is required}
+    # Loopback access is solely for the deploy/readiness probe. It is not an
+    # Internet-facing API port; Caddy is the only tunnel-facing origin proxy
+    # and is host-bound to loopback. Its upstream is Docker service DNS api:8080.
+    ports:
+      - "127.0.0.1:8080:8080"
+    mem_limit: ${CAMPUS_LMS_API_MEMORY_LIMIT:?CAMPUS_LMS_API_MEMORY_LIMIT is required}
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    healthcheck:
+      test: ["CMD", "/api", "-healthcheck"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  caddy:
+    image: ${CAMPUS_LMS_CADDY_IMAGE:?CAMPUS_LMS_CADDY_IMAGE is required}
+    environment:
+      CADDY_HOSTNAME: ${CAMPUS_LMS_HOSTNAME:?CAMPUS_LMS_HOSTNAME is required}
+      CADDY_ORIGIN_CERT_FILE: /etc/caddy/origin/cert.pem
+      CADDY_ORIGIN_KEY_FILE: /etc/caddy/origin/key.pem
+    ports:
+      # cloudflared is host-managed and reaches only this loopback TLS origin.
+      - "127.0.0.1:8443:443"
+    volumes:
+      - ${CAMPUS_LMS_CADDY_ORIGIN_CERT_FILE:?CAMPUS_LMS_CADDY_ORIGIN_CERT_FILE is required}:/etc/caddy/origin/cert.pem:ro
+      - ${CAMPUS_LMS_CADDY_ORIGIN_KEY_FILE:?CAMPUS_LMS_CADDY_ORIGIN_KEY_FILE is required}:/etc/caddy/origin/key.pem:ro
+      - ../caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+    mem_limit: ${CAMPUS_LMS_CADDY_MEMORY_LIMIT:?CAMPUS_LMS_CADDY_MEMORY_LIMIT is required}
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "caddy", "validate", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s

@@ -1,0 +1,29 @@
+# Current legacy TLS origin configuration. Caddy terminates HTTPS with
+# certificate and key paths supplied through environment variables, applies
+# the configured headers/encoding/logging, and proxies to the API service.
+# This is not the accepted target ingress architecture; reconciliation is
+# future authorized infrastructure work. Secret material never enters Git.
+https://{$CADDY_HOSTNAME} {
+	tls {$CADDY_ORIGIN_CERT_FILE} {$CADDY_ORIGIN_KEY_FILE}
+	encode gzip zstd
+
+	log {
+		output stdout
+		format json
+	}
+
+	header {
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		X-Frame-Options "DENY"
+		Content-Security-Policy "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
+		# HSTS is intentionally omitted until the real hostname and HTTPS chain
+		# are validated externally. It must not be enabled during local testing.
+	}
+
+	reverse_proxy api:8080 {
+		health_uri /readyz
+		health_interval 10s
+		health_timeout 2s
+	}
+}

@@ -1,0 +1,53 @@
+# Secrets and private configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+!**/testdata/*.key
+secrets/
+*.tfvars
+!*.tfvars.example
+
+# Build artifacts
+/bin/
+/dist/
+apps/api/bin/
+apps/web/.next/
+apps/web/out/
+apps/web/node_modules/
+node_modules/
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# Go artifacts
+*.test
+*.out
+coverage.out
+coverage.html
+
+# Terraform local state
+.terraform/
+*.tfstate
+*.tfstate.*
+
+# Editor and operating-system files
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# Local data and database dumps
+data/
+tmp/
+*.dump
+*.sql.gz
+opencode.json

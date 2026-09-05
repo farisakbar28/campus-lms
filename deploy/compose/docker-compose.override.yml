@@ -1,0 +1,39 @@
+# Development-only override for hot reload. Production uses the explicit
+# docker-compose.prod.yml definition.
+
+services:
+  api:
+    build:
+      target: builder
+    image: campus-lms-api:dev-hot
+    # The base limit describes application runtime; this override runs Go compiler + Air.
+    # 256m is the first tested dev-only envelope that passed current verification.
+    mem_limit: 256m
+    working_dir: /src
+    environment:
+      GOBIN: /go/bin
+      GOCACHE: /go/cache
+    command:
+      - /bin/sh
+      - -ec
+      - |
+        if [ ! -x /go/bin/air ]; then
+          go install github.com/air-verse/air@v1.61.7
+        fi
+        exec /go/bin/air --tmp_dir /tmp/air --build.cmd "go build -o /tmp/air/api ./cmd/api" --build.bin /tmp/air/api
+    volumes:
+      - ../../apps/api:/src
+      - go-module-cache:/go/pkg/mod
+      - go-build-cache:/go/cache
+      - air-bin:/go/bin
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider --quiet http://127.0.0.1:8080/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  go-module-cache:
+  go-build-cache:
+  air-bin:

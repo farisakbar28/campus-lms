@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  api:
+    name: API
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: apps/api/go.mod
+          cache: true
+          cache-dependency-path: apps/api/go.sum
+
+      - name: Download modules
+        working-directory: apps/api
+        run: go mod download
+
+      - name: Verify modules
+        working-directory: apps/api
+        run: go mod verify
+
+      - name: Verify formatting
+        working-directory: apps/api
+        run: |
+          unformatted="$(
+            find . -type f -name '*.go' -print0 |
+              xargs -0 -r gofmt -l
+          )"
+
+          if [ -n "$unformatted" ]; then
+            printf '%s\n' "$unformatted"
+            exit 1
+          fi
+
+      - name: Vet
+        working-directory: apps/api
+        run: go vet ./...
+
+      - name: Test
+        run: make test
+
+      - name: Build
+        run: make build
+
+      - name: Verify module files unchanged
+        run: git diff --exit-code -- apps/api/go.mod apps/api/go.sum
