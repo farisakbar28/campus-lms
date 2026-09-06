@@ -1206,3 +1206,65 @@ status=OPEN
 summary=The plan-review gate does not validate the prescribed key/value plan-review record or bind an approved legacy prose review to the current plan revision, plan hash, Issue digest, reviewer/author identities, or fresh session; a minimal unbound APPROVED plan review passes while a valid template-shaped record is rejected.
 
 verdict=CHANGES_REQUIRED
+
+## Review 8
+
+review_id=ENG-016-IMPLEMENTATION-REVIEW-003
+type=IMPLEMENTATION
+work_item_id=ENG-016
+plan_revision=4
+plan_hash=sha256:d6c0464e030f68eb2a9f1089c233e091725a306e9af5d3a7caa0bffa9c7cf934
+issue_digest=sha256:c1cf78cad608524cec118bc469fc223f2cf3d556f37fef0d17c91fc00850ccf4
+actor_label=Codex implementation reviewer r3
+session_label=ENG-016-implementation-review-r3-2026-09-06
+implementation_author_actor_label=Codex implementer
+implementation_author_session_label=ENG-016-implement-r4-2026-09-06
+fresh_session_attestation=Fresh independent implementation-review session; I reconstructed the approved contract and current source, fetched the canonical Issue and approval read-only, inspected the exact candidate and ancestry, reran applicable verification, and did not rely on prior reviewer conclusions as evidence.
+candidate_git_sha=e32e035461ac3b83c1887e88f1d932e21bf1d730
+
+finding_id=ENG-016-IMPL-001
+severity=HIGH
+status=RESOLVED
+summary=The READY_FOR_PR gate still requires exactly one complete implementation review bound to the current work item, plan, Issue, candidate, implementation author, reviewer, session, attestation, and APPROVED verdict.
+
+finding_id=ENG-016-IMPL-002
+severity=HIGH
+status=RESOLVED
+summary=Approval and supplied Issue URL validation still binds web/API forms and repository/Issue identity to the canonical WORK.md mapping.
+
+finding_id=ENG-016-IMPL-003
+severity=HIGH
+status=RESOLVED
+summary=Residual-risk validation still binds the exact current candidate, finding, work item, plan, and canonical comment identity.
+
+finding_id=ENG-016-IMPL-004
+severity=HIGH
+status=RESOLVED
+summary=Finding status remains allow-listed and unsupported status values cannot resolve HIGH or CRITICAL findings.
+
+finding_id=ENG-016-IMPL-005
+severity=MEDIUM
+status=RESOLVED
+summary=Live GitHub Issue JSON continues to distinguish API url, html_url, and repository_url while retaining identity and digest checks.
+
+finding_id=ENG-016-IMPL-006
+severity=HIGH
+status=RESOLVED
+summary=Cleanup validation still requires exactly one reviewed active work-item pair and rejects nested completed/archive structures.
+
+finding_id=ENG-016-IMPL-007
+severity=MEDIUM
+status=RESOLVED
+summary=Focused tests and independent negative probes cover the required review-binding, URL, residual-risk, finding-state, cleanup, archive, and malformed-input paths.
+
+finding_id=ENG-016-IMPL-008
+severity=HIGH
+status=OPEN
+summary=The legacy PLAN-review adapter is not restricted to bootstrap Review 5: an independently appended later Review block containing the historical labelled fields is selected and accepted, allowing a future review to bypass the strict canonical key/value schema.
+
+finding_id=ENG-016-IMPL-009
+severity=HIGH
+status=OPEN
+summary=The validator does not require plan-author actor/session fields in WORK.md. Removing both fields lets a canonical review bind literal None values through str(None), and validate_repository returns no error despite missing author identity bindings.
+
+verdict=CHANGES_REQUIRED

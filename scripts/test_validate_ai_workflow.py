@@ -137,6 +137,49 @@ def replace_with_legacy_plan_review(
     )
 
 
+def replace_with_current_bootstrap_review(root: Path) -> None:
+    """Install the repository's exact historical ENG-016 bootstrap prefix."""
+
+    source_root = Path(__file__).resolve().parents[1]
+    source_work = source_root / "work" / "active" / "ENG-016" / "WORK.md"
+    source_reviews = source_root / "work" / "active" / "ENG-016" / "REVIEWS.md"
+    reviews_text = source_reviews.read_text(encoding="utf-8")
+    prefix, separator, _ = reviews_text.partition("\n## Review 6\n")
+    if not separator:
+        raise AssertionError("current ENG-016 reviews are missing historical Review 6")
+    active = root / "work" / "active" / "ENG-016"
+    (active / "WORK.md").write_text(
+        source_work.read_text(encoding="utf-8"), encoding="utf-8"
+    )
+    (active / "REVIEWS.md").write_text(prefix + "\n", encoding="utf-8")
+
+
+def append_legacy_plan_review_after_bootstrap(
+    root: Path, *, review_number: str = "9", **overrides: str
+) -> None:
+    reviews = root / "work" / "active" / "ENG-016" / "REVIEWS.md"
+    reviews.write_text(
+        reviews.read_text(encoding="utf-8").rstrip()
+        + f"\n\n## Review {review_number}\n\n"
+        + legacy_plan_review_record(root, **overrides)
+        + "\n",
+        encoding="utf-8",
+    )
+
+
+def replace_work_identity_field(root: Path, label: str, value: str) -> None:
+    work = root / "work" / "active" / "ENG-016" / "WORK.md"
+    lines = work.read_text(encoding="utf-8").splitlines()
+    prefix = f"{label}:"
+    for index, line in enumerate(lines):
+        if line.startswith(prefix):
+            lines[index] = f"{label}: `{value}`"
+            break
+    else:
+        raise AssertionError(f"missing fixture field {label}")
+    work.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def append_exact_implementation_review(
     root: Path,
     *,
@@ -340,39 +383,109 @@ class WorkflowValidatorTests(unittest.TestCase):
                 encoding="utf-8",
             )
             errors = validate_repository(root)
-            self.assertTrue(any("missing work_item_id" in error for error in errors))
-            self.assertTrue(any("missing plan_revision" in error for error in errors))
+            self.assertTrue(errors)
+            self.assertTrue(any("canonical" in error for error in errors))
 
-    def test_current_bootstrap_legacy_plan_review_requires_explicit_bindings(self) -> None:
+    def test_bootstrap_legacy_plan_review_is_exact_and_non_extensible(self) -> None:
         with temporary_repository() as root:
-            replace_with_legacy_plan_review(root)
+            replace_with_current_bootstrap_review(root)
             self.assertEqual(validate_repository(root), [])
 
-        with temporary_repository() as root:
-            record = legacy_plan_review_record(
-                root, omitted="Subject plan revision"
-            )
-            reviews = root / "work" / "active" / "ENG-016" / "REVIEWS.md"
-            reviews.write_text(
-                "# ENG-016 reviews\n\n## Review 1\n\n" + record + "\n",
-                encoding="utf-8",
-            )
-            errors = validate_repository(root)
-            self.assertTrue(any("missing plan_revision" in error for error in errors))
+        for overrides in (
+            {},
+            {"Review ID": "ENG-016-PLAN-REVIEW-100"},
+            {"Subject work item": "ENG-017"},
+            {"Subject plan revision": "5"},
+            {
+                "Exact reviewed plan checkpoint SHA": "sha256:" + "0" * 64,
+                "Independently recomputed normative SHA": "sha256:" + "0" * 64,
+            },
+        ):
+            with self.subTest(overrides=overrides), temporary_repository() as root:
+                replace_with_current_bootstrap_review(root)
+                append_legacy_plan_review_after_bootstrap(root, **overrides)
+                errors = validate_repository(root)
+                self.assertTrue(
+                    any("legacy PLAN reviews after" in error for error in errors),
+                    errors,
+                )
 
         with temporary_repository() as root:
-            record = legacy_plan_review_record(
-                root, omitted="Independently recomputed normative SHA"
-            )
+            replace_with_current_bootstrap_review(root)
             reviews = root / "work" / "active" / "ENG-016" / "REVIEWS.md"
             reviews.write_text(
-                "# ENG-016 reviews\n\n## Review 1\n\n" + record + "\n",
+                reviews.read_text(encoding="utf-8").replace(
+                    "Review ID: `ENG-016-PLAN-REVIEW-005`",
+                    "Review ID: `ENG-016-PLAN-REVIEW-MALFORMED`",
+                    1,
+                ),
                 encoding="utf-8",
             )
             errors = validate_repository(root)
-            self.assertTrue(
-                any("missing plan_hash_recomputed" in error for error in errors)
+            self.assertTrue(any("bootstrap Review 5" in error for error in errors))
+
+        with temporary_repository() as root:
+            replace_with_legacy_plan_review(root)
+            errors = validate_repository(root)
+            self.assertTrue(errors)
+            self.assertTrue(any("canonical" in error for error in errors))
+
+        with temporary_repository() as root:
+            replace_with_plan_review(root)
+            self.assertEqual(validate_repository(root), [])
+
+    def test_plan_author_identity_is_required_before_independence(self) -> None:
+        cases = (
+            ("Plan author actor label", "", "plan author actor label"),
+            ("Plan author session label", "", "plan author session label"),
+            ("Plan author actor label", " ", "whitespace-only"),
+            ("Plan author session label", "   ", "whitespace-only"),
+            ("Plan author actor label", "None", "null-like"),
+            ("Plan author session label", "null", "null-like"),
+        )
+        for label, value, expected in cases:
+            with self.subTest(label=label, value=value), temporary_repository() as root:
+                replace_work_identity_field(root, label, value)
+                errors = validate_repository(root)
+                self.assertTrue(errors)
+                self.assertTrue(
+                    any(
+                        "plan author" in error and expected in error
+                        for error in errors
+                    ),
+                    errors,
+                )
+
+        with temporary_repository() as root:
+            work = root / "work" / "active" / "ENG-016" / "WORK.md"
+            text = work.read_text(encoding="utf-8")
+            text = text.replace("Plan author actor label: `Fixture planner`\n\n", "")
+            text = text.replace("Plan author session label: `Fixture planner session`\n\n", "")
+            work.write_text(text, encoding="utf-8")
+            replace_with_plan_review(root)
+            errors = validate_repository(root)
+            self.assertTrue(any("missing" in error and "plan author" in error for error in errors))
+
+        with temporary_repository() as root:
+            from scripts.validate_ai_workflow import parse_work
+
+            work = parse_work(
+                (root / "work" / "active" / "ENG-016" / "WORK.md").read_text(
+                    encoding="utf-8"
+                )
             )
+            replace_with_plan_review(
+                root,
+                actor_label=str(work["plan_author_actor"]),
+                session_label=str(work["plan_author_session"]),
+            )
+            errors = validate_repository(root)
+            self.assertTrue(any("reviewer actor equals author actor" in error for error in errors))
+            self.assertTrue(any("reviewer session equals author session" in error for error in errors))
+
+        with temporary_repository() as root:
+            replace_with_plan_review(root)
+            self.assertEqual(validate_repository(root), [])
 
     def test_invalid_state_and_equal_review_identity_are_rejected(self) -> None:
         with temporary_repository() as root:

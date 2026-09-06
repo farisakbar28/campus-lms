@@ -83,6 +83,23 @@ PLAN_REVIEW_FIELDS = (
     "fresh_session_attestation",
     "verdict",
 )
+# Compatibility debt: Review 5 is the only pre-canonical PLAN review that may
+# use the historical Markdown shape.  The exact block digest and bindings keep
+# this exception limited to the repository's ENG-016 bootstrap artifact.
+BOOTSTRAP_PLAN_REVIEW_WORK = {
+    "work_id": "ENG-016",
+    "issue_number": 16,
+    "issue_url": "https://github.com/farisakbar28/campus-lms/issues/16",
+    "plan_revision": "4",
+    "plan_hash": "sha256:d6c0464e030f68eb2a9f1089c233e091725a306e9af5d3a7caa0bffa9c7cf934",
+    "issue_digest": "sha256:c1cf78cad608524cec118bc469fc223f2cf3d556f37fef0d17c91fc00850ccf4",
+    "plan_author_actor": "Codex planner",
+    "plan_author_session": "ENG-016-plan-r4-2026-09-06",
+}
+BOOTSTRAP_PLAN_REVIEW_INDEX = 5
+BOOTSTRAP_PLAN_REVIEW_BLOCK_SHA256 = (
+    "828ef0618dd74baf2edc6262e273ebae0e124ea5a9dec7c46c24c221502f9e58"
+)
 FINDING_FIELDS = {
     "finding_id",
     "severity",
@@ -315,6 +332,20 @@ def _require(value: Any, name: str, errors: list[str]) -> str:
     return str(value)
 
 
+def _require_identity(value: Any, name: str, errors: list[str]) -> str:
+    """Require an identity/session label before relational checks use it."""
+
+    value_string = _require(value, name, errors)
+    if not value_string:
+        return value_string
+    stripped = value_string.strip()
+    if not stripped:
+        errors.append(f"{name} must not be whitespace-only")
+    elif stripped.casefold() in {"none", "null", "nil"}:
+        errors.append(f"{name} must not be null-like")
+    return value_string
+
+
 def _validate_work_document(
     path: Path,
     work_id_from_directory: str,
@@ -362,6 +393,13 @@ def _validate_work_document(
     )
     if issue_hash and not SHA256_RE.fullmatch(issue_hash):
         errors.append(f"{path}: invalid issue specification digest")
+
+    plan_author_actor = _require_identity(
+        values["plan_author_actor"], f"{path}: plan author actor label", errors
+    )
+    plan_author_session = _require_identity(
+        values["plan_author_session"], f"{path}: plan author session label", errors
+    )
 
     revision = _require(values["plan_revision"], f"{path}: plan revision", errors)
     if revision:
@@ -430,6 +468,8 @@ def _validate_work_document(
         "work_id": work_id,
         "issue_number": issue_number,
         "issue_url": issue_url,
+        "plan_author_actor": plan_author_actor,
+        "plan_author_session": plan_author_session,
     }
 
     review_ids = re.findall(
@@ -467,7 +507,17 @@ def _validate_work_document(
         "READY_TO_MERGE",
     }
     if status in implementation_states:
-        if implementation_actor == "NONE" or implementation_session == "NONE":
+        implementation_actor = _require_identity(
+            values["implementation_actor"],
+            f"{path}: implementation author actor label",
+            errors,
+        )
+        implementation_session = _require_identity(
+            values["implementation_session"],
+            f"{path}: implementation author session label",
+            errors,
+        )
+        if implementation_actor.casefold() == "none" or implementation_session.casefold() == "none":
             errors.append(f"{path}: {status} requires implementation author labels")
     if status in {
         "IMPLEMENTATION_REVIEW",
@@ -567,7 +617,10 @@ def _implementation_review_errors(
         "implementation_author_session_label",
         "fresh_session_attestation",
     ):
-        if values.get(key) == "NONE":
+        value = values.get(key)
+        if value is not None and (
+            not value.strip() or value.strip().casefold() in {"none", "null", "nil"}
+        ):
             errors.append(f"implementation review has an invalid {key}")
 
     if (
@@ -652,54 +705,6 @@ def _has_approved_implementation_review(
     return matches == 1
 
 
-def _legacy_field_values(
-    block: str, labels: Mapping[str, str]
-) -> dict[str, list[str]]:
-    """Extract only explicitly labelled legacy Markdown fields."""
-
-    values: dict[str, list[str]] = {}
-    lines = _normalise_lines(block)
-    for index, line in enumerate(lines):
-        for key, label in labels.items():
-            match = re.fullmatch(rf"-\s*{re.escape(label)}:\s*(.*)", line)
-            if not match:
-                continue
-            value = match.group(1).strip()
-            if not value:
-                continuation: list[str] = []
-                for continuation_line in lines[index + 1 :]:
-                    if re.match(r"^\s*-\s+", continuation_line):
-                        break
-                    if re.match(r"^\s*#{1,6}\s+", continuation_line):
-                        break
-                    if continuation_line.strip():
-                        continuation.append(continuation_line.strip())
-                value = " ".join(continuation)
-            if len(value) >= 2 and value[0] == "`" and value[-1] == "`":
-                value = value[1:-1]
-            values.setdefault(key, []).append(value)
-            break
-    return values
-
-
-LEGACY_PLAN_REVIEW_LABELS = {
-    "review_id": "Review ID",
-    "type": "Review type",
-    "work_item_id": "Subject work item",
-    "plan_revision": "Subject plan revision",
-    "plan_hash": "Exact reviewed plan checkpoint SHA",
-    "plan_hash_recomputed": "Independently recomputed normative SHA",
-    "issue_digest": "Exact Issue specification digest",
-    "issue_digest_recomputed": "Independently recomputed Issue specification digest",
-    "actor_label": "Actor",
-    "session_label": "Session label",
-    "plan_author_actor_label": "Plan author actor label",
-    "plan_author_session_label": "Plan author session label",
-    "fresh_session_attestation": "Fresh-session attestation",
-    "verdict": "Verdict",
-}
-
-
 def _required_review_values(
     fields: Mapping[str, list[str]],
     required: Iterable[str],
@@ -757,7 +762,10 @@ def _validate_plan_review_bindings(
         "plan_author_session_label",
         "fresh_session_attestation",
     ):
-        if values.get(key) == "NONE":
+        value = values.get(key)
+        if value is not None and (
+            not value.strip() or value.strip().casefold() in {"none", "null", "nil"}
+        ):
             errors.append(f"{prefix} has an invalid {key}")
 
     if (
@@ -804,73 +812,93 @@ def _canonical_plan_review_errors(
     )
     errors.extend(required_errors)
 
-    legacy_type_values = _legacy_field_values(block, {"type": "Review type"}).get(
-        "type", []
-    )
-    if legacy_type_values:
+    if _has_legacy_plan_review_marker(block):
         errors.append("plan review mixes canonical and legacy metadata")
 
     errors.extend(_validate_plan_review_bindings(values, work))
     return errors
 
 
-def _legacy_plan_review_errors(
-    block: str, work: Mapping[str, str | int | None]
-) -> list[str]:
-    fields = _legacy_field_values(block, LEGACY_PLAN_REVIEW_LABELS)
-    required = tuple(LEGACY_PLAN_REVIEW_LABELS)
-    values, errors = _required_review_values(fields, required, "plan review")
+def _has_legacy_plan_review_marker(block: str) -> bool:
+    """Recognize only explicit legacy PLAN field lines for rejection.
 
-    for key, recomputed_key in (
-        ("plan_hash", "plan_hash_recomputed"),
-        ("issue_digest", "issue_digest_recomputed"),
-    ):
-        if (
-            key in values
-            and recomputed_key in values
-            and values[key] != values[recomputed_key]
-        ):
-            errors.append(f"legacy plan review {key} attestations do not match")
+    This is deliberately not a legacy parser.  Acceptance is by the exact
+    historical block digest below; an explicit legacy PLAN marker elsewhere is
+    sufficient only to fail closed.
+    """
 
-    errors.extend(_validate_plan_review_bindings(values, work))
-    return errors
+    for line in _normalise_lines(block):
+        if re.fullmatch(r"-\s*Review type:\s*`?PLAN`?", line):
+            return True
+        if re.fullmatch(r"-\s*Subject plan revision:\s*`[^`\n]+`", line):
+            return True
+    return False
+
+
+def _is_bootstrap_plan_work(work: Mapping[str, str | int | None]) -> bool:
+    return all(work.get(key) == value for key, value in BOOTSTRAP_PLAN_REVIEW_WORK.items())
+
+
+def _has_exact_bootstrap_plan_review(
+    blocks: list[str], work: Mapping[str, str | int | None]
+) -> bool:
+    if not _is_bootstrap_plan_work(work):
+        return False
+    index = BOOTSTRAP_PLAN_REVIEW_INDEX
+    if len(blocks) <= index or not blocks[index].startswith("## Review 5\n"):
+        return False
+    digest = hashlib.sha256(normalize_document(blocks[index])).hexdigest()
+    return digest == BOOTSTRAP_PLAN_REVIEW_BLOCK_SHA256
 
 
 def _plan_review_kind(block: str) -> str | None:
     fields = _key_value_fields(block)
-    legacy_type_values = _legacy_field_values(block, {"type": "Review type"}).get(
-        "type", []
-    )
     canonical_signal = bool(set(fields) & (set(PLAN_REVIEW_FIELDS) | {"review_type"}))
     if "type" in fields:
         if any(value == "PLAN" for value in fields["type"]):
             return "canonical"
         if any(value == "IMPLEMENTATION" for value in fields["type"]):
-            return (
-                "legacy"
-                if legacy_type_values and "PLAN" in legacy_type_values
-                else None
-            )
+            return None
         return "canonical"
-    if legacy_type_values:
-        return "legacy" if "PLAN" in legacy_type_values else None
     return "canonical" if canonical_signal else None
 
 
 def _plan_review_gate_errors(
     reviews_text: str, work: Mapping[str, str | int | None]
 ) -> list[str]:
+    blocks = _review_blocks(reviews_text)
+    bootstrap = _has_exact_bootstrap_plan_review(blocks, work)
+    if _is_bootstrap_plan_work(work) and not bootstrap:
+        return [
+            "ENG-016 bootstrap Review 5 is missing or differs from the exact "
+            "historical compatibility record"
+        ]
+
+    legacy_after_bootstrap = any(
+        _has_legacy_plan_review_marker(block)
+        for block in (
+            blocks[BOOTSTRAP_PLAN_REVIEW_INDEX + 1 :]
+            if bootstrap
+            else blocks
+        )
+    )
+    if legacy_after_bootstrap:
+        return [
+            "legacy PLAN reviews after the ENG-016 bootstrap Review 5 are not "
+            "accepted; use the canonical key/value schema"
+        ]
+
     candidates = [
         (kind, block)
-        for block in _review_blocks(reviews_text)
+        for block in blocks
         if (kind := _plan_review_kind(block)) is not None
     ]
     if not candidates:
-        return ["plan review record is missing"]
-    kind, block = candidates[-1]
-    if kind == "canonical":
-        return _canonical_plan_review_errors(block, work)
-    return _legacy_plan_review_errors(block, work)
+        if bootstrap:
+            return []
+        return ["plan review record is missing or is not canonical"]
+    _, block = candidates[-1]
+    return _canonical_plan_review_errors(block, work)
 
 
 def _has_approved_plan_review(
