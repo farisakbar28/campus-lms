@@ -1,6 +1,6 @@
 # ENG-016 — Repository-native AI engineering workflow harness
 
-Status: `IMPLEMENTING`
+Status: `IMPLEMENTATION_REVIEW`
 
 Issue: `ENG-016` / GitHub issue `#16`
 
@@ -29,7 +29,7 @@ Implementation author actor label: `Codex implementer`
 
 Implementation author session label: `ENG-016-implement-r4-2026-09-06`
 
-Candidate Git commit SHA: `NONE`
+Candidate Git commit SHA: `c03eeeab7a9ad7508246214f64c42b7027c627c6`
 
 This is the approved revision-4 execution contract after Independent PLAN
 Review 5 and the exact human-authored canonical-Issue approval comment. It
@@ -1013,10 +1013,10 @@ PRODUCTION operation/evidence is required for ENG-016.
   `https://github.com/farisakbar28/campus-lms/issues/16#issuecomment-5556469166`
 - Implementation author actor label: `Codex implementer`
 - Implementation author session label: `ENG-016-implement-r4-2026-09-06`
-- Candidate Git commit SHA: `NONE`
+- Candidate Git commit SHA: `c03eeeab7a9ad7508246214f64c42b7027c627c6`
 - Material deviations: `NONE`
-- Concise verification result: `IN_PROGRESS: ENG-016-IMPL-008 and ENG-016-IMPL-009 remediation with focused regression coverage.`
-- Concise completion summary: `IMPLEMENTATION_IN_PROGRESS_FOR_ENG-016-IMPL-008_009_STOPPED_FOR_NEW_CANDIDATE`
+- Concise verification result: `PASS: workflow tests, canonical/bootstrap/legacy/author probes, Go race tests, build, go vet, go mod verify, formatting, and diff checks; workflow-check expected-fails on OPEN ENG-016-IMPL-008 and ENG-016-IMPL-009 pending fresh review.`
+- Concise completion summary: `CANDIDATE_CREATED_c03eeeab7a9ad7508246214f64c42b7027c627c6_STOPPED_FOR_INDEPENDENT_IMPLEMENTATION_REVIEW`
 
 ## Finding-resolution matrix for Independent PLAN Reviews 1–3
 
