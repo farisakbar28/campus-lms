@@ -25,6 +25,7 @@ finding_id=<ID>
 severity=CRITICAL|HIGH|MEDIUM|LOW
 status=OPEN|RESOLVED|ACCEPTED_RESIDUAL_RISK
 summary=<concise summary>
+residual_risk_comment_url=<exact canonical-Issue comment URL when accepted>
 verdict=CHANGES_REQUIRED|APPROVED
 ```
 
@@ -46,6 +47,7 @@ finding_id=<ID>
 severity=CRITICAL|HIGH|MEDIUM|LOW
 status=OPEN|RESOLVED|ACCEPTED_RESIDUAL_RISK
 summary=<concise summary>
+residual_risk_comment_url=<exact canonical-Issue comment URL when accepted>
 verdict=CHANGES_REQUIRED|APPROVED
 ```
 

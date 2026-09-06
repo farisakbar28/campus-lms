@@ -39,12 +39,55 @@ STATES = (
     "READY_TO_MERGE",
 )
 RISKS = ("NORMAL", "HIGH", "CRITICAL")
+FINDING_SEVERITIES = ("CRITICAL", "HIGH", "MEDIUM", "LOW")
+FINDING_STATUSES = ("OPEN", "RESOLVED", "ACCEPTED_RESIDUAL_RISK")
+REVIEW_VERDICTS = ("CHANGES_REQUIRED", "APPROVED")
 SHA256_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 GIT_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 WORK_ID_RE = re.compile(r"^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)*-[0-9]{3,}$")
-COMMENT_URL_RE = re.compile(
-    r"^https://github\.com/[^/\s]+/[^/\s]+/issues/[0-9]+#issuecomment-[0-9]+$"
+WEB_ISSUE_URL_RE = re.compile(
+    r"^https://github\.com/(?P<owner>[^/\s]+)/(?P<repo>[^/\s]+)"
+    r"/issues/(?P<number>[0-9]+)$"
 )
+WEB_COMMENT_URL_RE = re.compile(
+    r"^https://github\.com/(?P<owner>[^/\s]+)/(?P<repo>[^/\s]+)"
+    r"/issues/(?P<number>[0-9]+)#issuecomment-(?P<comment>[0-9]+)$"
+)
+
+IMPLEMENTATION_REVIEW_FIELDS = (
+    "review_id",
+    "type",
+    "work_item_id",
+    "plan_revision",
+    "plan_hash",
+    "issue_digest",
+    "actor_label",
+    "session_label",
+    "implementation_author_actor_label",
+    "implementation_author_session_label",
+    "fresh_session_attestation",
+    "candidate_git_sha",
+    "verdict",
+)
+FINDING_FIELDS = {
+    "finding_id",
+    "severity",
+    "status",
+    "summary",
+    "residual_risk_comment_url",
+}
+REQUIRED_FINDING_FIELDS = {
+    "finding_id",
+    "severity",
+    "status",
+    "summary",
+}
+FORBIDDEN_WORK_DIRECTORY_NAMES = {
+    "completed",
+    "archive",
+    "archives",
+    "archived",
+}
 
 REQUIRED_DURABLE_FILES = (
     "docs/engineering/ai-workflow.md",
@@ -156,6 +199,58 @@ def _field(text: str, label: str, *, multiline: bool = False) -> str | None:
     return match.group(1) if match else None
 
 
+def _angle_field(text: str, label: str) -> str | None:
+    match = re.search(
+        rf"(?m)^(?:-\s*)?{re.escape(label)}:[ \t]*<([^<>\n]+)>[ \t]*$",
+        text,
+    )
+    return match.group(1) if match else None
+
+
+def _web_issue_parts(value: Any) -> tuple[str, str, int] | None:
+    if not isinstance(value, str):
+        return None
+    match = WEB_ISSUE_URL_RE.fullmatch(value)
+    if not match:
+        return None
+    return match.group("owner"), match.group("repo"), int(match.group("number"))
+
+
+def _web_comment_parts(value: Any) -> tuple[str, str, int, int] | None:
+    if not isinstance(value, str):
+        return None
+    match = WEB_COMMENT_URL_RE.fullmatch(value)
+    if not match:
+        return None
+    return (
+        match.group("owner"),
+        match.group("repo"),
+        int(match.group("number")),
+        int(match.group("comment")),
+    )
+
+
+def _api_repository_url(owner: str, repo: str) -> str:
+    return f"https://api.github.com/repos/{owner}/{repo}"
+
+
+def _api_issue_url(owner: str, repo: str, number: int) -> str:
+    return f"{_api_repository_url(owner, repo)}/issues/{number}"
+
+
+def _key_value_fields(text: str) -> dict[str, list[str]]:
+    fields: dict[str, list[str]] = {}
+    for line in _normalise_lines(text):
+        match = re.fullmatch(r"(?P<key>[a-z][a-z0-9_]*)=(?P<value>.*)", line)
+        if match:
+            fields.setdefault(match.group("key"), []).append(match.group("value"))
+    return fields
+
+
+def _review_blocks(reviews_text: str) -> list[str]:
+    return re.split(r"(?m)(?=^##\s+Review\b)", reviews_text)
+
+
 def _issue_number(text: str) -> int | None:
     match = re.search(
         r"(?m)^Issue:\s*`(?P<work>[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)*-[0-9]{3,})`"
@@ -179,6 +274,7 @@ def parse_work(text: str) -> dict[str, str | int | None]:
     values: dict[str, str | int | None] = {
         "work_id": _work_id_from_heading(text),
         "issue_number": _issue_number(text),
+        "issue_url": _angle_field(text, "Issue URL"),
         "status": _field(text, "Status"),
         "issue_digest": _field(text, "Issue specification digest", multiline=True),
         "plan_revision": _field(text, "Plan revision"),
@@ -204,7 +300,10 @@ def _require(value: Any, name: str, errors: list[str]) -> str:
 
 
 def _validate_work_document(
-    path: Path, work_id_from_directory: str, reviews_text: str
+    path: Path,
+    work_id_from_directory: str,
+    reviews_text: str,
+    residual_comments: Iterable[Mapping[str, Any]] = (),
 ) -> list[str]:
     errors: list[str] = []
     try:
@@ -229,6 +328,12 @@ def _validate_work_document(
     issue_number = values["issue_number"]
     if issue_number is None:
         errors.append(f"{path}: missing canonical GitHub issue mapping")
+    issue_url = _require(values["issue_url"], f"{path}: Issue URL", errors)
+    issue_parts = _web_issue_parts(issue_url)
+    if issue_url and issue_parts is None:
+        errors.append(f"{path}: invalid canonical Issue URL")
+    elif issue_parts is not None and issue_number != issue_parts[2]:
+        errors.append(f"{path}: Issue URL number does not match canonical mapping")
 
     status = _require(values["status"], f"{path}: Status", errors)
     if status and status not in STATES:
@@ -279,8 +384,14 @@ def _validate_work_document(
     approval_url = _require(
         values["approval_url"], f"{path}: human plan-approval comment", errors
     )
-    if approval_url != "NONE" and not COMMENT_URL_RE.fullmatch(approval_url):
-        errors.append(f"{path}: invalid human plan-approval comment URL")
+    if approval_url != "NONE":
+        approval_parts = _web_comment_parts(approval_url)
+        if approval_parts is None:
+            errors.append(f"{path}: invalid human plan-approval comment URL")
+        elif issue_parts is None or approval_parts[:3] != issue_parts:
+            errors.append(
+                f"{path}: human plan-approval comment URL is not on the canonical Issue"
+            )
 
     implementation_actor = _require(
         values["implementation_actor"],
@@ -333,34 +444,189 @@ def _validate_work_document(
     } and candidate_sha == "NONE":
         errors.append(f"{path}: {status} requires a candidate Git SHA")
 
+    work_bindings = {
+        **values,
+        "work_id": work_id,
+        "issue_number": issue_number,
+        "issue_url": issue_url,
+    }
     if status in {"READY_FOR_PR", "PR_VALIDATION", "READY_TO_MERGE"}:
-        if not _has_approved_implementation_review(reviews_text, candidate_sha):
+        if not _has_approved_implementation_review(reviews_text, work_bindings):
             errors.append(
                 f"{path}: {status} requires an APPROVED implementation review "
                 f"for {candidate_sha}"
             )
 
-    errors.extend(_finding_gate_errors(path, reviews_text))
+    errors.extend(
+        _implementation_review_errors_for_document(
+            path,
+            reviews_text,
+            work_bindings,
+        )
+    )
+    errors.extend(
+        _finding_gate_errors(
+            path,
+            reviews_text,
+            work_bindings,
+            residual_comments,
+        )
+    )
     errors.extend(_review_relationship_errors(path, reviews_text))
     return errors
 
 
-def _has_approved_implementation_review(reviews_text: str, candidate_sha: str) -> bool:
-    blocks = re.split(r"(?m)(?=^##\s+Review\b)", reviews_text)
-    for block in blocks:
-        if not re.search(r"(?m)^-\s*Review type:\s*`?IMPLEMENTATION`?\s*$", block):
+def _is_implementation_review_block(block: str) -> bool:
+    fields = _key_value_fields(block)
+    if any(
+        value == "IMPLEMENTATION"
+        for key in ("type", "review_type")
+        for value in fields.get(key, [])
+    ):
+        return True
+    return bool(
+        re.search(
+            r"(?m)^-\s*Review type:\s*`?IMPLEMENTATION`?\s*$", block
+        )
+    )
+
+
+def _implementation_review_errors(
+    block: str,
+    work: Mapping[str, str | int | None],
+    *,
+    require_current_binding: bool = False,
+    require_approved: bool = False,
+) -> list[str]:
+    fields = _key_value_fields(block)
+    errors: list[str] = []
+    values: dict[str, str] = {}
+    for key in IMPLEMENTATION_REVIEW_FIELDS:
+        occurrences = fields.get(key, [])
+        if not occurrences:
+            errors.append(f"implementation review is missing {key}")
             continue
-        if candidate_sha not in block:
+        if len(occurrences) != 1:
+            errors.append(f"implementation review repeats {key}")
             continue
-        if re.search(r"(?m)^-\s*Verdict:\s*`?APPROVED`?\s*$", block):
-            return True
-        if re.search(r"(?m)^`APPROVED`\s*$", block):
-            return True
-    return False
+        value = occurrences[0]
+        if not value.strip():
+            errors.append(f"implementation review has an empty {key}")
+            continue
+        values[key] = value
+
+    if values.get("type") != "IMPLEMENTATION":
+        errors.append("implementation review type must be IMPLEMENTATION")
+
+    revision = values.get("plan_revision")
+    if revision and (
+        not revision.isdigit() or int(revision) < 1 or str(int(revision)) != revision
+    ):
+        errors.append("implementation review has an invalid plan_revision")
+    for key in ("plan_hash", "issue_digest"):
+        value = values.get(key)
+        if value and not SHA256_RE.fullmatch(value):
+            errors.append(f"implementation review has an invalid {key}")
+    candidate = values.get("candidate_git_sha")
+    if candidate and not GIT_SHA_RE.fullmatch(candidate):
+        errors.append("implementation review has an invalid candidate_git_sha")
+    if values.get("verdict") and values["verdict"] not in REVIEW_VERDICTS:
+        errors.append("implementation review has an invalid verdict")
+
+    for key in (
+        "actor_label",
+        "session_label",
+        "implementation_author_actor_label",
+        "implementation_author_session_label",
+        "fresh_session_attestation",
+    ):
+        if values.get(key) == "NONE":
+            errors.append(f"implementation review has an invalid {key}")
+
+    if (
+        values.get("actor_label")
+        and values.get("implementation_author_actor_label")
+        and values["actor_label"] == values["implementation_author_actor_label"]
+    ):
+        errors.append("implementation review reviewer actor equals author actor")
+    if (
+        values.get("session_label")
+        and values.get("implementation_author_session_label")
+        and values["session_label"] == values["implementation_author_session_label"]
+    ):
+        errors.append("implementation review reviewer session equals author session")
+
+    aliases = (
+        ("review_type", "type"),
+        ("reviewer_actor_label", "actor_label"),
+        ("fresh_reviewer_session_label", "session_label"),
+        ("implementation_candidate_sha", "candidate_git_sha"),
+    )
+    for alias, canonical in aliases:
+        occurrences = fields.get(alias, [])
+        if not occurrences:
+            continue
+        if len(occurrences) != 1:
+            errors.append(f"implementation review repeats {alias}")
+        elif canonical in values and occurrences[0] != values[canonical]:
+            errors.append(
+                f"implementation review {alias} does not match {canonical}"
+            )
+
+    if require_approved and values.get("verdict") != "APPROVED":
+        errors.append("implementation review verdict is not APPROVED")
+
+    if require_current_binding:
+        expected = {
+            "work_item_id": str(work.get("work_id")),
+            "plan_revision": str(work.get("plan_revision")),
+            "plan_hash": str(work.get("plan_hash")),
+            "issue_digest": str(work.get("issue_digest")),
+            "candidate_git_sha": str(work.get("candidate_sha")),
+            "implementation_author_actor_label": str(work.get("implementation_actor")),
+            "implementation_author_session_label": str(work.get("implementation_session")),
+        }
+        for key, expected_value in expected.items():
+            if values.get(key) != expected_value:
+                errors.append(f"implementation review {key} does not match current WORK.md")
+
+    return errors
+
+
+def _implementation_review_errors_for_document(
+    path: Path,
+    reviews_text: str,
+    work: Mapping[str, str | int | None],
+) -> list[str]:
+    errors: list[str] = []
+    for block in _review_blocks(reviews_text):
+        if _is_implementation_review_block(block):
+            errors.extend(
+                f"{path}: {error}"
+                for error in _implementation_review_errors(block, work)
+            )
+    return errors
+
+
+def _has_approved_implementation_review(
+    reviews_text: str, work: Mapping[str, str | int | None]
+) -> bool:
+    matches = 0
+    for block in _review_blocks(reviews_text):
+        if not _is_implementation_review_block(block):
+            continue
+        if not _implementation_review_errors(
+            block,
+            work,
+            require_current_binding=True,
+            require_approved=True,
+        ):
+            matches += 1
+    return matches == 1
 
 
 def _has_approved_plan_review(reviews_text: str) -> bool:
-    blocks = re.split(r"(?m)(?=^##\s+Review\b)", reviews_text)
+    blocks = _review_blocks(reviews_text)
     for block in blocks:
         if not re.search(r"(?m)^-\s*Review type:\s*`?PLAN`?\s*$", block):
             continue
@@ -402,40 +668,135 @@ def _block_field(block: str, label: str) -> str | None:
     return match.group(1) if match else None
 
 
-def _finding_gate_errors(path: Path, reviews_text: str) -> list[str]:
-    """Check only explicitly structured finding records, not prose."""
-
+def _structured_finding_records(
+    reviews_text: str,
+) -> tuple[list[dict[str, str]], list[str]]:
+    records: list[dict[str, str]] = []
     errors: list[str] = []
-    pattern = re.compile(
-        r"(?ms)^finding_id=(?P<id>[^\n]+)\n"
-        r"severity=(?P<severity>CRITICAL|HIGH|MEDIUM|LOW)\n"
-        r"status=(?P<status>[A-Z_]+)\n"
-        r"summary=(?P<summary>.*?)(?=\n\n|\Z)"
-    )
-    for match in pattern.finditer(reviews_text):
-        finding_id = match.group("id")
-        severity = match.group("severity")
-        status = match.group("status")
-        if severity in {"CRITICAL", "HIGH"} and status not in {
-            "RESOLVED",
-            "CLOSED",
-        }:
-            errors.append(
-                f"{path}: {severity} finding {finding_id} is not resolved"
+
+    def finish(current: dict[str, list[str]] | None) -> None:
+        if current is None:
+            return
+        record: dict[str, str] = {}
+        for key in REQUIRED_FINDING_FIELDS:
+            occurrences = current.get(key, [])
+            if not occurrences:
+                errors.append(f"finding record is missing {key}")
+            elif len(occurrences) != 1:
+                errors.append(f"finding record repeats {key}")
+            elif not occurrences[0].strip():
+                errors.append(f"finding record has an empty {key}")
+            else:
+                record[key] = occurrences[0]
+        if "residual_risk_comment_url" in current:
+            occurrences = current["residual_risk_comment_url"]
+            if len(occurrences) != 1:
+                errors.append("finding record repeats residual_risk_comment_url")
+            elif not occurrences[0].strip():
+                errors.append("finding record has an empty residual_risk_comment_url")
+            else:
+                record["residual_risk_comment_url"] = occurrences[0]
+        if record.get("finding_id"):
+            records.append(record)
+
+    for block in _review_blocks(reviews_text):
+        current: dict[str, list[str]] | None = None
+        for line in _normalise_lines(block):
+            match = re.fullmatch(
+                r"(?P<key>[a-z][a-z0-9_]*)=(?P<value>.*)", line
             )
-        if severity == "MEDIUM" and status not in {"RESOLVED", "CLOSED", "ACCEPTED_RESIDUAL_RISK"}:
-            errors.append(
-                f"{path}: MEDIUM finding {finding_id} lacks resolution or residual-risk acceptance"
-            )
+            if not match:
+                continue
+            key = match.group("key")
+            if key == "finding_id":
+                finish(current)
+                current = {"finding_id": [match.group("value")]}
+            elif key in FINDING_FIELDS:
+                if current is None:
+                    errors.append(f"finding field {key} appears without finding_id")
+                else:
+                    current.setdefault(key, []).append(match.group("value"))
+        finish(current)
+    return records, errors
+
+
+def _finding_gate_errors(
+    path: Path,
+    reviews_text: str,
+    work: Mapping[str, str | int | None],
+    residual_comments: Iterable[Mapping[str, Any]] = (),
+) -> list[str]:
+    """Check exact structured findings and require human residual-risk input."""
+
+    records, errors = _structured_finding_records(reviews_text)
+    latest: dict[str, dict[str, str]] = {}
+    for record in records:
+        finding_id = record.get("finding_id", "")
+        if finding_id:
+            latest[finding_id] = record
+
+    residual_comments = tuple(residual_comments)
+    for record in latest.values():
+        finding_id = record.get("finding_id", "")
+        severity = record.get("severity")
+        status = record.get("status")
+        if not finding_id or not severity or not status:
+            continue
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", finding_id):
+            errors.append(f"{path}: malformed finding ID {finding_id!r}")
+        if severity not in FINDING_SEVERITIES:
+            errors.append(f"{path}: invalid finding severity {severity!r}")
+            continue
+        if status not in FINDING_STATUSES:
+            errors.append(f"{path}: invalid finding status {status!r}")
+            if severity in {"CRITICAL", "HIGH"}:
+                errors.append(f"{path}: {severity} finding {finding_id} is not resolved")
+            continue
+
+        if severity in {"CRITICAL", "HIGH"}:
+            if status == "ACCEPTED_RESIDUAL_RISK":
+                errors.append(
+                    f"{path}: {severity} finding {finding_id} cannot accept residual risk"
+                )
+            elif status != "RESOLVED":
+                errors.append(f"{path}: {severity} finding {finding_id} is not resolved")
+
+        if status == "ACCEPTED_RESIDUAL_RISK":
+            comment_url = record.get("residual_risk_comment_url")
+            if not comment_url:
+                errors.append(
+                    f"{path}: finding {finding_id} is missing residual-risk comment URL"
+                )
+                continue
+            matching = [
+                comment
+                for comment in residual_comments
+                if comment.get("html_url") == comment_url
+            ]
+            if len(matching) != 1:
+                errors.append(
+                    f"{path}: finding {finding_id} requires exactly one supplied residual-risk comment"
+                )
+            else:
+                errors.extend(
+                    f"{path}: {error}"
+                    for error in validate_residual_comment(
+                        matching[0], work, finding=record
+                    )
+                )
     return errors
 
 
-def _validate_active_layout(root: Path) -> list[str]:
+def _validate_active_layout(
+    root: Path, residual_comments: Iterable[Mapping[str, Any]] = ()
+) -> list[str]:
     errors: list[str] = []
     work_root = root / "work"
-    for forbidden in ("completed", "archive", "archives", "archived"):
-        if (work_root / forbidden).exists():
-            errors.append(f"forbidden work/{forbidden}/ archive shape exists")
+    if work_root.exists():
+        for path in work_root.rglob("*"):
+            if path.is_dir() and path.name.lower() in FORBIDDEN_WORK_DIRECTORY_NAMES:
+                relative = path.relative_to(work_root).as_posix()
+                errors.append(f"forbidden work/{relative}/ archive shape exists")
 
     active_root = work_root / "active"
     if active_root.exists():
@@ -455,7 +816,11 @@ def _validate_active_layout(root: Path) -> list[str]:
                 )
                 continue
             reviews_text = _read_utf8(child / "REVIEWS.md")
-            errors.extend(_validate_work_document(child / "WORK.md", child.name, reviews_text))
+            errors.extend(
+                _validate_work_document(
+                    child / "WORK.md", child.name, reviews_text, residual_comments
+                )
+            )
 
     phase_root = work_root / "phases" / "active"
     if phase_root.exists():
@@ -552,10 +917,42 @@ def validate_approval_comment(
     comment: Mapping[str, Any], work: Mapping[str, str | int | None]
 ) -> list[str]:
     errors: list[str] = []
-    url = comment.get("html_url") or comment.get("url")
+    issue_parts = _web_issue_parts(work.get("issue_url"))
     expected_url = work.get("approval_url")
+    approval_parts = _web_comment_parts(expected_url)
+    if approval_parts is None:
+        errors.append("WORK.md approval URL is not a canonical Issue comment URL")
+    elif issue_parts is None or approval_parts[:3] != issue_parts:
+        errors.append("WORK.md approval URL is not on the canonical Issue")
+
+    url = comment.get("html_url")
     if not isinstance(url, str) or url != expected_url:
         errors.append("approval comment URL does not match WORK.md")
+    comment_parts = _web_comment_parts(url)
+    if comment_parts is None:
+        errors.append("approval comment html_url is not a canonical Issue comment URL")
+    elif issue_parts is None or comment_parts[:3] != issue_parts:
+        errors.append("approval comment html_url is not on the canonical Issue")
+
+    native_url = comment.get("url")
+    if native_url is not None:
+        if not isinstance(native_url, str):
+            errors.append("approval comment API url is malformed")
+        elif (
+            issue_parts is None
+            or comment_parts is None
+            or native_url
+            != _api_repository_url(issue_parts[0], issue_parts[1])
+            + f"/issues/comments/{comment_parts[3]}"
+        ):
+            errors.append("approval comment API url is not the matching comment")
+    comment_id = comment.get("id")
+    if comment_id is not None:
+        if isinstance(comment_id, bool) or not isinstance(comment_id, int) or comment_id < 1:
+            errors.append("approval comment id is malformed")
+        elif comment_parts is not None and comment_id != comment_parts[3]:
+            errors.append("approval comment id does not match html_url")
+
     body = comment.get("body")
     expected_body = "\n".join(
         (
@@ -571,8 +968,10 @@ def validate_approval_comment(
     ):
         errors.append("approval comment body does not exactly match PLAN schema")
     user = comment.get("user")
-    if isinstance(user, Mapping) and user.get("type") not in {None, "User"}:
+    if not isinstance(user, Mapping) or user.get("type") != "User":
         errors.append("approval comment author is not a GitHub User")
+    elif user.get("is_bot") is True:
+        errors.append("approval comment author is marked as a bot")
     author = comment.get("author")
     if isinstance(author, Mapping) and author.get("is_bot") is True:
         errors.append("approval comment author is marked as a bot")
@@ -584,20 +983,70 @@ def validate_approval_comment(
 
 
 def validate_residual_comment(
-    comment: Mapping[str, Any], work: Mapping[str, str | int | None]
+    comment: Mapping[str, Any],
+    work: Mapping[str, str | int | None],
+    *,
+    finding: Mapping[str, str] | None = None,
 ) -> list[str]:
+    errors: list[str] = []
+
+    issue_parts = _web_issue_parts(work.get("issue_url"))
+    html_url = comment.get("html_url")
+    comment_parts = _web_comment_parts(html_url)
+    if comment_parts is None:
+        errors.append("residual-risk comment html_url is not a canonical Issue comment URL")
+    elif issue_parts is None or comment_parts[:3] != issue_parts:
+        errors.append("residual-risk comment html_url is not on the canonical Issue")
+
+    comment_id = comment.get("id")
+    if isinstance(comment_id, bool) or not isinstance(comment_id, int) or comment_id < 1:
+        errors.append("residual-risk comment id is malformed")
+    elif comment_parts is not None and comment_id != comment_parts[3]:
+        errors.append("residual-risk comment id does not match html_url")
+
+    native_url = comment.get("url")
+    if not isinstance(native_url, str):
+        errors.append("residual-risk comment API url is missing or malformed")
+    elif (
+        issue_parts is None
+        or comment_parts is None
+        or native_url
+        != _api_repository_url(issue_parts[0], issue_parts[1])
+        + f"/issues/comments/{comment_parts[3]}"
+    ):
+        errors.append("residual-risk comment API url is not the matching comment")
+
     body = comment.get("body")
     if not isinstance(body, str):
-        return ["residual-risk comment body is missing"]
+        errors.append("residual-risk comment body is missing")
+        return errors
     fields: dict[str, str] = {}
     for line in normalize_document(body).decode("utf-8").splitlines():
         if "=" not in line:
-            return ["residual-risk comment contains a non key=value line"]
+            errors.append("residual-risk comment contains a non key=value line")
+            return errors
         key, value = line.split("=", 1)
         if key in fields:
-            return [f"residual-risk comment repeats {key}"]
+            errors.append(f"residual-risk comment repeats {key}")
+            return errors
         fields[key] = value
-    errors: list[str] = []
+
+    expected_keys = {
+        "decision",
+        "work_item_id",
+        "finding_id",
+        "plan_revision",
+        "plan_hash",
+        "candidate_git_sha",
+        "rationale",
+    }
+    missing = expected_keys - fields.keys()
+    unexpected = fields.keys() - expected_keys
+    for key in sorted(missing):
+        errors.append(f"residual-risk comment is missing {key}")
+    for key in sorted(unexpected):
+        errors.append(f"residual-risk comment has unsupported field {key}")
+
     expected = {
         "decision": "ACCEPTED_RESIDUAL_RISK",
         "work_item_id": str(work.get("work_id")),
@@ -607,13 +1056,38 @@ def validate_residual_comment(
     for key, value in expected.items():
         if fields.get(key) != value:
             errors.append(f"residual-risk comment {key} does not match WORK.md")
-    if not fields.get("finding_id"):
+    finding_id = fields.get("finding_id")
+    if not finding_id:
         errors.append("residual-risk comment is missing finding_id")
+    elif not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", finding_id):
+        errors.append("residual-risk comment has a malformed finding_id")
     if not fields.get("rationale"):
         errors.append("residual-risk comment is missing rationale")
     candidate = fields.get("candidate_git_sha")
+    expected_candidate = work.get("candidate_sha")
+    if candidate != expected_candidate:
+        errors.append("residual-risk comment candidate_git_sha does not match WORK.md")
     if candidate != "NONE" and (candidate is None or not GIT_SHA_RE.fullmatch(candidate)):
         errors.append("residual-risk comment has an invalid candidate_git_sha")
+    if finding is not None:
+        if finding_id != finding.get("finding_id"):
+            errors.append("residual-risk comment finding_id does not match the applicable finding")
+        if finding.get("status") != "ACCEPTED_RESIDUAL_RISK":
+            errors.append("residual-risk comment finding is not accepted residual risk")
+        if finding.get("severity") in {"CRITICAL", "HIGH"}:
+            errors.append("residual-risk comment cannot accept a HIGH or CRITICAL finding")
+        expected_comment_url = finding.get("residual_risk_comment_url")
+        if html_url != expected_comment_url:
+            errors.append("residual-risk comment URL does not match the finding reference")
+
+    user = comment.get("user")
+    if not isinstance(user, Mapping) or user.get("type") != "User":
+        errors.append("residual-risk comment author is not a GitHub User")
+    elif user.get("is_bot") is True:
+        errors.append("residual-risk comment author is marked as a bot")
+    author = comment.get("author")
+    if isinstance(author, Mapping) and author.get("is_bot") is True:
+        errors.append("residual-risk comment author is marked as a bot")
     return errors
 
 
@@ -624,24 +1098,72 @@ def _validate_supplied_issue(
     try:
         computed = issue_digest(issue)
     except WorkflowValidationError as exc:
-        return [str(exc)]
-    if computed != work.get("issue_digest"):
+        errors.append(str(exc))
+        computed = None
+    if computed is not None and computed != work.get("issue_digest"):
         errors.append(
             f"{work_path}: supplied Issue title/body digest {computed} does not match WORK.md"
         )
+
+    issue_parts = _web_issue_parts(work.get("issue_url"))
+    if issue_parts is None:
+        errors.append(f"{work_path}: WORK.md has no valid canonical Issue URL")
+
     number = issue.get("number")
-    if number is not None and number != work.get("issue_number"):
+    if isinstance(number, bool) or not isinstance(number, int):
+        errors.append(f"{work_path}: supplied Issue number is missing or malformed")
+    elif number != work.get("issue_number"):
         errors.append(f"{work_path}: supplied Issue number does not match WORK.md")
-    url = issue.get("url")
-    if url is not None:
-        expected = f"https://github.com/farisakbar28/campus-lms/issues/{work.get('issue_number')}"
-        if url != expected:
-            errors.append(f"{work_path}: supplied Issue URL does not match canonical mapping")
+
+    if issue_parts is not None:
+        owner, repo, issue_number = issue_parts
+        expected_api_repo = _api_repository_url(owner, repo)
+        expected_api_issue = _api_issue_url(owner, repo, issue_number)
+        if issue.get("repository_url") != expected_api_repo:
+            errors.append(
+                f"{work_path}: supplied Issue repository identity does not match canonical mapping"
+            )
+        if issue.get("url") != expected_api_issue:
+            errors.append(
+                f"{work_path}: supplied Issue API url does not match canonical mapping"
+            )
+        if issue.get("html_url") != work.get("issue_url"):
+            errors.append(
+                f"{work_path}: supplied Issue html_url does not match canonical mapping"
+            )
     return errors
 
 
+def _active_pairs_at_revision(
+    root: Path, revision: str
+) -> tuple[dict[str, set[str]], list[str]]:
+    result = subprocess.run(
+        ["git", "ls-tree", "-r", "--name-only", revision, "--", "work/active"],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        return {}, ["git ls-tree failed while checking active cleanup target"]
+    pairs: dict[str, set[str]] = {}
+    errors: list[str] = []
+    for path in result.stdout.splitlines():
+        match = re.fullmatch(r"work/active/([^/]+)/(WORK|REVIEWS)\.md", path)
+        if match is None:
+            errors.append(f"candidate active tree contains an unpermitted path: {path}")
+            continue
+        pairs.setdefault(match.group(1), set()).add(match.group(2) + ".md")
+    return pairs, errors
+
+
 def validate_cleanup_diff(
-    root: Path, base_sha: str, candidate_sha: str, head_sha: str
+    root: Path,
+    base_sha: str,
+    candidate_sha: str,
+    head_sha: str,
+    *,
+    work_id: str | None = None,
 ) -> list[str]:
     """Require a candidate-to-head diff consisting only of active-file deletion."""
 
@@ -690,11 +1212,40 @@ def validate_cleanup_diff(
         deleted.setdefault(match.group(1), set()).add(match.group(2) + ".md")
     if not deleted:
         errors.append("cleanup diff is empty")
-    for work_id, names in deleted.items():
+    if len(deleted) != 1:
+        errors.append("cleanup diff must delete exactly one reviewed work item")
+
+    candidate_pairs, tree_errors = _active_pairs_at_revision(root, candidate_sha)
+    errors.extend(tree_errors)
+    for candidate_work_id, names in candidate_pairs.items():
         if names != {"WORK.md", "REVIEWS.md"}:
             errors.append(
-                f"cleanup diff for {work_id} must delete exactly WORK.md and REVIEWS.md"
+                f"candidate active work item {candidate_work_id} must contain exactly WORK.md and REVIEWS.md"
             )
+
+    if work_id is not None and not WORK_ID_RE.fullmatch(work_id):
+        errors.append("cleanup reviewed work-item ID is malformed")
+    if work_id is None:
+        if len(candidate_pairs) != 1:
+            errors.append(
+                "cleanup requires an explicit reviewed work-item ID when the candidate has multiple active items"
+            )
+        elif candidate_pairs:
+            work_id = next(iter(candidate_pairs))
+
+    if work_id is not None:
+        if work_id not in candidate_pairs:
+            errors.append("cleanup reviewed work-item ID is not present in the candidate")
+        if work_id not in deleted:
+            errors.append("cleanup diff does not delete the reviewed work item")
+
+    for deleted_work_id, names in deleted.items():
+        if names != {"WORK.md", "REVIEWS.md"}:
+            errors.append(
+                f"cleanup diff for {deleted_work_id} must delete exactly WORK.md and REVIEWS.md"
+            )
+    if work_id is not None and set(deleted) != {work_id}:
+        errors.append("cleanup diff contains a work item other than the reviewed work item")
     return errors
 
 
@@ -705,10 +1256,11 @@ def validate_repository(
     approval_comment: Mapping[str, Any] | None = None,
     residual_comments: Iterable[Mapping[str, Any]] = (),
     cleanup_shas: tuple[str, str, str] | None = None,
+    cleanup_work_id: str | None = None,
 ) -> list[str]:
     residual_comments = tuple(residual_comments)
     errors = _validate_durable_files(root)
-    errors.extend(_validate_active_layout(root))
+    errors.extend(_validate_active_layout(root, residual_comments))
 
     if issue is not None or approval_comment is not None or residual_comments:
         try:
@@ -720,11 +1272,34 @@ def validate_repository(
                 errors.extend(_validate_supplied_issue(issue, work_path, work))
             if approval_comment is not None:
                 errors.extend(validate_approval_comment(approval_comment, work))
+            reviews_text = _read_utf8(work_path.parent / "REVIEWS.md")
+            finding_records, _ = _structured_finding_records(reviews_text)
+            latest_findings = {
+                record["finding_id"]: record
+                for record in finding_records
+                if record.get("finding_id")
+            }
             for comment in residual_comments:
-                errors.extend(validate_residual_comment(comment, work))
+                body = comment.get("body")
+                finding_id = None
+                if isinstance(body, str):
+                    for line in normalize_document(body).decode("utf-8").splitlines():
+                        if line.startswith("finding_id="):
+                            finding_id = line.split("=", 1)[1]
+                            break
+                finding = latest_findings.get(finding_id or "")
+                if finding is None:
+                    errors.append(
+                        "residual-risk comment does not identify an applicable finding"
+                    )
+                errors.extend(
+                    validate_residual_comment(comment, work, finding=finding)
+                )
 
     if cleanup_shas is not None:
-        errors.extend(validate_cleanup_diff(root, *cleanup_shas))
+        errors.extend(
+            validate_cleanup_diff(root, *cleanup_shas, work_id=cleanup_work_id)
+        )
     return errors
 
 
@@ -753,6 +1328,10 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--base-sha")
     parser.add_argument("--candidate-sha")
     parser.add_argument("--head-sha")
+    parser.add_argument(
+        "--work-item-id",
+        help="reviewed active work-item ID for cleanup-only SHA validation",
+    )
     return parser
 
 
@@ -776,6 +1355,12 @@ def main(argv: list[str] | None = None) -> int:
             file=sys.stderr,
         )
         return 1
+    if args.work_item_id is not None and not all(value is not None for value in sha_args):
+        print(
+            "AI workflow validation: FAIL\n- --work-item-id requires cleanup SHAs",
+            file=sys.stderr,
+        )
+        return 1
     cleanup = tuple(sha_args) if all(value is not None for value in sha_args) else None
     errors = validate_repository(
         root,
@@ -783,6 +1368,7 @@ def main(argv: list[str] | None = None) -> int:
         approval_comment=approval,
         residual_comments=residual,
         cleanup_shas=cleanup,  # type: ignore[arg-type]
+        cleanup_work_id=args.work_item_id,
     )
     if errors:
         print("AI workflow validation: FAIL", file=sys.stderr)

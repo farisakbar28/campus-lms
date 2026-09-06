@@ -1095,3 +1095,49 @@ production authority. Before implementation, the human must supply the exact
 canonical-Issue approval schema required by the plan and the implementation
 agent must re-fetch the Issue, approval, plan hash, and current repository
 state.
+
+## Review 6
+
+review_id=ENG-016-IMPLEMENTATION-REVIEW-001
+review_type=IMPLEMENTATION
+type=IMPLEMENTATION
+work_item_id=ENG-016
+plan_revision=4
+plan_hash=sha256:d6c0464e030f68eb2a9f1089c233e091725a306e9af5d3a7caa0bffa9c7cf934
+issue_digest=sha256:c1cf78cad608524cec118bc469fc223f2cf3d556f37fef0d17c91fc00850ccf4
+implementation_candidate_sha=959307b75fffa6986c2587af763f1ce2dfbcd3a7
+candidate_git_sha=959307b75fffa6986c2587af763f1ce2dfbcd3a7
+candidate_parent_sha=92419ed6144e8d07b1392e0b931cdf32a044af77
+reviewer_actor_label=Codex implementation reviewer r1
+actor_label=Codex implementation reviewer r1
+fresh_reviewer_session_label=ENG-016-implementation-review-r1-2026-09-06
+session_label=ENG-016-implementation-review-r1-2026-09-06
+implementation_author_actor_label=Codex implementer
+implementation_author_session_label=ENG-016-implement-r4-2026-09-06
+fresh_session_attestation=Fresh independent implementation-review session; I reconstructed the requirements from the repository and live read-only GitHub state, inspected the exact candidate and complete diff, and did not rely on planner, implementer, prior plan-review conclusions, or delegated work.
+material_deviation=NONE
+
+findings:
+- finding_id=ENG-016-IMPL-001; severity=HIGH; status=OPEN; summary=The READY_FOR_PR implementation-review gate accepts a block based only on prose review type, the candidate SHA appearing anywhere, and an APPROVED verdict. It does not require or bind the work item, current plan revision/hash, Issue digest, reviewer/author labels, or fresh-session attestation; an independently mutated fixture with no reviewer identity or bindings returned no validator errors.
+- finding_id=ENG-016-IMPL-002; severity=HIGH; status=OPEN; summary=Approval URLs are validated only against a generic GitHub URL pattern and the mutable WORK.md value, not the canonical Issue owner/repository/number. The supplied fixture's approval URL is github.com/example/... and the exact-schema matcher accepts it, so a foreign-repository comment can satisfy the local approval check.
+- finding_id=ENG-016-IMPL-003; severity=HIGH; status=OPEN; summary=Residual-risk validation checks candidate_git_sha syntax but not equality with the current candidate or an exact comment URL. An independently supplied residual-risk comment for a different candidate SHA returned no errors, allowing a risk acceptance to bind to the wrong implementation.
+- finding_id=ENG-016-IMPL-004; severity=HIGH; status=OPEN; summary=The finding gate treats unsupported status=CLOSED as resolving HIGH/CRITICAL findings, although the approved schema permits only OPEN, RESOLVED, or ACCEPTED_RESIDUAL_RISK and HIGH/CRITICAL findings must block. An independently mutated HIGH/CLOSED fixture returned no validator errors.
+- finding_id=ENG-016-IMPL-005; severity=MEDIUM; status=OPEN; summary=Fresh standard GitHub Issue JSON is rejected because validation compares its API url field with the web html_url form while ignoring html_url. Running the validator with raw gh api Issue #16 JSON failed on URL mapping despite the correct number and digest, so the documented live-input path cannot pass.
+- finding_id=ENG-016-IMPL-006; severity=HIGH; status=OPEN; summary=Cleanup validation accepts deletion of multiple active work-item pairs, not exactly the reviewed work item, and archive rejection covers only names directly below work/, so work/phases/archive passes. Independent temporary-repository checks returned no errors for both cases.
+- finding_id=ENG-016-IMPL-007; severity=MEDIUM; status=OPEN; summary=The 10 bundled tests do not cover the required negative paths for current review bindings, missing reviewer fields, canonical approval URLs, residual candidate binding, finding-status enums, phase/archive handling, malformed inputs, or multi-item cleanup; the reproduced false passes above are consequently untested.
+
+verdict=CHANGES_REQUIRED
+
+- Review ID: `ENG-016-IMPLEMENTATION-REVIEW-001`
+- Review type: `IMPLEMENTATION`
+- Actor: `Codex implementation reviewer r1`
+- Session label: `ENG-016-implementation-review-r1-2026-09-06`
+- Implementation author actor label: `Codex implementer`
+- Implementation author session label: `ENG-016-implement-r4-2026-09-06`
+- Fresh-session attestation: This record is from a fresh independent implementation-review session and binds to the exact candidate above.
+- Candidate Git SHA: `959307b75fffa6986c2587af763f1ce2dfbcd3a7`
+- Subject work item: `ENG-016`
+- Plan revision: `4`
+- Plan hash: `sha256:d6c0464e030f68eb2a9f1089c233e091725a306e9af5d3a7caa0bffa9c7cf934`
+- Issue digest: `sha256:c1cf78cad608524cec118bc469fc223f2cf3d556f37fef0d17c91fc00850ccf4`
+- Verdict: `CHANGES_REQUIRED`

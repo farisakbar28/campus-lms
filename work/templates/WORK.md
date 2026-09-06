@@ -6,6 +6,8 @@ Status: `DRAFT`
 
 Issue: `<PLANNING-ID>` / GitHub issue `#<number>`
 
+Issue URL: <https://github.com/OWNER/REPOSITORY/issues/NUMBER>
+
 Issue specification digest:
 `sha256:<64 lowercase hexadecimal>`
 

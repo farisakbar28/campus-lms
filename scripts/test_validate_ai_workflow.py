@@ -12,7 +12,6 @@ from scripts.validate_ai_workflow import (
     CONTRACT_VERSION,
     PLAN_BEGIN,
     PLAN_END,
-    GIT_SHA_RE,
     issue_digest,
     normalize_document,
     plan_hash_from_text,
@@ -20,6 +19,86 @@ from scripts.validate_ai_workflow import (
     validate_cleanup_diff,
     validate_repository,
 )
+
+
+def bind_fixture_work(
+    root: Path,
+    *,
+    candidate: str = "b" * 40,
+    status: str = "IMPLEMENTING",
+) -> dict[str, str | int | None]:
+    work = root / "work" / "active" / "ENG-016" / "WORK.md"
+    text = work.read_text(encoding="utf-8")
+    text = text.replace("Status: `IMPLEMENTING`", f"Status: `{status}`")
+    text = text.replace(
+        "Candidate Git commit SHA: `NONE`", f"Candidate Git commit SHA: `{candidate}`"
+    )
+    work.write_text(text, encoding="utf-8")
+    from scripts.validate_ai_workflow import parse_work
+
+    return parse_work(text)
+
+
+def append_exact_implementation_review(
+    root: Path,
+    *,
+    candidate: str,
+    verdict: str = "APPROVED",
+    **overrides: str,
+) -> None:
+    from scripts.validate_ai_workflow import parse_work
+
+    work = parse_work(
+        (root / "work" / "active" / "ENG-016" / "WORK.md").read_text(
+            encoding="utf-8"
+        )
+    )
+    fields = {
+        "review_id": "ENG-016-IMPLEMENTATION-REVIEW-002",
+        "type": "IMPLEMENTATION",
+        "work_item_id": str(work["work_id"]),
+        "plan_revision": str(work["plan_revision"]),
+        "plan_hash": str(work["plan_hash"]),
+        "issue_digest": str(work["issue_digest"]),
+        "actor_label": "Fixture reviewer",
+        "session_label": "Fixture reviewer session",
+        "implementation_author_actor_label": str(work["implementation_actor"]),
+        "implementation_author_session_label": str(work["implementation_session"]),
+        "fresh_session_attestation": "Fresh independent review session.",
+        "candidate_git_sha": candidate,
+        "verdict": verdict,
+    }
+    fields.update(overrides)
+    record = "\n".join(f"{key}={value}" for key, value in fields.items())
+    reviews = root / "work" / "active" / "ENG-016" / "REVIEWS.md"
+    reviews.write_text(
+        reviews.read_text(encoding="utf-8").rstrip() + "\n\n## Review 7\n\n" + record + "\n",
+        encoding="utf-8",
+    )
+
+
+def append_finding(
+    root: Path,
+    *,
+    finding_id: str = "ENG-016-IMPL-TEST",
+    severity: str = "HIGH",
+    status: str = "OPEN",
+    summary: str = "unsafe",
+    residual_url: str | None = None,
+) -> None:
+    lines = [
+        f"finding_id={finding_id}",
+        f"severity={severity}",
+        f"status={status}",
+        f"summary={summary}",
+    ]
+    if residual_url is not None:
+        lines.append(f"residual_risk_comment_url={residual_url}")
+    reviews = root / "work" / "active" / "ENG-016" / "REVIEWS.md"
+    reviews.write_text(
+        reviews.read_text(encoding="utf-8").rstrip() + "\n\n" + "\n".join(lines) + "\n",
+        encoding="utf-8",
+    )
 
 
 class WorkflowValidatorTests(unittest.TestCase):
@@ -121,6 +200,98 @@ class WorkflowValidatorTests(unittest.TestCase):
             errors = validate_repository(root)
             self.assertTrue(any("requires a candidate Git SHA" in error for error in errors))
 
+    def test_ready_requires_exact_implementation_review_bindings(self) -> None:
+        required = (
+            "review_id",
+            "type",
+            "work_item_id",
+            "plan_revision",
+            "plan_hash",
+            "issue_digest",
+            "actor_label",
+            "session_label",
+            "implementation_author_actor_label",
+            "implementation_author_session_label",
+            "fresh_session_attestation",
+            "candidate_git_sha",
+            "verdict",
+        )
+        for missing in required:
+            with self.subTest(missing=missing), temporary_repository() as root:
+                candidate = "b" * 40
+                bind_fixture_work(root, candidate=candidate, status="READY_FOR_PR")
+                append_exact_implementation_review(root, candidate=candidate)
+                reviews = root / "work" / "active" / "ENG-016" / "REVIEWS.md"
+                reviews.write_text(
+                    reviews.read_text(encoding="utf-8").replace(
+                        f"{missing}=", f"omitted_{missing}="
+                    ),
+                    encoding="utf-8",
+                )
+                errors = validate_repository(root)
+                self.assertTrue(
+                    any(
+                        "requires an APPROVED implementation review" in error
+                        or f"missing {missing}" in error
+                        for error in errors
+                    )
+                )
+
+        with temporary_repository() as root:
+            candidate = "b" * 40
+            bind_fixture_work(root, candidate=candidate, status="READY_FOR_PR")
+            append_exact_implementation_review(root, candidate=candidate)
+            self.assertEqual(validate_repository(root), [])
+
+    def test_implementation_review_mismatch_duplicate_and_prose_are_rejected(self) -> None:
+        mismatches = {
+            "work_item_id": "ENG-017",
+            "plan_revision": "5",
+            "plan_hash": "sha256:" + "0" * 64,
+            "issue_digest": "sha256:" + "0" * 64,
+            "candidate_git_sha": "c" * 40,
+            "implementation_author_actor_label": "Foreign implementer",
+        }
+        for field, value in mismatches.items():
+            with self.subTest(field=field), temporary_repository() as root:
+                candidate = "b" * 40
+                bind_fixture_work(root, candidate=candidate, status="READY_FOR_PR")
+                append_exact_implementation_review(
+                    root, candidate=candidate, **{field: value}
+                )
+                errors = validate_repository(root)
+                self.assertTrue(
+                    any(
+                        "requires an APPROVED implementation review" in error
+                        for error in errors
+                    )
+                )
+
+        with temporary_repository() as root:
+            candidate = "b" * 40
+            bind_fixture_work(root, candidate=candidate, status="READY_FOR_PR")
+            append_exact_implementation_review(root, candidate=candidate)
+            reviews = root / "work" / "active" / "ENG-016" / "REVIEWS.md"
+            reviews.write_text(
+                reviews.read_text(encoding="utf-8") + f"candidate_git_sha={candidate}\n",
+                encoding="utf-8",
+            )
+            errors = validate_repository(root)
+            self.assertTrue(any("repeats candidate_git_sha" in error for error in errors))
+
+        with temporary_repository() as root:
+            candidate = "b" * 40
+            bind_fixture_work(root, candidate=candidate, status="READY_FOR_PR")
+            reviews = root / "work" / "active" / "ENG-016" / "REVIEWS.md"
+            reviews.write_text(
+                reviews.read_text(encoding="utf-8")
+                + f"\n## Review 7\n\n- Review type: `IMPLEMENTATION`\n"
+                + f"- Candidate Git SHA: `{candidate}`\n- Verdict: `APPROVED`\n",
+                encoding="utf-8",
+            )
+            errors = validate_repository(root)
+            self.assertTrue(any("missing work_item_id" in error for error in errors))
+
     def test_approval_comment_requires_exact_binding(self) -> None:
         with temporary_repository() as root:
             work = root / "work" / "active" / "ENG-016" / "WORK.md"
@@ -146,6 +317,160 @@ class WorkflowValidatorTests(unittest.TestCase):
             comment["body"] = comment["body"].replace("APPROVED", "REJECTED")
             self.assertTrue(validate_approval_comment(comment, parsed))
 
+    def test_approval_comment_must_bind_to_canonical_issue_repository(self) -> None:
+        with temporary_repository() as root:
+            from scripts.validate_ai_workflow import parse_work
+
+            work = root / "work" / "active" / "ENG-016" / "WORK.md"
+            parsed = parse_work(work.read_text(encoding="utf-8"))
+            comment = {
+                "html_url": parsed["approval_url"],
+                "body": "\n".join(
+                    (
+                        "approval_type=PLAN",
+                        "work_item_id=ENG-016",
+                        "plan_revision=4",
+                        f"plan_hash={parsed['plan_hash']}",
+                        "decision=APPROVED",
+                    )
+                ),
+                "user": {"type": "User"},
+            }
+            self.assertEqual(validate_approval_comment(comment, parsed), [])
+            parsed["approval_url"] = (
+                "https://github.com/foreign/repository/issues/16#issuecomment-1"
+            )
+            comment["html_url"] = parsed["approval_url"]
+            self.assertTrue(validate_approval_comment(comment, parsed))
+
+            work.write_text(
+                work.read_text(encoding="utf-8").replace(
+                    "https://github.com/example/campus-lms/issues/16#issuecomment-1",
+                    "https://github.com/foreign/repository/issues/16#issuecomment-1",
+                ),
+                encoding="utf-8",
+            )
+            errors = validate_repository(root)
+            self.assertTrue(any("not on the canonical Issue" in error for error in errors))
+
+    def test_live_issue_json_distinguishes_api_and_web_urls(self) -> None:
+        with temporary_repository() as root:
+            issue = {
+                "title": "Fixture issue",
+                "body": "Fixture body",
+                "number": 16,
+                "url": "https://api.github.com/repos/example/campus-lms/issues/16",
+                "html_url": "https://github.com/example/campus-lms/issues/16",
+                "repository_url": "https://api.github.com/repos/example/campus-lms",
+            }
+            self.assertEqual(validate_repository(root, issue=issue), [])
+
+            issue["url"] = issue["html_url"]
+            errors = validate_repository(root, issue=issue)
+            self.assertTrue(any("API url" in error for error in errors))
+
+    def test_malformed_live_issue_json_fails_closed(self) -> None:
+        with temporary_repository() as root:
+            issue = {
+                "title": "Fixture issue",
+                "body": "Fixture body",
+                "number": "16",
+                "url": "https://api.github.com/repos/foreign/repository/issues/16",
+            }
+            errors = validate_repository(root, issue=issue)
+            self.assertTrue(any("number is missing or malformed" in error for error in errors))
+            self.assertTrue(any("repository identity" in error for error in errors))
+            self.assertTrue(any("html_url" in error for error in errors))
+
+    def test_residual_risk_requires_current_candidate_human_comment_and_finding(self) -> None:
+        candidate = "b" * 40
+        comment_url = "https://github.com/example/campus-lms/issues/16#issuecomment-42"
+        comment = {
+            "id": 42,
+            "url": "https://api.github.com/repos/example/campus-lms/issues/comments/42",
+            "html_url": comment_url,
+            "body": "\n".join(
+                (
+                    "decision=ACCEPTED_RESIDUAL_RISK",
+                    "work_item_id=ENG-016",
+                    "finding_id=ENG-016-IMPL-TEST",
+                    "plan_revision=4",
+                    "plan_hash=PLACEHOLDER",
+                    f"candidate_git_sha={candidate}",
+                    "rationale=Human decision for bounded residual risk.",
+                )
+            ),
+            "user": {"type": "User"},
+        }
+        with temporary_repository() as root:
+            work = bind_fixture_work(root, candidate=candidate)
+            comment["body"] = comment["body"].replace(
+                "plan_hash=PLACEHOLDER", f"plan_hash={work['plan_hash']}"
+            )
+            append_finding(
+                root,
+                severity="MEDIUM",
+                status="ACCEPTED_RESIDUAL_RISK",
+                residual_url=comment_url,
+            )
+            self.assertEqual(validate_repository(root, residual_comments=[comment]), [])
+
+            wrong_candidate = dict(comment)
+            wrong_candidate["body"] = wrong_candidate["body"].replace(candidate, "c" * 40)
+            errors = validate_repository(root, residual_comments=[wrong_candidate])
+            self.assertTrue(any("candidate_git_sha" in error for error in errors))
+
+            wrong_finding = dict(comment)
+            wrong_finding["body"] = wrong_finding["body"].replace(
+                "finding_id=ENG-016-IMPL-TEST", "finding_id=ENG-016-IMPL-OTHER"
+            )
+            errors = validate_repository(root, residual_comments=[wrong_finding])
+            self.assertTrue(any("applicable finding" in error for error in errors))
+
+            bot_comment = dict(comment)
+            bot_comment["user"] = {"type": "Bot"}
+            errors = validate_repository(root, residual_comments=[bot_comment])
+            self.assertTrue(any("not a GitHub User" in error for error in errors))
+
+        with temporary_repository() as root:
+            bind_fixture_work(root, candidate=candidate)
+            append_finding(
+                root,
+                severity="MEDIUM",
+                status="ACCEPTED_RESIDUAL_RISK",
+                residual_url=comment_url,
+            )
+            errors = validate_repository(root)
+            self.assertTrue(any("requires exactly one supplied" in error for error in errors))
+
+    def test_finding_status_enum_and_high_critical_residual_bypass_fail_closed(self) -> None:
+        for severity in ("HIGH", "CRITICAL"):
+            with self.subTest(severity=severity), temporary_repository() as root:
+                append_finding(root, severity=severity, status="CLOSED")
+                errors = validate_repository(root)
+                self.assertTrue(any("invalid finding status" in error for error in errors))
+                self.assertTrue(any(f"{severity} finding" in error for error in errors))
+
+            with self.subTest(severity=f"{severity}-accepted"), temporary_repository() as root:
+                append_finding(
+                    root,
+                    severity=severity,
+                    status="ACCEPTED_RESIDUAL_RISK",
+                    residual_url="https://github.com/example/campus-lms/issues/16#issuecomment-42",
+                )
+                errors = validate_repository(root)
+                self.assertTrue(any("cannot accept residual risk" in error for error in errors))
+
+        with temporary_repository() as root:
+            append_finding(root, status="OPEN")
+            reviews = root / "work" / "active" / "ENG-016" / "REVIEWS.md"
+            reviews.write_text(
+                reviews.read_text(encoding="utf-8") + "status=OPEN\n",
+                encoding="utf-8",
+            )
+            errors = validate_repository(root)
+            self.assertTrue(any("repeats status" in error for error in errors))
+
     def test_cleanup_diff_allows_only_active_pair_deletions(self) -> None:
         with temporary_git_repository() as root:
             base = git_commit(root, "base", {"README.md": "base\n"})
@@ -165,12 +490,69 @@ class WorkflowValidatorTests(unittest.TestCase):
                     "work/active/ENG-016/REVIEWS.md": None,
                 },
             )
-            self.assertEqual(validate_cleanup_diff(root, base, candidate, head), [])
+            self.assertEqual(
+                validate_cleanup_diff(root, base, candidate, head, work_id="ENG-016"), []
+            )
             git_commit(root, "unpermitted", {"README.md": "changed\n"})
             bad_head = subprocess.check_output(
                 ["git", "rev-parse", "HEAD"], cwd=root, text=True
             ).strip()
             self.assertTrue(validate_cleanup_diff(root, base, candidate, bad_head))
+
+    def test_cleanup_rejects_multiple_or_wrong_active_work_items(self) -> None:
+        with temporary_git_repository() as root:
+            base = git_commit(root, "base", {"README.md": "base\n"})
+            candidate = git_commit(
+                root,
+                "candidate",
+                {
+                    "work/active/ENG-016/WORK.md": "work 16\n",
+                    "work/active/ENG-016/REVIEWS.md": "reviews 16\n",
+                    "work/active/ENG-017/WORK.md": "work 17\n",
+                    "work/active/ENG-017/REVIEWS.md": "reviews 17\n",
+                },
+            )
+            head = git_commit(
+                root,
+                "cleanup both",
+                {
+                    "work/active/ENG-016/WORK.md": None,
+                    "work/active/ENG-016/REVIEWS.md": None,
+                    "work/active/ENG-017/WORK.md": None,
+                    "work/active/ENG-017/REVIEWS.md": None,
+                },
+            )
+            errors = validate_cleanup_diff(root, base, candidate, head, work_id="ENG-016")
+            self.assertTrue(any("exactly one reviewed work item" in error for error in errors))
+
+        with temporary_git_repository() as root:
+            base = git_commit(root, "base", {"README.md": "base\n"})
+            candidate = git_commit(
+                root,
+                "candidate",
+                {
+                    "work/active/ENG-016/WORK.md": "work 16\n",
+                    "work/active/ENG-016/REVIEWS.md": "reviews 16\n",
+                    "work/active/ENG-017/WORK.md": "work 17\n",
+                    "work/active/ENG-017/REVIEWS.md": "reviews 17\n",
+                },
+            )
+            head = git_commit(
+                root,
+                "wrong cleanup",
+                {
+                    "work/active/ENG-017/WORK.md": None,
+                    "work/active/ENG-017/REVIEWS.md": None,
+                },
+            )
+            errors = validate_cleanup_diff(root, base, candidate, head, work_id="ENG-016")
+            self.assertTrue(any("does not delete the reviewed work item" in error for error in errors))
+
+    def test_nested_phase_archive_is_rejected(self) -> None:
+        with temporary_repository() as root:
+            (root / "work" / "phases" / "archive").mkdir(parents=True)
+            errors = validate_repository(root)
+            self.assertTrue(any("work/phases/archive" in error for error in errors))
 
 
 def temporary_repository():
@@ -217,6 +599,8 @@ def create_fixture(root: Path) -> None:
 Status: `IMPLEMENTING`
 
 Issue: `{work_id}` / GitHub issue `#16`
+
+Issue URL: <https://github.com/example/campus-lms/issues/16>
 
 Issue specification digest:
 `{issue_digest(issue)}`
