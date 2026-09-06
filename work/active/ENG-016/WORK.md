@@ -1,6 +1,6 @@
 # ENG-016 — Repository-native AI engineering workflow harness
 
-Status: `IMPLEMENTING`
+Status: `IMPLEMENTATION_REVIEW`
 
 Issue: `ENG-016` / GitHub issue `#16`
 
@@ -29,7 +29,7 @@ Implementation author actor label: `Codex implementer`
 
 Implementation author session label: `ENG-016-implement-r4-2026-09-06`
 
-Candidate Git commit SHA: `959307b75fffa6986c2587af763f1ce2dfbcd3a7`
+Candidate Git commit SHA: `4491883fde2f108802954602189bcd02878c3923`
 
 This is the approved revision-4 execution contract after Independent PLAN
 Review 5 and the exact human-authored canonical-Issue approval comment. It
@@ -1013,10 +1013,10 @@ PRODUCTION operation/evidence is required for ENG-016.
   `https://github.com/farisakbar28/campus-lms/issues/16#issuecomment-5556469166`
 - Implementation author actor label: `Codex implementer`
 - Implementation author session label: `ENG-016-implement-r4-2026-09-06`
-- Candidate Git commit SHA: `959307b75fffa6986c2587af763f1ce2dfbcd3a7`
+- Candidate Git commit SHA: `4491883fde2f108802954602189bcd02878c3923`
 - Material deviations: `NONE`
-- Concise verification result: `PASS: workflow tests/checks, live bindings, Go race tests, build, help, and diff checks; sandbox retry limitation resolved by local verification environment.`
-- Concise completion summary: `CANDIDATE_CREATED_959307b75fffa6986c2587af763f1ce2dfbcd3a7_STOPPED_FOR_INDEPENDENT_IMPLEMENTATION_REVIEW`
+- Concise verification result: `PASS: workflow tests/checks, live Issue/approval bindings, Go race tests, build, help, and diff checks.`
+- Concise completion summary: `CANDIDATE_CREATED_4491883fde2f108802954602189bcd02878c3923_STOPPED_FOR_INDEPENDENT_IMPLEMENTATION_REVIEW`
 
 ## Finding-resolution matrix for Independent PLAN Reviews 1–3
 
