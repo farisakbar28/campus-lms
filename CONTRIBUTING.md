@@ -16,6 +16,21 @@ The development workflow is:
 Changes intended for master should be developed on short-lived branches and
 submitted through pull requests.
 
+## AI-assisted work items
+
+For AI-assisted work, follow `docs/engineering/ai-workflow.md` and the schemas
+under `work/templates/`. A temporary phase is independently reviewed and
+human-approved before its durable roadmap and GitHub Issue handoff. An active
+Issue work item then follows the repository-local states from `DRAFT` through
+`READY_TO_MERGE`; the human maintainer remains the authority for intent,
+material changes, push, PR mutation, merge, release, and production.
+
+The canonical Issue title/body digest, exact plan revision/hash, directly
+human-authored approval comment, candidate commit, and independent review are
+rechecked at their applicable gates. Active files are removed before merge
+only after the durable native GitHub handoff. Do not create `work/completed/`,
+progress journals, command receipts, or a parallel evidence archive.
+
 ## Branch names
 
 Use a simple engineering category:

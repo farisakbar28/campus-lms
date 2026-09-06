@@ -20,6 +20,19 @@ Current engineering work follows the repository contracts in `AGENTS.md`,
 security-sensitive configuration fails closed; and no automatic paid fallback
 may be introduced.
 
+## Product/Phase Planning synchronization
+
+Temporary Product/Phase Planning is a planning aid, not a durable task
+archive. A phase proposal under `work/phases/active/` records its goal and
+outcomes, dependency order and rationale, exit criteria, exclusions,
+unresolved decisions, revision/hash, risk, and exact existing planning-ID to
+GitHub Issue mapping. A fresh independent review and directly human-authored
+phase approval are required before the accepted decision is synchronized here
+and to the canonical GitHub Issues. The roadmap handoff is reviewed and
+human-merged; temporary phase artifacts are then removed. See
+`docs/engineering/ai-workflow.md` for the complete contract and trust
+boundaries.
+
 ## Product boundary
 
 `campus-lms` is a multi-tenant university Learning Management System. It is
@@ -110,7 +123,7 @@ defer, or disable a capability when verified zero-cost capacity is exhausted.
 |---|---|
 | Implemented foundation | Go API foundation; fail-closed configuration; `/healthz` and dependency-backed `/readyz`; migrations through `0006`; tenant/RLS and composite-constraint foundations; roster repository and handler; access-token and refresh-session primitives; Docker, Compose, health probes, and deployment tooling foundations. |
 | Partial / requires composition | Authentication: primitives exist, but the running server does not yet produce the trusted `Principal` required by protected routes. Backup/restore: local tooling exists, but its validator is stale and does not cover the current schema. |
-| Not implemented | Frontend application; AI subsystem; AI evaluation; complete course-content workflow; assessment and gradebook workflow; attendance workflow; production observability; permanent production ingress; and a current hosted CI baseline. |
+| Not implemented | Frontend application; AI subsystem; AI evaluation; complete course-content workflow; assessment and gradebook workflow; attendance workflow; production observability; permanent production ingress; and a current hosted CI baseline beyond the dated evidence checkpoint below. |
 | Stale / requires reconciliation | Legacy deployment wiring using loopback 8443, Origin-CA files, and hostname-based Caddy TLS conflicts with the later bounded Quick Tunnel validation ADR. |
 | Decision required | AI role allowlist; institutional AI data-processing boundary; permanent production ingress; and fresh external infrastructure/provider validation. |
 
@@ -118,6 +131,15 @@ These classifications are bounded by the current source and documentation.
 Existing authentication and session primitives do not imply complete
 authenticated API behavior, production readiness, or a complete authorization
 boundary.
+
+### Hosted CI evidence checkpoint
+
+On 2026-09-06, a successful hosted `CI / API` run was observed for base SHA
+`92419ed6144e8d07b1392e0b931cdf32a044af77`. This is evidence for that exact
+revision and job only; current hosted status, required-check settings, and
+branch-protection state must be fetched from GitHub before relying on them.
+ENG-016 does not mutate branch protection or claim that local CI makes the
+governance contract tamper-proof.
 
 ## Dependency-oriented capability roadmap
 
