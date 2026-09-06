@@ -13,6 +13,7 @@ SHA. Reviewers are read-only and do not create a parallel evidence archive.
 ```text
 review_id=<ID>
 type=PLAN
+work_item_id=<subject work item>
 actor_label=<reviewer actor>
 session_label=<fresh reviewer session>
 plan_author_actor_label=<plan author actor>

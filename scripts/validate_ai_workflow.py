@@ -69,6 +69,20 @@ IMPLEMENTATION_REVIEW_FIELDS = (
     "candidate_git_sha",
     "verdict",
 )
+PLAN_REVIEW_FIELDS = (
+    "review_id",
+    "type",
+    "work_item_id",
+    "plan_revision",
+    "plan_hash",
+    "issue_digest",
+    "actor_label",
+    "session_label",
+    "plan_author_actor_label",
+    "plan_author_session_label",
+    "fresh_session_attestation",
+    "verdict",
+)
 FINDING_FIELDS = {
     "finding_id",
     "severity",
@@ -277,6 +291,8 @@ def parse_work(text: str) -> dict[str, str | int | None]:
         "issue_url": _angle_field(text, "Issue URL"),
         "status": _field(text, "Status"),
         "issue_digest": _field(text, "Issue specification digest", multiline=True),
+        "plan_author_actor": _field(text, "Plan author actor label"),
+        "plan_author_session": _field(text, "Plan author session label"),
         "plan_revision": _field(text, "Plan revision"),
         "plan_hash": _field(text, "Plan hash"),
         "risk": _field(text, "Risk"),
@@ -409,7 +425,21 @@ def _validate_work_document(
     if candidate_sha != "NONE" and not GIT_SHA_RE.fullmatch(candidate_sha):
         errors.append(f"{path}: invalid candidate Git SHA")
 
-    review_ids = re.findall(r"(?m)^-?\s*Review ID:\s*`?([^`\n]+?)`?\s*$", reviews_text)
+    work_bindings = {
+        **values,
+        "work_id": work_id,
+        "issue_number": issue_number,
+        "issue_url": issue_url,
+    }
+
+    review_ids = re.findall(
+        r"(?m)^-?\s*Review ID:\s*`?([^`\n]+?)`?\s*$", reviews_text
+    )
+    review_ids.extend(
+        value
+        for block in _review_blocks(reviews_text)
+        for value in _key_value_fields(block).get("review_id", [])
+    )
     if status not in {"DRAFT"} and not review_ids:
         errors.append(f"{path}: active work has no review record")
 
@@ -423,8 +453,11 @@ def _validate_work_document(
     }
     if status in approval_states and approval_url == "NONE":
         errors.append(f"{path}: {status} requires a plan-approval URL")
-    if status in approval_states and not _has_approved_plan_review(reviews_text):
-        errors.append(f"{path}: {status} requires an APPROVED plan review")
+    if status in approval_states:
+        plan_review_errors = _plan_review_gate_errors(reviews_text, work_bindings)
+        if plan_review_errors:
+            errors.append(f"{path}: {status} requires an APPROVED plan review")
+            errors.extend(f"{path}: {error}" for error in plan_review_errors)
 
     implementation_states = {
         "IMPLEMENTING",
@@ -444,12 +477,6 @@ def _validate_work_document(
     } and candidate_sha == "NONE":
         errors.append(f"{path}: {status} requires a candidate Git SHA")
 
-    work_bindings = {
-        **values,
-        "work_id": work_id,
-        "issue_number": issue_number,
-        "issue_url": issue_url,
-    }
     if status in {"READY_FOR_PR", "PR_VALIDATION", "READY_TO_MERGE"}:
         if not _has_approved_implementation_review(reviews_text, work_bindings):
             errors.append(
@@ -625,16 +652,232 @@ def _has_approved_implementation_review(
     return matches == 1
 
 
-def _has_approved_plan_review(reviews_text: str) -> bool:
-    blocks = _review_blocks(reviews_text)
-    for block in blocks:
-        if not re.search(r"(?m)^-\s*Review type:\s*`?PLAN`?\s*$", block):
+def _legacy_field_values(
+    block: str, labels: Mapping[str, str]
+) -> dict[str, list[str]]:
+    """Extract only explicitly labelled legacy Markdown fields."""
+
+    values: dict[str, list[str]] = {}
+    lines = _normalise_lines(block)
+    for index, line in enumerate(lines):
+        for key, label in labels.items():
+            match = re.fullmatch(rf"-\s*{re.escape(label)}:\s*(.*)", line)
+            if not match:
+                continue
+            value = match.group(1).strip()
+            if not value:
+                continuation: list[str] = []
+                for continuation_line in lines[index + 1 :]:
+                    if re.match(r"^\s*-\s+", continuation_line):
+                        break
+                    if re.match(r"^\s*#{1,6}\s+", continuation_line):
+                        break
+                    if continuation_line.strip():
+                        continuation.append(continuation_line.strip())
+                value = " ".join(continuation)
+            if len(value) >= 2 and value[0] == "`" and value[-1] == "`":
+                value = value[1:-1]
+            values.setdefault(key, []).append(value)
+            break
+    return values
+
+
+LEGACY_PLAN_REVIEW_LABELS = {
+    "review_id": "Review ID",
+    "type": "Review type",
+    "work_item_id": "Subject work item",
+    "plan_revision": "Subject plan revision",
+    "plan_hash": "Exact reviewed plan checkpoint SHA",
+    "plan_hash_recomputed": "Independently recomputed normative SHA",
+    "issue_digest": "Exact Issue specification digest",
+    "issue_digest_recomputed": "Independently recomputed Issue specification digest",
+    "actor_label": "Actor",
+    "session_label": "Session label",
+    "plan_author_actor_label": "Plan author actor label",
+    "plan_author_session_label": "Plan author session label",
+    "fresh_session_attestation": "Fresh-session attestation",
+    "verdict": "Verdict",
+}
+
+
+def _required_review_values(
+    fields: Mapping[str, list[str]],
+    required: Iterable[str],
+    prefix: str,
+) -> tuple[dict[str, str], list[str]]:
+    values: dict[str, str] = {}
+    errors: list[str] = []
+    for key in required:
+        occurrences = fields.get(key, [])
+        if not occurrences:
+            errors.append(f"{prefix} is missing {key}")
             continue
-        if re.search(r"(?m)^-\s*Verdict:\s*`?APPROVED`?\s*$", block):
-            return True
-        if re.search(r"(?m)^`APPROVED`\s*$", block):
-            return True
-    return False
+        if len(occurrences) != 1:
+            errors.append(f"{prefix} repeats {key}")
+            continue
+        value = occurrences[0]
+        if not value.strip():
+            errors.append(f"{prefix} has an empty {key}")
+            continue
+        values[key] = value
+    return values, errors
+
+
+def _validate_plan_review_bindings(
+    values: Mapping[str, str],
+    work: Mapping[str, str | int | None],
+    *,
+    prefix: str = "plan review",
+) -> list[str]:
+    errors: list[str] = []
+
+    if values.get("type") != "PLAN":
+        errors.append(f"{prefix} type must be PLAN")
+
+    work_item_id = values.get("work_item_id")
+    if work_item_id and not WORK_ID_RE.fullmatch(work_item_id):
+        errors.append(f"{prefix} has an invalid work_item_id")
+
+    revision = values.get("plan_revision")
+    if revision and (
+        not revision.isdigit() or int(revision) < 1 or str(int(revision)) != revision
+    ):
+        errors.append(f"{prefix} has an invalid plan_revision")
+
+    for key in ("plan_hash", "issue_digest"):
+        value = values.get(key)
+        if value and not SHA256_RE.fullmatch(value):
+            errors.append(f"{prefix} has an invalid {key}")
+
+    for key in (
+        "review_id",
+        "actor_label",
+        "session_label",
+        "plan_author_actor_label",
+        "plan_author_session_label",
+        "fresh_session_attestation",
+    ):
+        if values.get(key) == "NONE":
+            errors.append(f"{prefix} has an invalid {key}")
+
+    if (
+        values.get("actor_label")
+        and values.get("plan_author_actor_label")
+        and values["actor_label"] == values["plan_author_actor_label"]
+    ):
+        errors.append(f"{prefix} reviewer actor equals author actor")
+    if (
+        values.get("session_label")
+        and values.get("plan_author_session_label")
+        and values["session_label"] == values["plan_author_session_label"]
+    ):
+        errors.append(f"{prefix} reviewer session equals author session")
+
+    expected = {
+        "work_item_id": str(work.get("work_id")),
+        "plan_revision": str(work.get("plan_revision")),
+        "plan_hash": str(work.get("plan_hash")),
+        "issue_digest": str(work.get("issue_digest")),
+        "plan_author_actor_label": str(work.get("plan_author_actor")),
+        "plan_author_session_label": str(work.get("plan_author_session")),
+    }
+    for key, expected_value in expected.items():
+        if values.get(key) != expected_value:
+            errors.append(f"{prefix} {key} does not match current WORK.md")
+
+    if values.get("verdict") != "APPROVED":
+        errors.append(f"{prefix} verdict is not APPROVED")
+    return errors
+
+
+def _canonical_plan_review_errors(
+    block: str, work: Mapping[str, str | int | None]
+) -> list[str]:
+    fields = _key_value_fields(block)
+    allowed = set(PLAN_REVIEW_FIELDS) | FINDING_FIELDS
+    errors = [
+        f"plan review has unsupported field {key}"
+        for key in sorted(set(fields) - allowed)
+    ]
+    values, required_errors = _required_review_values(
+        fields, PLAN_REVIEW_FIELDS, "plan review"
+    )
+    errors.extend(required_errors)
+
+    legacy_type_values = _legacy_field_values(block, {"type": "Review type"}).get(
+        "type", []
+    )
+    if legacy_type_values:
+        errors.append("plan review mixes canonical and legacy metadata")
+
+    errors.extend(_validate_plan_review_bindings(values, work))
+    return errors
+
+
+def _legacy_plan_review_errors(
+    block: str, work: Mapping[str, str | int | None]
+) -> list[str]:
+    fields = _legacy_field_values(block, LEGACY_PLAN_REVIEW_LABELS)
+    required = tuple(LEGACY_PLAN_REVIEW_LABELS)
+    values, errors = _required_review_values(fields, required, "plan review")
+
+    for key, recomputed_key in (
+        ("plan_hash", "plan_hash_recomputed"),
+        ("issue_digest", "issue_digest_recomputed"),
+    ):
+        if (
+            key in values
+            and recomputed_key in values
+            and values[key] != values[recomputed_key]
+        ):
+            errors.append(f"legacy plan review {key} attestations do not match")
+
+    errors.extend(_validate_plan_review_bindings(values, work))
+    return errors
+
+
+def _plan_review_kind(block: str) -> str | None:
+    fields = _key_value_fields(block)
+    legacy_type_values = _legacy_field_values(block, {"type": "Review type"}).get(
+        "type", []
+    )
+    canonical_signal = bool(set(fields) & (set(PLAN_REVIEW_FIELDS) | {"review_type"}))
+    if "type" in fields:
+        if any(value == "PLAN" for value in fields["type"]):
+            return "canonical"
+        if any(value == "IMPLEMENTATION" for value in fields["type"]):
+            return (
+                "legacy"
+                if legacy_type_values and "PLAN" in legacy_type_values
+                else None
+            )
+        return "canonical"
+    if legacy_type_values:
+        return "legacy" if "PLAN" in legacy_type_values else None
+    return "canonical" if canonical_signal else None
+
+
+def _plan_review_gate_errors(
+    reviews_text: str, work: Mapping[str, str | int | None]
+) -> list[str]:
+    candidates = [
+        (kind, block)
+        for block in _review_blocks(reviews_text)
+        if (kind := _plan_review_kind(block)) is not None
+    ]
+    if not candidates:
+        return ["plan review record is missing"]
+    kind, block = candidates[-1]
+    if kind == "canonical":
+        return _canonical_plan_review_errors(block, work)
+    return _legacy_plan_review_errors(block, work)
+
+
+def _has_approved_plan_review(
+    reviews_text: str,
+    work: Mapping[str, str | int | None] | None = None,
+) -> bool:
+    return not _plan_review_gate_errors(reviews_text, work or {})
 
 
 def _review_relationship_errors(path: Path, reviews_text: str) -> list[str]:

@@ -1141,3 +1141,68 @@ verdict=CHANGES_REQUIRED
 - Plan hash: `sha256:d6c0464e030f68eb2a9f1089c233e091725a306e9af5d3a7caa0bffa9c7cf934`
 - Issue digest: `sha256:c1cf78cad608524cec118bc469fc223f2cf3d556f37fef0d17c91fc00850ccf4`
 - Verdict: `CHANGES_REQUIRED`
+
+## Review 7
+
+review_id=ENG-016-IMPLEMENTATION-REVIEW-002
+review_type=IMPLEMENTATION
+type=IMPLEMENTATION
+work_item_id=ENG-016
+plan_revision=4
+plan_hash=sha256:d6c0464e030f68eb2a9f1089c233e091725a306e9af5d3a7caa0bffa9c7cf934
+issue_digest=sha256:c1cf78cad608524cec118bc469fc223f2cf3d556f37fef0d17c91fc00850ccf4
+implementation_candidate_sha=4491883fde2f108802954602189bcd02878c3923
+candidate_git_sha=4491883fde2f108802954602189bcd02878c3923
+candidate_parent_sha=925b483dc043a43c24bc22845cc5a74705d6eb51
+reviewer_actor_label=Codex implementation reviewer r2
+actor_label=Codex implementation reviewer r2
+fresh_reviewer_session_label=ENG-016-implementation-review-r2-2026-09-06
+session_label=ENG-016-implementation-review-r2-2026-09-06
+implementation_author_actor_label=Codex implementer
+implementation_author_session_label=ENG-016-implement-r4-2026-09-06
+fresh_session_attestation=Fresh independent implementation-review session; I re-fetched the canonical Issue and approval read-only, recomputed the plan and Issue bindings, inspected the complete base-to-candidate diff, reproduced the prior findings independently, and did not rely on prior reviewer conclusions as evidence.
+material_deviation=NONE
+recorded_at=2026-09-06T04:36:37Z
+
+findings:
+finding_id=ENG-016-IMPL-001
+severity=HIGH
+status=RESOLVED
+summary=READY_FOR_PR now requires one complete implementation review with current work-item, plan, Issue, candidate, author, reviewer, session, attestation, and APPROVED bindings.
+
+finding_id=ENG-016-IMPL-002
+severity=HIGH
+status=RESOLVED
+summary=Approval references and supplied Issue JSON now bind web/API URLs and repository/Issue identity to the canonical Work mapping.
+
+finding_id=ENG-016-IMPL-003
+severity=HIGH
+status=RESOLVED
+summary=Residual-risk comments now bind the exact current candidate, finding, work item, plan, and canonical comment URL with matching native comment identity.
+
+finding_id=ENG-016-IMPL-004
+severity=HIGH
+status=RESOLVED
+summary=Finding status is allow-listed and unsupported states cannot resolve HIGH or CRITICAL findings.
+
+finding_id=ENG-016-IMPL-005
+severity=MEDIUM
+status=RESOLVED
+summary=Standard GitHub Issue JSON now distinguishes API url, html_url, and repository_url while retaining identity and digest checks.
+
+finding_id=ENG-016-IMPL-006
+severity=HIGH
+status=RESOLVED
+summary=Cleanup validation now requires exactly one reviewed active work item and rejects nested completed/archive structures under work/.
+
+finding_id=ENG-016-IMPL-007
+severity=MEDIUM
+status=RESOLVED
+summary=Focused tests now cover the required positive and negative paths for review bindings, URLs, residual risk, finding states, cleanup, archives, and malformed input.
+
+finding_id=ENG-016-IMPL-008
+severity=HIGH
+status=OPEN
+summary=The plan-review gate does not validate the prescribed key/value plan-review record or bind an approved legacy prose review to the current plan revision, plan hash, Issue digest, reviewer/author identities, or fresh session; a minimal unbound APPROVED plan review passes while a valid template-shaped record is rejected.
+
+verdict=CHANGES_REQUIRED

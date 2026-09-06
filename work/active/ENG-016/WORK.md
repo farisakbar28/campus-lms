@@ -1,6 +1,6 @@
 # ENG-016 — Repository-native AI engineering workflow harness
 
-Status: `IMPLEMENTATION_REVIEW`
+Status: `IMPLEMENTING`
 
 Issue: `ENG-016` / GitHub issue `#16`
 
@@ -1013,10 +1013,10 @@ PRODUCTION operation/evidence is required for ENG-016.
   `https://github.com/farisakbar28/campus-lms/issues/16#issuecomment-5556469166`
 - Implementation author actor label: `Codex implementer`
 - Implementation author session label: `ENG-016-implement-r4-2026-09-06`
-- Candidate Git commit SHA: `4491883fde2f108802954602189bcd02878c3923`
+- Candidate Git commit SHA: `NONE`
 - Material deviations: `NONE`
-- Concise verification result: `PASS: workflow tests/checks, live Issue/approval bindings, Go race tests, build, help, and diff checks.`
-- Concise completion summary: `CANDIDATE_CREATED_4491883fde2f108802954602189bcd02878c3923_STOPPED_FOR_INDEPENDENT_IMPLEMENTATION_REVIEW`
+- Concise verification result: `IN_PROGRESS: PLAN-review gate remediation and focused regression tests.`
+- Concise completion summary: `IMPLEMENTATION_IN_PROGRESS_FOR_ENG-016-IMPL-008`
 
 ## Finding-resolution matrix for Independent PLAN Reviews 1–3
 

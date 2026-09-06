@@ -39,6 +39,104 @@ def bind_fixture_work(
     return parse_work(text)
 
 
+def plan_review_record(
+    root: Path,
+    *,
+    verdict: str = "APPROVED",
+    omitted: str | None = None,
+    **overrides: str,
+) -> str:
+    from scripts.validate_ai_workflow import parse_work
+
+    work = parse_work(
+        (root / "work" / "active" / "ENG-016" / "WORK.md").read_text(
+            encoding="utf-8"
+        )
+    )
+    fields = {
+        "review_id": "ENG-016-PLAN-REVIEW-099",
+        "type": "PLAN",
+        "work_item_id": str(work["work_id"]),
+        "plan_revision": str(work["plan_revision"]),
+        "plan_hash": str(work["plan_hash"]),
+        "issue_digest": str(work["issue_digest"]),
+        "actor_label": "Fixture plan reviewer",
+        "session_label": "Fixture plan reviewer session",
+        "plan_author_actor_label": str(work["plan_author_actor"]),
+        "plan_author_session_label": str(work["plan_author_session"]),
+        "fresh_session_attestation": "Fresh independent plan review session.",
+        "verdict": verdict,
+    }
+    fields.update(overrides)
+    if omitted is not None:
+        fields.pop(omitted, None)
+    return "\n".join(f"{key}={value}" for key, value in fields.items())
+
+
+def replace_with_plan_review(
+    root: Path,
+    *,
+    verdict: str = "APPROVED",
+    omitted: str | None = None,
+    **overrides: str,
+) -> None:
+    reviews = root / "work" / "active" / "ENG-016" / "REVIEWS.md"
+    reviews.write_text(
+        "# ENG-016 reviews\n\n## Review 1\n\n"
+        + plan_review_record(
+            root, verdict=verdict, omitted=omitted, **overrides
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+
+def legacy_plan_review_record(
+    root: Path, *, omitted: str | None = None, **overrides: str
+) -> str:
+    from scripts.validate_ai_workflow import parse_work
+
+    work = parse_work(
+        (root / "work" / "active" / "ENG-016" / "WORK.md").read_text(
+            encoding="utf-8"
+        )
+    )
+    fields = {
+        "Review ID": "ENG-016-PLAN-REVIEW-099",
+        "Review type": "PLAN",
+        "Subject work item": str(work["work_id"]),
+        "Subject plan revision": str(work["plan_revision"]),
+        "Exact reviewed plan checkpoint SHA": str(work["plan_hash"]),
+        "Independently recomputed normative SHA": str(work["plan_hash"]),
+        "Exact Issue specification digest": str(work["issue_digest"]),
+        "Independently recomputed Issue specification digest": str(
+            work["issue_digest"]
+        ),
+        "Actor": "Fixture plan reviewer",
+        "Session label": "Fixture plan reviewer session",
+        "Plan author actor label": str(work["plan_author_actor"]),
+        "Plan author session label": str(work["plan_author_session"]),
+        "Fresh-session attestation": "Fresh independent plan review session.",
+        "Verdict": "APPROVED",
+    }
+    fields.update(overrides)
+    if omitted is not None:
+        fields.pop(omitted, None)
+    return "\n".join(f"- {key}: `{value}`" for key, value in fields.items())
+
+
+def replace_with_legacy_plan_review(
+    root: Path, *, omitted: str | None = None, **overrides: str
+) -> None:
+    reviews = root / "work" / "active" / "ENG-016" / "REVIEWS.md"
+    reviews.write_text(
+        "# ENG-016 reviews\n\n## Review 1\n\n"
+        + legacy_plan_review_record(root, omitted=omitted, **overrides)
+        + "\n",
+        encoding="utf-8",
+    )
+
+
 def append_exact_implementation_review(
     root: Path,
     *,
@@ -137,6 +235,144 @@ class WorkflowValidatorTests(unittest.TestCase):
     def test_repository_fixture_passes_and_contract_is_machine_checkable(self) -> None:
         with temporary_repository() as root:
             self.assertEqual(validate_repository(root), [])
+
+    def test_canonical_plan_review_requires_exact_current_bindings(self) -> None:
+        required = (
+            "review_id",
+            "type",
+            "work_item_id",
+            "plan_revision",
+            "plan_hash",
+            "issue_digest",
+            "actor_label",
+            "session_label",
+            "plan_author_actor_label",
+            "plan_author_session_label",
+            "fresh_session_attestation",
+            "verdict",
+        )
+        for field in required:
+            with self.subTest(missing=field), temporary_repository() as root:
+                replace_with_plan_review(root, omitted=field)
+                errors = validate_repository(root)
+                self.assertTrue(
+                    any(f"missing {field}" in error for error in errors), errors
+                )
+
+        mismatches = {
+            "work_item_id": "ENG-017",
+            "plan_revision": "3",
+            "plan_hash": "sha256:" + "0" * 64,
+            "issue_digest": "sha256:" + "0" * 64,
+            "plan_author_actor_label": "Foreign planner",
+            "plan_author_session_label": "Foreign planner session",
+        }
+        for field, value in mismatches.items():
+            with self.subTest(mismatch=field), temporary_repository() as root:
+                replace_with_plan_review(root, **{field: value})
+                errors = validate_repository(root)
+                self.assertTrue(
+                    any(
+                        f"{field} does not match current WORK.md" in error
+                        for error in errors
+                    ),
+                    errors,
+                )
+
+    def test_canonical_plan_review_requires_independence_freshness_and_verdict(self) -> None:
+        with temporary_repository() as root:
+            from scripts.validate_ai_workflow import parse_work
+
+            work = parse_work(
+                (root / "work" / "active" / "ENG-016" / "WORK.md").read_text(
+                    encoding="utf-8"
+                )
+            )
+            replace_with_plan_review(
+                root,
+                actor_label=str(work["plan_author_actor"]),
+                session_label=str(work["plan_author_session"]),
+            )
+            errors = validate_repository(root)
+            self.assertTrue(
+                any("reviewer actor equals author actor" in error for error in errors)
+            )
+            self.assertTrue(
+                any("reviewer session equals author session" in error for error in errors)
+            )
+
+        with temporary_repository() as root:
+            replace_with_plan_review(root, verdict="CHANGES_REQUIRED")
+            errors = validate_repository(root)
+            self.assertTrue(
+                any("verdict is not APPROVED" in error for error in errors)
+            )
+
+        with temporary_repository() as root:
+            replace_with_plan_review(root)
+            reviews = root / "work" / "active" / "ENG-016" / "REVIEWS.md"
+            reviews.write_text(
+                reviews.read_text(encoding="utf-8")
+                + "plan_hash=sha256:"
+                + "0" * 64
+                + "\n",
+                encoding="utf-8",
+            )
+            errors = validate_repository(root)
+            self.assertTrue(any("repeats plan_hash" in error for error in errors))
+
+    def test_minimal_prose_plan_review_is_not_an_approval(self) -> None:
+        with temporary_repository() as root:
+            from scripts.validate_ai_workflow import parse_work
+
+            work = parse_work(
+                (root / "work" / "active" / "ENG-016" / "WORK.md").read_text(
+                    encoding="utf-8"
+                )
+            )
+            reviews = root / "work" / "active" / "ENG-016" / "REVIEWS.md"
+            reviews.write_text(
+                "# ENG-016 reviews\n\n## Review 1\n\n"
+                "- Review ID: `ENG-016-PLAN-REVIEW-099`\n"
+                "- Review type: `PLAN`\n"
+                f"- Exact reviewed plan checkpoint SHA: `{work['plan_hash']}`\n"
+                "- Verdict: `APPROVED`\n",
+                encoding="utf-8",
+            )
+            errors = validate_repository(root)
+            self.assertTrue(any("missing work_item_id" in error for error in errors))
+            self.assertTrue(any("missing plan_revision" in error for error in errors))
+
+    def test_current_bootstrap_legacy_plan_review_requires_explicit_bindings(self) -> None:
+        with temporary_repository() as root:
+            replace_with_legacy_plan_review(root)
+            self.assertEqual(validate_repository(root), [])
+
+        with temporary_repository() as root:
+            record = legacy_plan_review_record(
+                root, omitted="Subject plan revision"
+            )
+            reviews = root / "work" / "active" / "ENG-016" / "REVIEWS.md"
+            reviews.write_text(
+                "# ENG-016 reviews\n\n## Review 1\n\n" + record + "\n",
+                encoding="utf-8",
+            )
+            errors = validate_repository(root)
+            self.assertTrue(any("missing plan_revision" in error for error in errors))
+
+        with temporary_repository() as root:
+            record = legacy_plan_review_record(
+                root, omitted="Independently recomputed normative SHA"
+            )
+            reviews = root / "work" / "active" / "ENG-016" / "REVIEWS.md"
+            reviews.write_text(
+                "# ENG-016 reviews\n\n## Review 1\n\n" + record + "\n",
+                encoding="utf-8",
+            )
+            errors = validate_repository(root)
+            self.assertTrue(
+                any("missing plan_hash_recomputed" in error for error in errors)
+            )
 
     def test_invalid_state_and_equal_review_identity_are_rejected(self) -> None:
         with temporary_repository() as root:
@@ -605,6 +841,10 @@ Issue URL: <https://github.com/example/campus-lms/issues/16>
 Issue specification digest:
 `{issue_digest(issue)}`
 
+Plan author actor label: `Fixture planner`
+
+Plan author session label: `Fixture planner session`
+
 Plan revision: `4`
 
 Plan hash: `PLACEHOLDER`
@@ -638,7 +878,9 @@ Candidate Git commit SHA: `NONE`
     active.mkdir(parents=True)
     (active / "WORK.md").write_text(work_text, encoding="utf-8")
     (active / "REVIEWS.md").write_text(
-        "## Review 1\n\n- Review ID: `ENG-016-PLAN-REVIEW-001`\n- Review type: `PLAN`\n- Verdict: `APPROVED`\n",
+        "# ENG-016 reviews\n\n## Review 1\n\n"
+        + plan_review_record(root)
+        + "\n",
         encoding="utf-8",
     )
 
