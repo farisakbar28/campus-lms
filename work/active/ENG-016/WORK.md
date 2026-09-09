@@ -1,6 +1,6 @@
 # ENG-016 — Repository-native AI engineering workflow harness
 
-Status: `IMPLEMENTATION_REVIEW`
+Status: `IMPLEMENTING`
 
 Issue: `ENG-016` / GitHub issue `#16`
 
@@ -1015,8 +1015,8 @@ PRODUCTION operation/evidence is required for ENG-016.
 - Implementation author session label: `ENG-016-implement-r4-2026-09-06`
 - Candidate Git commit SHA: `c03eeeab7a9ad7508246214f64c42b7027c627c6`
 - Material deviations: `NONE`
-- Concise verification result: `PASS: workflow tests, canonical/bootstrap/legacy/author probes, Go race tests, build, go vet, go mod verify, formatting, and diff checks; workflow-check expected-fails on OPEN ENG-016-IMPL-008 and ENG-016-IMPL-009 pending fresh review.`
-- Concise completion summary: `CANDIDATE_CREATED_c03eeeab7a9ad7508246214f64c42b7027c627c6_STOPPED_FOR_INDEPENDENT_IMPLEMENTATION_REVIEW`
+- Concise verification result: `PASS: 30 hermetic workflow tests, targeted legacy/MEDIUM/cleanup probes, cleanup-removed workflow test/check simulation, Go race tests, build, go vet, go mod verify, Python compile, Go formatting, help, and diff checks; workflow-check expected-fails only on Review 10 OPEN HIGH findings ENG-016-IMPL-008, ENG-016-IMPL-010, and ENG-016-IMPL-011 pending fresh review.`
+- Concise completion summary: `IMPLEMENTATION_COMPLETE_PENDING_NEW_CANDIDATE_BINDING`
 
 ## Finding-resolution matrix for Independent PLAN Reviews 1–3
 

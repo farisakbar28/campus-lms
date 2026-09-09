@@ -819,20 +819,131 @@ def _canonical_plan_review_errors(
     return errors
 
 
-def _has_legacy_plan_review_marker(block: str) -> bool:
-    """Recognize only explicit legacy PLAN field lines for rejection.
+LEGACY_REVIEW_LABELS = {
+    "review id",
+    "review type",
+    "recorded at",
+    "actor",
+    "actor role",
+    "session label",
+    "plan author actor label",
+    "plan author session label",
+    "fresh-session attestation",
+    "subject work item",
+    "subject plan revision",
+    "exact reviewed plan checkpoint sha",
+    "independently recomputed normative sha",
+    "exact issue specification digest",
+    "independently recomputed issue specification digest",
+    "full reviewed work.md sha-256",
+    "verdict",
+}
+LEGACY_PLAN_ONLY_LABELS = {
+    "plan author actor label",
+    "plan author session label",
+    "subject plan revision",
+    "exact reviewed plan checkpoint sha",
+    "independently recomputed normative sha",
+    "exact issue specification digest",
+    "independently recomputed issue specification digest",
+    "full reviewed work.md sha-256",
+}
 
-    This is deliberately not a legacy parser.  Acceptance is by the exact
-    historical block digest below; an explicit legacy PLAN marker elsewhere is
-    sufficient only to fail closed.
+
+def _legacy_review_fields(block: str) -> dict[str, list[str]]:
+    """Parse only the historical Markdown review-metadata shape.
+
+    A value may be on its label line or on indented continuation lines.  This
+    parser is used solely to reject non-canonical records; it never supplies an
+    approval binding.
     """
 
-    for line in _normalise_lines(block):
-        if re.fullmatch(r"-\s*Review type:\s*`?PLAN`?", line):
-            return True
-        if re.fullmatch(r"-\s*Subject plan revision:\s*`[^`\n]+`", line):
-            return True
-    return False
+    lines = _normalise_lines(block)
+    fields: dict[str, list[str]] = {}
+    index = 1 if lines and re.fullmatch(r"##\s+Review\b.*", lines[0]) else 0
+    while index < len(lines):
+        line = lines[index]
+        if re.match(r"^#{2,}\s+", line):
+            break
+        match = re.fullmatch(
+            r"\s*(?:-\s+)?(?P<label>[^:\n]+):(?P<value>.*)", line
+        )
+        if match is None:
+            index += 1
+            continue
+        label = " ".join(match.group("label").split()).casefold()
+        if label not in LEGACY_REVIEW_LABELS:
+            index += 1
+            continue
+
+        parts = [match.group("value").strip()]
+        continuation = index + 1
+        while continuation < len(lines):
+            candidate = lines[continuation]
+            if re.match(r"^#{2,}\s+", candidate) or re.match(
+                r"^\s*(?:-\s+)?[^:\n]+:", candidate
+            ):
+                break
+            if candidate.strip():
+                if not candidate[:1].isspace() and not re.fullmatch(
+                    r"`?(?:PLAN|IMPLEMENTATION|APPROVED)`?", candidate.strip()
+                ):
+                    break
+                parts.append(candidate.strip())
+            continuation += 1
+        value = " ".join(part for part in parts if part).strip("` .\t")
+        fields.setdefault(label, []).append(value)
+        index = continuation
+    return fields
+
+
+def _has_legacy_plan_review_marker(block: str) -> bool:
+    """Detect a structural attempt to use the retired PLAN-review schema.
+
+    Exact historical acceptance is handled only by the pinned Review 5 digest.
+    This routine cannot approve anything and deliberately ignores ordinary
+    narrative in an explicitly non-PLAN review.
+    """
+
+    fields = _legacy_review_fields(block)
+    review_types = {
+        value.strip("` .\t").casefold()
+        for value in fields.get("review type", [])
+    }
+    if "plan" in review_types:
+        return True
+    if "review type" in fields and "implementation" not in review_types:
+        return True
+    if set(fields) & LEGACY_PLAN_ONLY_LABELS:
+        return True
+    if any("plan-review" in value.casefold() for value in fields.get("review id", [])):
+        return True
+
+    canonical_types = {
+        value.casefold() for value in _key_value_fields(block).get("type", [])
+    }
+    explicitly_non_plan = "implementation" in review_types or "implementation" in canonical_types
+    if explicitly_non_plan:
+        return False
+
+    # Bare decision tokens immediately below a Review heading are an attempted
+    # record, not general finding prose.  Limit this to standalone tokens in
+    # the metadata preamble so narrative sentences are never classified by
+    # merely containing PLAN or APPROVED.
+    lines = _normalise_lines(block)
+    decision_tokens: set[str] = set()
+    for line in lines[1:]:
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if stripped.startswith(("-", "#")) or "=" in stripped:
+            continue
+        tokens = re.findall(r"[A-Za-z_]+", stripped.upper())
+        if tokens and set(tokens) <= {"PLAN", "APPROVED"}:
+            decision_tokens.update(tokens)
+            continue
+        break
+    return {"PLAN", "APPROVED"} <= decision_tokens
 
 
 def _is_bootstrap_plan_work(work: Mapping[str, str | int | None]) -> bool:
@@ -842,13 +953,33 @@ def _is_bootstrap_plan_work(work: Mapping[str, str | int | None]) -> bool:
 def _has_exact_bootstrap_plan_review(
     blocks: list[str], work: Mapping[str, str | int | None]
 ) -> bool:
-    if not _is_bootstrap_plan_work(work):
-        return False
     index = BOOTSTRAP_PLAN_REVIEW_INDEX
-    if len(blocks) <= index or not blocks[index].startswith("## Review 5\n"):
+    if len(blocks) <= index:
         return False
     digest = hashlib.sha256(normalize_document(blocks[index])).hexdigest()
-    return digest == BOOTSTRAP_PLAN_REVIEW_BLOCK_SHA256
+    return _matches_bootstrap_plan_review_identity(
+        work=work,
+        review_index=index,
+        heading=blocks[index].splitlines()[0] if blocks[index].splitlines() else "",
+        block_sha256=digest,
+    )
+
+
+def _matches_bootstrap_plan_review_identity(
+    *,
+    work: Mapping[str, str | int | None],
+    review_index: int,
+    heading: str,
+    block_sha256: str,
+) -> bool:
+    """Match the one pinned ENG-016 bootstrap review without parsing it."""
+
+    return (
+        _is_bootstrap_plan_work(work)
+        and review_index == BOOTSTRAP_PLAN_REVIEW_INDEX
+        and heading == "## Review 5"
+        and block_sha256 == BOOTSTRAP_PLAN_REVIEW_BLOCK_SHA256
+    )
 
 
 def _plan_review_kind(block: str) -> str | None:
@@ -1031,6 +1162,8 @@ def _finding_gate_errors(
                 )
             elif status != "RESOLVED":
                 errors.append(f"{path}: {severity} finding {finding_id} is not resolved")
+        elif severity == "MEDIUM" and status == "OPEN":
+            errors.append(f"{path}: MEDIUM finding {finding_id} is not resolved")
 
         if status == "ACCEPTED_RESIDUAL_RISK":
             comment_url = record.get("residual_risk_comment_url")

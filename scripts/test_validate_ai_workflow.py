@@ -2,16 +2,22 @@
 
 from __future__ import annotations
 
-import json
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from scripts.validate_ai_workflow import (
+    BOOTSTRAP_PLAN_REVIEW_BLOCK_SHA256,
+    BOOTSTRAP_PLAN_REVIEW_INDEX,
+    BOOTSTRAP_PLAN_REVIEW_WORK,
     CONTRACT_VERSION,
     PLAN_BEGIN,
     PLAN_END,
+    _matches_bootstrap_plan_review_identity,
+    _plan_review_gate_errors,
     issue_digest,
     normalize_document,
     plan_hash_from_text,
@@ -19,6 +25,20 @@ from scripts.validate_ai_workflow import (
     validate_cleanup_diff,
     validate_repository,
 )
+
+HISTORICAL_REVIEW_5_SHA256 = (
+    "828ef0618dd74baf2edc6262e273ebae0e124ea5a9dec7c46c24c221502f9e58"
+)
+HISTORICAL_REVIEW_5_WORK = {
+    "work_id": "ENG-016",
+    "issue_number": 16,
+    "issue_url": "https://github.com/farisakbar28/campus-lms/issues/16",
+    "plan_revision": "4",
+    "plan_hash": "sha256:d6c0464e030f68eb2a9f1089c233e091725a306e9af5d3a7caa0bffa9c7cf934",
+    "issue_digest": "sha256:c1cf78cad608524cec118bc469fc223f2cf3d556f37fef0d17c91fc00850ccf4",
+    "plan_author_actor": "Codex planner",
+    "plan_author_session": "ENG-016-plan-r4-2026-09-06",
+}
 
 
 def bind_fixture_work(
@@ -125,43 +145,12 @@ def legacy_plan_review_record(
     return "\n".join(f"- {key}: `{value}`" for key, value in fields.items())
 
 
-def replace_with_legacy_plan_review(
-    root: Path, *, omitted: str | None = None, **overrides: str
-) -> None:
-    reviews = root / "work" / "active" / "ENG-016" / "REVIEWS.md"
-    reviews.write_text(
-        "# ENG-016 reviews\n\n## Review 1\n\n"
-        + legacy_plan_review_record(root, omitted=omitted, **overrides)
-        + "\n",
-        encoding="utf-8",
-    )
-
-
-def replace_with_current_bootstrap_review(root: Path) -> None:
-    """Install the repository's exact historical ENG-016 bootstrap prefix."""
-
-    source_root = Path(__file__).resolve().parents[1]
-    source_work = source_root / "work" / "active" / "ENG-016" / "WORK.md"
-    source_reviews = source_root / "work" / "active" / "ENG-016" / "REVIEWS.md"
-    reviews_text = source_reviews.read_text(encoding="utf-8")
-    prefix, separator, _ = reviews_text.partition("\n## Review 6\n")
-    if not separator:
-        raise AssertionError("current ENG-016 reviews are missing historical Review 6")
-    active = root / "work" / "active" / "ENG-016"
-    (active / "WORK.md").write_text(
-        source_work.read_text(encoding="utf-8"), encoding="utf-8"
-    )
-    (active / "REVIEWS.md").write_text(prefix + "\n", encoding="utf-8")
-
-
-def append_legacy_plan_review_after_bootstrap(
-    root: Path, *, review_number: str = "9", **overrides: str
-) -> None:
+def append_review_block(root: Path, body: str, *, review_number: str = "9") -> None:
     reviews = root / "work" / "active" / "ENG-016" / "REVIEWS.md"
     reviews.write_text(
         reviews.read_text(encoding="utf-8").rstrip()
         + f"\n\n## Review {review_number}\n\n"
-        + legacy_plan_review_record(root, **overrides)
+        + body
         + "\n",
         encoding="utf-8",
     )
@@ -387,10 +376,92 @@ class WorkflowValidatorTests(unittest.TestCase):
             self.assertTrue(any("canonical" in error for error in errors))
 
     def test_bootstrap_legacy_plan_review_is_exact_and_non_extensible(self) -> None:
+        self.assertEqual(BOOTSTRAP_PLAN_REVIEW_BLOCK_SHA256, HISTORICAL_REVIEW_5_SHA256)
+        self.assertEqual(BOOTSTRAP_PLAN_REVIEW_WORK, HISTORICAL_REVIEW_5_WORK)
+        bootstrap_work = dict(HISTORICAL_REVIEW_5_WORK)
+        self.assertTrue(
+            _matches_bootstrap_plan_review_identity(
+                work=bootstrap_work,
+                review_index=BOOTSTRAP_PLAN_REVIEW_INDEX,
+                heading="## Review 5",
+                block_sha256=HISTORICAL_REVIEW_5_SHA256,
+            )
+        )
+        for change in (
+            {"review_index": BOOTSTRAP_PLAN_REVIEW_INDEX + 1},
+            {"heading": "## Review 6"},
+            {"block_sha256": "0" * 64},
+        ):
+            arguments = {
+                "work": bootstrap_work,
+                "review_index": BOOTSTRAP_PLAN_REVIEW_INDEX,
+                "heading": "## Review 5",
+                "block_sha256": HISTORICAL_REVIEW_5_SHA256,
+            }
+            arguments.update(change)
+            self.assertFalse(_matches_bootstrap_plan_review_identity(**arguments))
+
+        foreign_work = dict(bootstrap_work, work_id="AUTHCTX-001")
+        self.assertFalse(
+            _matches_bootstrap_plan_review_identity(
+                work=foreign_work,
+                review_index=BOOTSTRAP_PLAN_REVIEW_INDEX,
+                heading="## Review 5",
+                block_sha256=HISTORICAL_REVIEW_5_SHA256,
+            )
+        )
+
         with temporary_repository() as root:
-            replace_with_current_bootstrap_review(root)
+            replace_with_plan_review(root)
             self.assertEqual(validate_repository(root), [])
 
+    def test_later_legacy_plan_reviews_fail_closed_in_all_structural_forms(self) -> None:
+        cases = {
+            "same-line": "- Review type: `PLAN`\n- Verdict: `APPROVED`",
+            "multiline": "- Review type:\n  `PLAN`\n- Verdict:\n  `APPROVED`",
+            "continuation-values": (
+                "- Review type:\n  `PLAN`\n"
+                "- Subject plan revision:\n  `4`\n"
+                "- Verdict:\n  `APPROVED`"
+            ),
+            "malformed-multiline": (
+                "- Review type:\n  `PL\n  AN`\n"
+                "- Subject plan revision:\n  not-an-integer"
+            ),
+            "loose-approval": "PLAN APPROVED",
+            "loose-split-approval": "PLAN\nAPPROVED",
+            "unicode-whitespace": (
+                "-\u00a0Review type:\u00a0\n\u00a0 `PLAN`\n"
+                "-\u00a0Subject plan revision:\u00a0\n\u00a0 `4`"
+            ),
+        }
+        for name, record in cases.items():
+            with self.subTest(name=name), temporary_repository() as root:
+                append_review_block(root, record)
+                errors = validate_repository(root)
+                self.assertTrue(any("legacy PLAN reviews" in error for error in errors), errors)
+
+    def test_bootstrap_fallback_rejects_a_later_multiline_legacy_record(self) -> None:
+        historical_prefix = "# reviews\n\n" + "\n\n".join(
+            f"## Review {number}\n\nhistorical" for number in range(1, 6)
+        )
+        later_record = (
+            "## Review 6\n\n"
+            "- Review type:\n  `PLAN`\n"
+            "- Subject plan revision:\n  `4`\n"
+            "- Verdict:\n  `APPROVED`\n"
+        )
+        with patch(
+            "scripts.validate_ai_workflow._has_exact_bootstrap_plan_review",
+            return_value=True,
+        ):
+            errors = _plan_review_gate_errors(
+                historical_prefix + "\n\n" + later_record,
+                HISTORICAL_REVIEW_5_WORK,
+            )
+        self.assertTrue(any("legacy PLAN reviews" in error for error in errors), errors)
+
+    def test_later_legacy_plan_bindings_never_extend_to_stale_or_future_work(self) -> None:
         for overrides in (
             {},
             {"Review ID": "ENG-016-PLAN-REVIEW-100"},
@@ -402,36 +473,49 @@ class WorkflowValidatorTests(unittest.TestCase):
             },
         ):
             with self.subTest(overrides=overrides), temporary_repository() as root:
-                replace_with_current_bootstrap_review(root)
-                append_legacy_plan_review_after_bootstrap(root, **overrides)
+                append_review_block(root, legacy_plan_review_record(root, **overrides))
                 errors = validate_repository(root)
-                self.assertTrue(
-                    any("legacy PLAN reviews after" in error for error in errors),
-                    errors,
-                )
+                self.assertTrue(any("legacy PLAN reviews" in error for error in errors), errors)
 
         with temporary_repository() as root:
-            replace_with_current_bootstrap_review(root)
-            reviews = root / "work" / "active" / "ENG-016" / "REVIEWS.md"
+            active = root / "work" / "active"
+            future = active / "AUTHCTX-001"
+            (active / "ENG-016").rename(future)
+            for name in ("WORK.md", "REVIEWS.md"):
+                path = future / name
+                path.write_text(
+                    path.read_text(encoding="utf-8").replace("ENG-016", "AUTHCTX-001"),
+                    encoding="utf-8",
+                )
+            reviews = future / "REVIEWS.md"
             reviews.write_text(
-                reviews.read_text(encoding="utf-8").replace(
-                    "Review ID: `ENG-016-PLAN-REVIEW-005`",
-                    "Review ID: `ENG-016-PLAN-REVIEW-MALFORMED`",
-                    1,
-                ),
+                reviews.read_text(encoding="utf-8").rstrip()
+                + "\n\n## Review 2\n\n- Review type: `PLAN`\n- Verdict: `APPROVED`\n",
                 encoding="utf-8",
             )
             errors = validate_repository(root)
-            self.assertTrue(any("bootstrap Review 5" in error for error in errors))
+            self.assertTrue(any("legacy PLAN reviews" in error for error in errors), errors)
+
+    def test_non_plan_review_narrative_can_mention_plan_and_approved(self) -> None:
+        with temporary_repository() as root:
+            append_review_block(
+                root,
+                "This finding notes that an APPROVED PLAN must remain unchanged, "
+                "but it does not claim review approval.",
+            )
+            self.assertEqual(validate_repository(root), [])
 
         with temporary_repository() as root:
-            replace_with_legacy_plan_review(root)
-            errors = validate_repository(root)
-            self.assertTrue(errors)
-            self.assertTrue(any("canonical" in error for error in errors))
-
-        with temporary_repository() as root:
-            replace_with_plan_review(root)
+            candidate = "b" * 40
+            bind_fixture_work(root, candidate=candidate)
+            append_exact_implementation_review(root, candidate=candidate)
+            append_finding(
+                root,
+                finding_id="F-NARRATIVE",
+                severity="LOW",
+                status="RESOLVED",
+                summary="The approved PLAN wording is quoted only as finding context.",
+            )
             self.assertEqual(validate_repository(root), [])
 
     def test_plan_author_identity_is_required_before_independence(self) -> None:
@@ -509,16 +593,41 @@ class WorkflowValidatorTests(unittest.TestCase):
             self.assertTrue(any("post-merge/DONE" in error for error in errors))
             self.assertTrue(any("reviewer actor equals" in error for error in errors))
 
-    def test_finding_severity_gate_is_fail_closed(self) -> None:
+    def test_finding_severity_status_decision_matrix(self) -> None:
+        cases = (
+            ("CRITICAL", "OPEN", True),
+            ("CRITICAL", "RESOLVED", False),
+            ("CRITICAL", "ACCEPTED_RESIDUAL_RISK", True),
+            ("HIGH", "OPEN", True),
+            ("HIGH", "RESOLVED", False),
+            ("HIGH", "ACCEPTED_RESIDUAL_RISK", True),
+            ("MEDIUM", "OPEN", True),
+            ("MEDIUM", "RESOLVED", False),
+            ("LOW", "OPEN", False),
+            ("LOW", "RESOLVED", False),
+        )
+        for severity, status, blocked in cases:
+            with self.subTest(severity=severity, status=status), temporary_repository() as root:
+                append_finding(root, finding_id="F-MATRIX", severity=severity, status=status)
+                errors = validate_repository(root)
+                finding_errors = [error for error in errors if "F-MATRIX" in error]
+                self.assertEqual(bool(finding_errors), blocked, errors)
+
+        for severity, status in (("UNKNOWN", "OPEN"), ("MEDIUM", "UNKNOWN")):
+            with self.subTest(severity=severity, status=status), temporary_repository() as root:
+                append_finding(root, finding_id="F-UNKNOWN", severity=severity, status=status)
+                errors = validate_repository(root)
+                self.assertTrue(any("invalid finding" in error for error in errors), errors)
+
         with temporary_repository() as root:
-            reviews = root / "work" / "active" / "ENG-016" / "REVIEWS.md"
-            reviews.write_text(
-                reviews.read_text(encoding="utf-8")
-                + "\nfinding_id=F-1\nseverity=HIGH\nstatus=OPEN\nsummary=unsafe\n",
-                encoding="utf-8",
+            append_finding(
+                root,
+                finding_id="F-LOW-RISK",
+                severity="LOW",
+                status="ACCEPTED_RESIDUAL_RISK",
             )
             errors = validate_repository(root)
-            self.assertTrue(any("HIGH finding F-1" in error for error in errors))
+            self.assertTrue(any("missing residual-risk comment URL" in error for error in errors))
 
     def test_invalid_enum_hash_archive_and_stale_issue_are_rejected(self) -> None:
         with temporary_repository() as root:
@@ -781,6 +890,25 @@ class WorkflowValidatorTests(unittest.TestCase):
             errors = validate_repository(root, residual_comments=[bot_comment])
             self.assertTrue(any("not a GitHub User" in error for error in errors))
 
+            foreign_url = "https://github.com/foreign/repository/issues/16#issuecomment-42"
+            append_finding(
+                root,
+                finding_id="ENG-016-IMPL-FOREIGN",
+                severity="MEDIUM",
+                status="ACCEPTED_RESIDUAL_RISK",
+                residual_url=foreign_url,
+            )
+            foreign_comment = dict(comment)
+            foreign_comment["html_url"] = foreign_url
+            foreign_comment["url"] = (
+                "https://api.github.com/repos/foreign/repository/issues/comments/42"
+            )
+            foreign_comment["body"] = foreign_comment["body"].replace(
+                "ENG-016-IMPL-TEST", "ENG-016-IMPL-FOREIGN"
+            )
+            errors = validate_repository(root, residual_comments=[foreign_comment])
+            self.assertTrue(any("not on the canonical Issue" in error for error in errors))
+
         with temporary_repository() as root:
             bind_fixture_work(root, candidate=candidate)
             append_finding(
@@ -902,6 +1030,46 @@ class WorkflowValidatorTests(unittest.TestCase):
             (root / "work" / "phases" / "archive").mkdir(parents=True)
             errors = validate_repository(root)
             self.assertTrue(any("work/phases/archive" in error for error in errors))
+
+    def test_active_cleanup_lifecycle_is_hermetic(self) -> None:
+        with temporary_repository() as root:
+            self.assertEqual(validate_repository(root), [])
+
+            active_item = root / "work" / "active" / "ENG-016"
+            (active_item / "WORK.md").unlink()
+            (active_item / "REVIEWS.md").unlink()
+            active_item.rmdir()
+
+            self.assertEqual(validate_repository(root), [])
+            command = subprocess.run(
+                [
+                    sys.executable,
+                    str(Path(__file__).with_name("validate_ai_workflow.py")),
+                    "--repo-root",
+                    str(root),
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(command.returncode, 0, command.stderr)
+            self.assertIn("AI workflow validation: PASS", command.stdout)
+
+            (root / "work" / "active").rmdir()
+            self.assertEqual(validate_repository(root), [])
+
+    def test_unrelated_future_active_work_item_is_independent(self) -> None:
+        with temporary_repository() as root:
+            active = root / "work" / "active"
+            future = active / "AUTHCTX-001"
+            (active / "ENG-016").rename(future)
+            for name in ("WORK.md", "REVIEWS.md"):
+                path = future / name
+                path.write_text(
+                    path.read_text(encoding="utf-8").replace("ENG-016", "AUTHCTX-001"),
+                    encoding="utf-8",
+                )
+            self.assertEqual(validate_repository(root), [])
 
 
 def temporary_repository():
