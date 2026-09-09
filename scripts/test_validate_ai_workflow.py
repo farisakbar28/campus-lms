@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
 import tempfile
@@ -231,6 +232,69 @@ def append_finding(
     )
 
 
+def populated_review_template(
+    root: Path,
+    review_type: str,
+    *,
+    candidate: str = "b" * 40,
+    omitted: str | None = None,
+) -> str:
+    from scripts.validate_ai_workflow import parse_work
+
+    template = (
+        Path(__file__).resolve().parents[1] / "work" / "templates" / "REVIEWS.md"
+    ).read_text(encoding="utf-8")
+    section = "Plan" if review_type == "PLAN" else "Implementation"
+    match = re.search(
+        rf"## {section} review record\n\n```text\n(?P<record>.*?)\n```",
+        template,
+        re.DOTALL,
+    )
+    if match is None:
+        raise AssertionError(f"missing {section} review template")
+
+    work = parse_work(
+        (root / "work" / "active" / "ENG-016" / "WORK.md").read_text(
+            encoding="utf-8"
+        )
+    )
+    values = {
+        "review_id": f"ENG-016-{review_type}-REVIEW-TEMPLATE",
+        "type": review_type,
+        "work_item_id": str(work["work_id"]),
+        "actor_label": "Template reviewer",
+        "session_label": "Template reviewer session",
+        "plan_author_actor_label": str(work["plan_author_actor"]),
+        "plan_author_session_label": str(work["plan_author_session"]),
+        "implementation_author_actor_label": str(work["implementation_actor"]),
+        "implementation_author_session_label": str(work["implementation_session"]),
+        "fresh_session_attestation": "Fresh independent template review session.",
+        "candidate_git_sha": candidate,
+        "plan_revision": str(work["plan_revision"]),
+        "plan_hash": str(work["plan_hash"]),
+        "issue_digest": str(work["issue_digest"]),
+        "finding_id": "ENG-016-TEMPLATE-001",
+        "severity": "LOW",
+        "status": "RESOLVED",
+        "summary": "Canonical summary may mention an APPROVED PLAN as narrative.",
+        "residual_risk_comment_url": (
+            "https://github.com/example/campus-lms/issues/16#issuecomment-99"
+        ),
+        "verdict": "APPROVED",
+    }
+    lines = []
+    for line in match.group("record").splitlines():
+        key, separator, _ = line.partition("=")
+        if not separator:
+            raise AssertionError(f"noncanonical template line: {line!r}")
+        if key == omitted:
+            continue
+        if key not in values:
+            raise AssertionError(f"unpopulated template field: {key}")
+        lines.append(f"{key}={values[key]}")
+    return "\n".join(lines)
+
+
 class WorkflowValidatorTests(unittest.TestCase):
     def test_plan_hash_normalizes_line_endings_and_mutable_text(self) -> None:
         document = (
@@ -288,7 +352,12 @@ class WorkflowValidatorTests(unittest.TestCase):
                 replace_with_plan_review(root, omitted=field)
                 errors = validate_repository(root)
                 self.assertTrue(
-                    any(f"missing {field}" in error for error in errors), errors
+                    any(
+                        f"missing {field}" in error
+                        or (field == "type" and "missing canonical review type" in error)
+                        for error in errors
+                    ),
+                    errors,
                 )
 
         mismatches = {
@@ -411,13 +480,71 @@ class WorkflowValidatorTests(unittest.TestCase):
             )
         )
 
+        historical_prefix = "# reviews\n\n" + "\n\n".join(
+            f"## Review {number}\n\nhistorical" for number in range(1, 6)
+        )
+        with patch(
+            "scripts.validate_ai_workflow._has_exact_bootstrap_plan_review",
+            return_value=True,
+        ):
+            self.assertEqual(
+                _plan_review_gate_errors(historical_prefix, bootstrap_work), []
+            )
+
         with temporary_repository() as root:
             replace_with_plan_review(root)
             self.assertEqual(validate_repository(root), [])
 
+    def test_canonical_plan_and_implementation_reviews_pass_after_bootstrap(self) -> None:
+        historical_prefix = "# reviews\n\n" + "\n\n".join(
+            f"## Review {number}\n\nhistorical" for number in range(1, 6)
+        )
+        common = {
+            "work_item_id": "ENG-016",
+            "plan_revision": "4",
+            "plan_hash": HISTORICAL_REVIEW_5_WORK["plan_hash"],
+            "issue_digest": HISTORICAL_REVIEW_5_WORK["issue_digest"],
+            "actor_label": "Fresh reviewer",
+            "session_label": "Fresh reviewer session",
+            "fresh_session_attestation": "Fresh independent review session.",
+            "verdict": "APPROVED",
+        }
+        plan = {
+            "review_id": "ENG-016-PLAN-REVIEW-006",
+            "type": "PLAN",
+            **common,
+            "plan_author_actor_label": HISTORICAL_REVIEW_5_WORK["plan_author_actor"],
+            "plan_author_session_label": HISTORICAL_REVIEW_5_WORK["plan_author_session"],
+        }
+        implementation = {
+            "review_id": "ENG-016-IMPLEMENTATION-REVIEW-001",
+            "type": "IMPLEMENTATION",
+            **common,
+            "implementation_author_actor_label": "Codex implementer",
+            "implementation_author_session_label": "Implementation session",
+            "candidate_git_sha": "b" * 40,
+        }
+        for review_number, record in ((6, plan), (6, implementation)):
+            with self.subTest(review_type=record["type"]), patch(
+                "scripts.validate_ai_workflow._has_exact_bootstrap_plan_review",
+                return_value=True,
+            ):
+                reviews = (
+                    historical_prefix
+                    + f"\n\n## Review {review_number}\n\n"
+                    + "\n".join(f"{key}={value}" for key, value in record.items())
+                    + "\n"
+                )
+                self.assertEqual(
+                    _plan_review_gate_errors(reviews, HISTORICAL_REVIEW_5_WORK), []
+                )
+
     def test_later_legacy_plan_reviews_fail_closed_in_all_structural_forms(self) -> None:
         cases = {
+            "prose-only": "A later prose-only review cannot provide authority.",
+            "review-11-sentence": "This PLAN review is APPROVED.",
             "same-line": "- Review type: `PLAN`\n- Verdict: `APPROVED`",
+            "markdown-bold": "- **Review type:** `PLAN`\n- **Verdict:** `APPROVED`",
             "multiline": "- Review type:\n  `PLAN`\n- Verdict:\n  `APPROVED`",
             "continuation-values": (
                 "- Review type:\n  `PLAN`\n"
@@ -434,12 +561,18 @@ class WorkflowValidatorTests(unittest.TestCase):
                 "-\u00a0Review type:\u00a0\n\u00a0 `PLAN`\n"
                 "-\u00a0Subject plan revision:\u00a0\n\u00a0 `4`"
             ),
+            "zero-width-format-character": (
+                "- Review\u200b type: `PLAN`\n- Verdict\u200b: `APPROVED`"
+            ),
         }
         for name, record in cases.items():
             with self.subTest(name=name), temporary_repository() as root:
                 append_review_block(root, record)
                 errors = validate_repository(root)
-                self.assertTrue(any("legacy PLAN reviews" in error for error in errors), errors)
+                self.assertTrue(
+                    any("missing canonical review type" in error for error in errors),
+                    errors,
+                )
 
     def test_bootstrap_fallback_rejects_a_later_multiline_legacy_record(self) -> None:
         historical_prefix = "# reviews\n\n" + "\n\n".join(
@@ -459,7 +592,33 @@ class WorkflowValidatorTests(unittest.TestCase):
                 historical_prefix + "\n\n" + later_record,
                 HISTORICAL_REVIEW_5_WORK,
             )
-        self.assertTrue(any("legacy PLAN reviews" in error for error in errors), errors)
+        self.assertTrue(any("missing canonical review type" in error for error in errors), errors)
+
+    def test_post_bootstrap_review_type_must_be_canonical_and_known(self) -> None:
+        cases = {
+            "missing": "review_id=ENG-016-PLAN-REVIEW-100\nverdict=APPROVED",
+            "legacy-alias-only": (
+                "review_id=ENG-016-PLAN-REVIEW-100\n"
+                "review_type=PLAN\nverdict=APPROVED"
+            ),
+            "malformed": "type=plan",
+            "unknown": "type=SECURITY",
+        }
+        for name, record in cases.items():
+            with self.subTest(name=name), temporary_repository() as root:
+                append_review_block(root, record)
+                errors = validate_repository(root)
+                self.assertTrue(errors)
+                if name in {"missing", "legacy-alias-only"}:
+                    self.assertTrue(
+                        any("missing canonical review type" in error for error in errors),
+                        errors,
+                    )
+                else:
+                    self.assertTrue(
+                        any("unknown canonical review type" in error for error in errors),
+                        errors,
+                    )
 
     def test_later_legacy_plan_bindings_never_extend_to_stale_or_future_work(self) -> None:
         for overrides in (
@@ -475,7 +634,10 @@ class WorkflowValidatorTests(unittest.TestCase):
             with self.subTest(overrides=overrides), temporary_repository() as root:
                 append_review_block(root, legacy_plan_review_record(root, **overrides))
                 errors = validate_repository(root)
-                self.assertTrue(any("legacy PLAN reviews" in error for error in errors), errors)
+                self.assertTrue(
+                    any("missing canonical review type" in error for error in errors),
+                    errors,
+                )
 
         with temporary_repository() as root:
             active = root / "work" / "active"
@@ -494,17 +656,12 @@ class WorkflowValidatorTests(unittest.TestCase):
                 encoding="utf-8",
             )
             errors = validate_repository(root)
-            self.assertTrue(any("legacy PLAN reviews" in error for error in errors), errors)
-
-    def test_non_plan_review_narrative_can_mention_plan_and_approved(self) -> None:
-        with temporary_repository() as root:
-            append_review_block(
-                root,
-                "This finding notes that an APPROVED PLAN must remain unchanged, "
-                "but it does not claim review approval.",
+            self.assertTrue(
+                any("missing canonical review type" in error for error in errors),
+                errors,
             )
-            self.assertEqual(validate_repository(root), [])
 
+    def test_canonical_review_narrative_can_mention_plan_and_approved(self) -> None:
         with temporary_repository() as root:
             candidate = "b" * 40
             bind_fixture_work(root, candidate=candidate)
@@ -578,16 +735,11 @@ class WorkflowValidatorTests(unittest.TestCase):
                 "Status: `IMPLEMENTING`", "Status: `DONE`"
             )
             work.write_text(text, encoding="utf-8")
-            reviews = work.parent / "REVIEWS.md"
-            reviews.write_text(
-                reviews.read_text(encoding="utf-8")
-                + "\n## Review 1\n"
-                + "- Review type: `IMPLEMENTATION`\n"
-                + "- Actor: `Codex implementer`\n"
-                + "- Session label: `ENG-016-implement-r4`\n"
-                + "- Implementation author actor label: `Codex implementer`\n"
-                + "- Implementation author session label: `ENG-016-author`\n",
-                encoding="utf-8",
+            append_exact_implementation_review(
+                root,
+                candidate="b" * 40,
+                actor_label="Fixture implementer",
+                implementation_author_actor_label="Fixture implementer",
             )
             errors = validate_repository(root)
             self.assertTrue(any("post-merge/DONE" in error for error in errors))
@@ -748,7 +900,52 @@ class WorkflowValidatorTests(unittest.TestCase):
                 encoding="utf-8",
             )
             errors = validate_repository(root)
-            self.assertTrue(any("missing work_item_id" in error for error in errors))
+            self.assertTrue(any("missing canonical review type" in error for error in errors))
+
+    def test_review_templates_round_trip_through_canonical_schema(self) -> None:
+        template = (
+            Path(__file__).resolve().parents[1]
+            / "work"
+            / "templates"
+            / "REVIEWS.md"
+        ).read_text(encoding="utf-8")
+        self.assertNotIn("ENG-016", template)
+
+        with temporary_repository() as root:
+            reviews = root / "work" / "active" / "ENG-016" / "REVIEWS.md"
+            reviews.write_text(
+                "# reviews\n\n## Review 1\n\n"
+                + populated_review_template(root, "PLAN")
+                + "\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(validate_repository(root), [])
+
+        with temporary_repository() as root:
+            candidate = "b" * 40
+            bind_fixture_work(root, candidate=candidate, status="READY_FOR_PR")
+            append_review_block(
+                root,
+                populated_review_template(root, "IMPLEMENTATION", candidate=candidate),
+                review_number="2",
+            )
+            self.assertEqual(validate_repository(root), [])
+
+        with temporary_repository() as root:
+            candidate = "b" * 40
+            bind_fixture_work(root, candidate=candidate, status="READY_FOR_PR")
+            append_review_block(
+                root,
+                populated_review_template(
+                    root,
+                    "IMPLEMENTATION",
+                    candidate=candidate,
+                    omitted="work_item_id",
+                ),
+                review_number="2",
+            )
+            errors = validate_repository(root)
+            self.assertTrue(any("missing work_item_id" in error for error in errors), errors)
 
     def test_approval_comment_requires_exact_binding(self) -> None:
         with temporary_repository() as root:

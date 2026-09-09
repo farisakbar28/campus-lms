@@ -483,6 +483,9 @@ def _validate_work_document(
     if status not in {"DRAFT"} and not review_ids:
         errors.append(f"{path}: active work has no review record")
 
+    review_schema_errors = _review_schema_errors(reviews_text, work_bindings)
+    errors.extend(f"{path}: {error}" for error in review_schema_errors)
+
     approval_states = {
         "APPROVED",
         "IMPLEMENTING",
@@ -493,7 +496,7 @@ def _validate_work_document(
     }
     if status in approval_states and approval_url == "NONE":
         errors.append(f"{path}: {status} requires a plan-approval URL")
-    if status in approval_states:
+    if status in approval_states and not review_schema_errors:
         plan_review_errors = _plan_review_gate_errors(reviews_text, work_bindings)
         if plan_review_errors:
             errors.append(f"{path}: {status} requires an APPROVED plan review")
@@ -535,13 +538,6 @@ def _validate_work_document(
             )
 
     errors.extend(
-        _implementation_review_errors_for_document(
-            path,
-            reviews_text,
-            work_bindings,
-        )
-    )
-    errors.extend(
         _finding_gate_errors(
             path,
             reviews_text,
@@ -549,23 +545,12 @@ def _validate_work_document(
             residual_comments,
         )
     )
-    errors.extend(_review_relationship_errors(path, reviews_text))
     return errors
 
 
 def _is_implementation_review_block(block: str) -> bool:
     fields = _key_value_fields(block)
-    if any(
-        value == "IMPLEMENTATION"
-        for key in ("type", "review_type")
-        for value in fields.get(key, [])
-    ):
-        return True
-    return bool(
-        re.search(
-            r"(?m)^-\s*Review type:\s*`?IMPLEMENTATION`?\s*$", block
-        )
-    )
+    return fields.get("type") == ["IMPLEMENTATION"]
 
 
 def _implementation_review_errors(
@@ -673,21 +658,6 @@ def _implementation_review_errors(
     return errors
 
 
-def _implementation_review_errors_for_document(
-    path: Path,
-    reviews_text: str,
-    work: Mapping[str, str | int | None],
-) -> list[str]:
-    errors: list[str] = []
-    for block in _review_blocks(reviews_text):
-        if _is_implementation_review_block(block):
-            errors.extend(
-                f"{path}: {error}"
-                for error in _implementation_review_errors(block, work)
-            )
-    return errors
-
-
 def _has_approved_implementation_review(
     reviews_text: str, work: Mapping[str, str | int | None]
 ) -> bool:
@@ -733,6 +703,8 @@ def _validate_plan_review_bindings(
     work: Mapping[str, str | int | None],
     *,
     prefix: str = "plan review",
+    require_current_binding: bool = True,
+    require_approved: bool = True,
 ) -> list[str]:
     errors: list[str] = []
 
@@ -781,25 +753,34 @@ def _validate_plan_review_bindings(
     ):
         errors.append(f"{prefix} reviewer session equals author session")
 
-    expected = {
-        "work_item_id": str(work.get("work_id")),
-        "plan_revision": str(work.get("plan_revision")),
-        "plan_hash": str(work.get("plan_hash")),
-        "issue_digest": str(work.get("issue_digest")),
-        "plan_author_actor_label": str(work.get("plan_author_actor")),
-        "plan_author_session_label": str(work.get("plan_author_session")),
-    }
-    for key, expected_value in expected.items():
-        if values.get(key) != expected_value:
-            errors.append(f"{prefix} {key} does not match current WORK.md")
+    verdict = values.get("verdict")
+    if verdict and verdict not in REVIEW_VERDICTS:
+        errors.append(f"{prefix} has an invalid verdict")
 
-    if values.get("verdict") != "APPROVED":
+    if require_current_binding:
+        expected = {
+            "work_item_id": str(work.get("work_id")),
+            "plan_revision": str(work.get("plan_revision")),
+            "plan_hash": str(work.get("plan_hash")),
+            "issue_digest": str(work.get("issue_digest")),
+            "plan_author_actor_label": str(work.get("plan_author_actor")),
+            "plan_author_session_label": str(work.get("plan_author_session")),
+        }
+        for key, expected_value in expected.items():
+            if values.get(key) != expected_value:
+                errors.append(f"{prefix} {key} does not match current WORK.md")
+
+    if require_approved and verdict != "APPROVED":
         errors.append(f"{prefix} verdict is not APPROVED")
     return errors
 
 
 def _canonical_plan_review_errors(
-    block: str, work: Mapping[str, str | int | None]
+    block: str,
+    work: Mapping[str, str | int | None],
+    *,
+    require_current_binding: bool = True,
+    require_approved: bool = True,
 ) -> list[str]:
     fields = _key_value_fields(block)
     allowed = set(PLAN_REVIEW_FIELDS) | FINDING_FIELDS
@@ -812,138 +793,15 @@ def _canonical_plan_review_errors(
     )
     errors.extend(required_errors)
 
-    if _has_legacy_plan_review_marker(block):
-        errors.append("plan review mixes canonical and legacy metadata")
-
-    errors.extend(_validate_plan_review_bindings(values, work))
-    return errors
-
-
-LEGACY_REVIEW_LABELS = {
-    "review id",
-    "review type",
-    "recorded at",
-    "actor",
-    "actor role",
-    "session label",
-    "plan author actor label",
-    "plan author session label",
-    "fresh-session attestation",
-    "subject work item",
-    "subject plan revision",
-    "exact reviewed plan checkpoint sha",
-    "independently recomputed normative sha",
-    "exact issue specification digest",
-    "independently recomputed issue specification digest",
-    "full reviewed work.md sha-256",
-    "verdict",
-}
-LEGACY_PLAN_ONLY_LABELS = {
-    "plan author actor label",
-    "plan author session label",
-    "subject plan revision",
-    "exact reviewed plan checkpoint sha",
-    "independently recomputed normative sha",
-    "exact issue specification digest",
-    "independently recomputed issue specification digest",
-    "full reviewed work.md sha-256",
-}
-
-
-def _legacy_review_fields(block: str) -> dict[str, list[str]]:
-    """Parse only the historical Markdown review-metadata shape.
-
-    A value may be on its label line or on indented continuation lines.  This
-    parser is used solely to reject non-canonical records; it never supplies an
-    approval binding.
-    """
-
-    lines = _normalise_lines(block)
-    fields: dict[str, list[str]] = {}
-    index = 1 if lines and re.fullmatch(r"##\s+Review\b.*", lines[0]) else 0
-    while index < len(lines):
-        line = lines[index]
-        if re.match(r"^#{2,}\s+", line):
-            break
-        match = re.fullmatch(
-            r"\s*(?:-\s+)?(?P<label>[^:\n]+):(?P<value>.*)", line
+    errors.extend(
+        _validate_plan_review_bindings(
+            values,
+            work,
+            require_current_binding=require_current_binding,
+            require_approved=require_approved,
         )
-        if match is None:
-            index += 1
-            continue
-        label = " ".join(match.group("label").split()).casefold()
-        if label not in LEGACY_REVIEW_LABELS:
-            index += 1
-            continue
-
-        parts = [match.group("value").strip()]
-        continuation = index + 1
-        while continuation < len(lines):
-            candidate = lines[continuation]
-            if re.match(r"^#{2,}\s+", candidate) or re.match(
-                r"^\s*(?:-\s+)?[^:\n]+:", candidate
-            ):
-                break
-            if candidate.strip():
-                if not candidate[:1].isspace() and not re.fullmatch(
-                    r"`?(?:PLAN|IMPLEMENTATION|APPROVED)`?", candidate.strip()
-                ):
-                    break
-                parts.append(candidate.strip())
-            continuation += 1
-        value = " ".join(part for part in parts if part).strip("` .\t")
-        fields.setdefault(label, []).append(value)
-        index = continuation
-    return fields
-
-
-def _has_legacy_plan_review_marker(block: str) -> bool:
-    """Detect a structural attempt to use the retired PLAN-review schema.
-
-    Exact historical acceptance is handled only by the pinned Review 5 digest.
-    This routine cannot approve anything and deliberately ignores ordinary
-    narrative in an explicitly non-PLAN review.
-    """
-
-    fields = _legacy_review_fields(block)
-    review_types = {
-        value.strip("` .\t").casefold()
-        for value in fields.get("review type", [])
-    }
-    if "plan" in review_types:
-        return True
-    if "review type" in fields and "implementation" not in review_types:
-        return True
-    if set(fields) & LEGACY_PLAN_ONLY_LABELS:
-        return True
-    if any("plan-review" in value.casefold() for value in fields.get("review id", [])):
-        return True
-
-    canonical_types = {
-        value.casefold() for value in _key_value_fields(block).get("type", [])
-    }
-    explicitly_non_plan = "implementation" in review_types or "implementation" in canonical_types
-    if explicitly_non_plan:
-        return False
-
-    # Bare decision tokens immediately below a Review heading are an attempted
-    # record, not general finding prose.  Limit this to standalone tokens in
-    # the metadata preamble so narrative sentences are never classified by
-    # merely containing PLAN or APPROVED.
-    lines = _normalise_lines(block)
-    decision_tokens: set[str] = set()
-    for line in lines[1:]:
-        stripped = line.strip()
-        if not stripped:
-            continue
-        if stripped.startswith(("-", "#")) or "=" in stripped:
-            continue
-        tokens = re.findall(r"[A-Za-z_]+", stripped.upper())
-        if tokens and set(tokens) <= {"PLAN", "APPROVED"}:
-            decision_tokens.update(tokens)
-            continue
-        break
-    return {"PLAN", "APPROVED"} <= decision_tokens
+    )
+    return errors
 
 
 def _is_bootstrap_plan_work(work: Mapping[str, str | int | None]) -> bool:
@@ -984,44 +842,70 @@ def _matches_bootstrap_plan_review_identity(
 
 def _plan_review_kind(block: str) -> str | None:
     fields = _key_value_fields(block)
-    canonical_signal = bool(set(fields) & (set(PLAN_REVIEW_FIELDS) | {"review_type"}))
-    if "type" in fields:
-        if any(value == "PLAN" for value in fields["type"]):
-            return "canonical"
-        if any(value == "IMPLEMENTATION" for value in fields["type"]):
-            return None
-        return "canonical"
-    return "canonical" if canonical_signal else None
+    return "canonical" if fields.get("type") == ["PLAN"] else None
+
+
+def _review_schema_errors(
+    reviews_text: str, work: Mapping[str, str | int | None]
+) -> list[str]:
+    """Require canonical records beyond the one pinned bootstrap boundary."""
+
+    blocks = _review_blocks(reviews_text)
+    if _is_bootstrap_plan_work(work):
+        if not _has_exact_bootstrap_plan_review(blocks, work):
+            return [
+                "ENG-016 bootstrap Review 5 is missing or differs from the exact "
+                "historical compatibility record"
+            ]
+        review_blocks = blocks[BOOTSTRAP_PLAN_REVIEW_INDEX + 1 :]
+    else:
+        review_blocks = blocks[1:]
+
+    errors: list[str] = []
+    for block in review_blocks:
+        heading = block.splitlines()[0] if block.splitlines() else "review block"
+        fields = _key_value_fields(block)
+        review_types = fields.get("type", [])
+        if not review_types:
+            errors.append(f"{heading} is missing canonical review type")
+            continue
+        if len(review_types) != 1:
+            errors.append(f"{heading} repeats canonical review type")
+            continue
+
+        review_type = review_types[0]
+        if review_type == "PLAN":
+            block_errors = _canonical_plan_review_errors(
+                block,
+                work,
+                require_current_binding=False,
+                require_approved=False,
+            )
+        elif review_type == "IMPLEMENTATION":
+            block_errors = _implementation_review_errors(block, work)
+        else:
+            errors.append(f"{heading} has unknown canonical review type {review_type!r}")
+            continue
+        errors.extend(f"{heading}: {error}" for error in block_errors)
+    return errors
 
 
 def _plan_review_gate_errors(
     reviews_text: str, work: Mapping[str, str | int | None]
 ) -> list[str]:
+    schema_errors = _review_schema_errors(reviews_text, work)
+    if schema_errors:
+        return schema_errors
+
     blocks = _review_blocks(reviews_text)
     bootstrap = _has_exact_bootstrap_plan_review(blocks, work)
-    if _is_bootstrap_plan_work(work) and not bootstrap:
-        return [
-            "ENG-016 bootstrap Review 5 is missing or differs from the exact "
-            "historical compatibility record"
-        ]
-
-    legacy_after_bootstrap = any(
-        _has_legacy_plan_review_marker(block)
-        for block in (
-            blocks[BOOTSTRAP_PLAN_REVIEW_INDEX + 1 :]
-            if bootstrap
-            else blocks
-        )
+    review_blocks = (
+        blocks[BOOTSTRAP_PLAN_REVIEW_INDEX + 1 :] if bootstrap else blocks[1:]
     )
-    if legacy_after_bootstrap:
-        return [
-            "legacy PLAN reviews after the ENG-016 bootstrap Review 5 are not "
-            "accepted; use the canonical key/value schema"
-        ]
 
     candidates = [
         (kind, block)
-        for block in blocks
+        for block in review_blocks
         if (kind := _plan_review_kind(block)) is not None
     ]
     if not candidates:
@@ -1037,37 +921,6 @@ def _has_approved_plan_review(
     work: Mapping[str, str | int | None] | None = None,
 ) -> bool:
     return not _plan_review_gate_errors(reviews_text, work or {})
-
-
-def _review_relationship_errors(path: Path, reviews_text: str) -> list[str]:
-    """Check the relational actor/session rules when review records expose them."""
-
-    errors: list[str] = []
-    blocks = re.split(r"(?m)(?=^##\s+Review\b)", reviews_text)
-    for block in blocks:
-        review_type = _block_field(block, "Review type")
-        if review_type not in {"PLAN", "IMPLEMENTATION"}:
-            continue
-        actor = _block_field(block, "Actor")
-        session = _block_field(block, "Session label")
-        if review_type == "PLAN":
-            author_actor = _block_field(block, "Plan author actor label")
-            author_session = _block_field(block, "Plan author session label")
-        else:
-            author_actor = _block_field(block, "Implementation author actor label")
-            author_session = _block_field(block, "Implementation author session label")
-        if actor and author_actor and actor == author_actor:
-            errors.append(f"{path}: {review_type} reviewer actor equals author actor")
-        if session and author_session and session == author_session:
-            errors.append(f"{path}: {review_type} reviewer session equals author session")
-    return errors
-
-
-def _block_field(block: str, label: str) -> str | None:
-    match = re.search(
-        rf"(?m)^-\s*{re.escape(label)}:\s*`?([^`\n]+?)`?\s*$", block
-    )
-    return match.group(1) if match else None
 
 
 def _structured_finding_records(

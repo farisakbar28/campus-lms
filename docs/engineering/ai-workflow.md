@@ -180,11 +180,12 @@ candidate Git SHA. A reviewer actor and session must differ from the relevant
 author labels, and each final review must be from a fresh session. Labels and
 attestations improve auditability but are not cryptographic proof.
 
-The canonical key/value PLAN-review schema is permanent. Compatibility debt is
+The canonical key/value review schema is permanent. Compatibility debt is
 limited to the existing ENG-016 bootstrap Review 5: the validator recognizes
 that exact historical record and its exact current bindings by repository-local
-identity. Any legacy PLAN review appended after it, or associated with another
-work item, revision, hash, or ordinary future item, is rejected.
+identity. Every later `## Review N` block, and every review block for an
+ordinary work item, must parse as a canonical `PLAN` or `IMPLEMENTATION`
+record. Missing, unknown, malformed, or legacy review structure is rejected.
 
 `CRITICAL` and `HIGH` findings block. `MEDIUM` findings require resolution or
 an exact human-authored residual-risk comment; `LOW` findings are normally

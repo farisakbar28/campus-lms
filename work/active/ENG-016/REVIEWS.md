@@ -1412,3 +1412,82 @@ status=OPEN
 summary=The committed workflow test helper reads the live work/active/ENG-016 files as its bootstrap fixture, so after the mandated active-only cleanup the 24-test suite fails with FileNotFoundError instead of testing only durable templates and validator behavior.
 
 verdict=CHANGES_REQUIRED
+
+## Review 11
+
+review_id=ENG-016-IMPLEMENTATION-REVIEW-006
+review_type=IMPLEMENTATION
+type=IMPLEMENTATION
+work_item_id=ENG-016
+plan_revision=4
+plan_hash=sha256:d6c0464e030f68eb2a9f1089c233e091725a306e9af5d3a7caa0bffa9c7cf934
+issue_digest=sha256:c1cf78cad608524cec118bc469fc223f2cf3d556f37fef0d17c91fc00850ccf4
+actor_label=Codex implementation reviewer r6
+session_label=ENG-016-implementation-review-r6-2026-09-09
+implementation_author_actor_label=Codex implementer
+implementation_author_session_label=ENG-016-implement-r4-2026-09-06
+fresh_session_attestation=Fresh independent implementation-review session; I reconstructed the approved contract from repository and live read-only GitHub state, inspected the exact candidate and its complete ancestry/diff, ran independent adversarial and cleanup probes plus the applicable regression commands, and treated prior review conclusions only as claims to verify.
+candidate_git_sha=b4d5e6f224465e9c9eecfc8e3f18e161dc779ab1
+recorded_at=2026-09-09T13:19:03Z
+
+finding_id=ENG-016-IMPL-001
+severity=HIGH
+status=RESOLVED
+summary=The READY_FOR_PR gate still requires one complete APPROVED implementation review with exact current work-item, plan, Issue, candidate, implementation-author, reviewer, session, and fresh-attestation bindings; independently varied missing and mismatched bindings fail.
+
+finding_id=ENG-016-IMPL-002
+severity=HIGH
+status=RESOLVED
+summary=The current live Issue and approval inputs validate only with their canonical repository, Issue, web/API URL, comment ID, exact body, GitHub User provenance, and unedited native timestamps; foreign mappings fail.
+
+finding_id=ENG-016-IMPL-003
+severity=HIGH
+status=RESOLVED
+summary=Residual-risk validation still binds the exact current work item, finding, plan revision/hash, candidate SHA, canonical Issue comment identity, and supplied GitHub User comment; wrong candidate, finding, work item, plan, or repository fails.
+
+finding_id=ENG-016-IMPL-004
+severity=HIGH
+status=RESOLVED
+summary=Finding severity and status remain allow-listed; unsupported values fail, OPEN CRITICAL/HIGH findings block, and CRITICAL/HIGH residual-risk acceptance cannot pass even with an otherwise valid comment.
+
+finding_id=ENG-016-IMPL-005
+severity=MEDIUM
+status=RESOLVED
+summary=Fresh native GitHub Issue JSON correctly distinguishes repository_url, API url, and html_url while matching the canonical repository, Issue number, and recomputed title/body digest.
+
+finding_id=ENG-016-IMPL-006
+severity=HIGH
+status=RESOLVED
+summary=Cleanup validation remains limited to deletion of exactly the reviewed active WORK.md/REVIEWS.md pair, checks ancestry and candidate active-tree shape, and rejects other work items, paths, content changes, and nested archive/completed directories.
+
+finding_id=ENG-016-IMPL-007
+severity=MEDIUM
+status=RESOLVED
+summary=The focused suite retains the original review-binding, canonical URL, residual-risk, enum, malformed-input, cleanup-scope, and archive regression cases and passes all 30 tests; the remaining parser defect is tracked separately as IMPL-008.
+
+finding_id=ENG-016-IMPL-008
+severity=HIGH
+status=OPEN
+summary=The compatibility gate still ignores newly appended non-canonical authority attempts outside its enumerated legacy shapes. On the actual Review 5 bootstrap history, a later sentence stating "This PLAN review is APPROVED.", Markdown-bold legacy labels, or legacy labels containing zero-width format characters leaves _plan_review_gate_errors empty, so the pinned historical fallback still lets those appended records coexist with a passing plan gate.
+
+finding_id=ENG-016-IMPL-009
+severity=HIGH
+status=RESOLVED
+summary=Missing, empty, whitespace-only, and null-like plan-author actor/session values fail before independence comparisons; equal reviewer/author actor or session values also fail, while distinct complete bindings pass.
+
+finding_id=ENG-016-IMPL-010
+severity=HIGH
+status=RESOLVED
+summary=The independently reproduced matrix now blocks OPEN CRITICAL/HIGH/MEDIUM findings, rejects CRITICAL/HIGH residual-risk acceptance and unknown severity/status, permits RESOLVED states and LOW/OPEN, and permits MEDIUM or LOW residual risk only with every applicable exact human-comment binding.
+
+finding_id=ENG-016-IMPL-011
+severity=HIGH
+status=RESOLVED
+summary=The 30-test suite is hermetic and does not open the live ENG-016 active files. In an extracted candidate tree it passes after ENG-016 cleanup with work/active empty and with work/active absent; workflow-check also passes in both zero-active-item states, and an unrelated future active fixture validates independently.
+
+finding_id=ENG-016-IMPL-012
+severity=MEDIUM
+status=OPEN
+summary=The durable implementation-review template omits work_item_id even though the validator requires that field and the workflow contract says implementation reviews identify their work item. A record populated exactly from the template fails with missing work_item_id, so the published schema does not produce a valid implementation review.
+
+verdict=CHANGES_REQUIRED

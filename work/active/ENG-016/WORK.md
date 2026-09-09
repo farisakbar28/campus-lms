@@ -1,6 +1,6 @@
 # ENG-016 — Repository-native AI engineering workflow harness
 
-Status: `IMPLEMENTATION_REVIEW`
+Status: `IMPLEMENTING`
 
 Issue: `ENG-016` / GitHub issue `#16`
 

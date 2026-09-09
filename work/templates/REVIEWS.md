@@ -35,6 +35,7 @@ verdict=CHANGES_REQUIRED|APPROVED
 ```text
 review_id=<ID>
 type=IMPLEMENTATION
+work_item_id=<subject work item>
 actor_label=<reviewer actor>
 session_label=<fresh reviewer session>
 implementation_author_actor_label=<implementation author actor>
