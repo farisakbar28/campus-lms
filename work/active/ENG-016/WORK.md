@@ -1,6 +1,6 @@
 # ENG-016 — Repository-native AI engineering workflow harness
 
-Status: `IMPLEMENTING`
+Status: `IMPLEMENTATION_REVIEW`
 
 Issue: `ENG-016` / GitHub issue `#16`
 
@@ -29,7 +29,7 @@ Implementation author actor label: `Codex implementer`
 
 Implementation author session label: `ENG-016-implement-r4-2026-09-06`
 
-Candidate Git commit SHA: `b4d5e6f224465e9c9eecfc8e3f18e161dc779ab1`
+Candidate Git commit SHA: `6ea02877364fcfa7eebc794998668e201c683c0c`
 
 This is the approved revision-4 execution contract after Independent PLAN
 Review 5 and the exact human-authored canonical-Issue approval comment. It
@@ -1013,10 +1013,10 @@ PRODUCTION operation/evidence is required for ENG-016.
   `https://github.com/farisakbar28/campus-lms/issues/16#issuecomment-5556469166`
 - Implementation author actor label: `Codex implementer`
 - Implementation author session label: `ENG-016-implement-r4-2026-09-06`
-- Candidate Git commit SHA: `b4d5e6f224465e9c9eecfc8e3f18e161dc779ab1`
+- Candidate Git commit SHA: `6ea02877364fcfa7eebc794998668e201c683c0c`
 - Material deviations: `NONE`
-- Concise verification result: `PASS: 30 hermetic workflow tests, targeted legacy/MEDIUM/cleanup probes, cleanup-removed workflow test/check simulation, Go race tests, build, go vet, go mod verify, Python compile, Go formatting, help, and diff checks; workflow-check expected-fails only on Review 10 OPEN HIGH findings ENG-016-IMPL-008, ENG-016-IMPL-010, and ENG-016-IMPL-011 pending fresh review.`
-- Concise completion summary: `CANDIDATE_CREATED_b4d5e6f224465e9c9eecfc8e3f18e161dc779ab1_STOPPED_FOR_INDEPENDENT_IMPLEMENTATION_REVIEW`
+- Concise verification result: `PASS: 33 hermetic workflow tests, targeted post-bootstrap canonical-only and template round-trip probes, cleanup/zero-active workflow test/check simulations, Go race tests, build, go vet, go mod verify, Python compile, Go formatting, help, and diff checks; workflow-check expected-fails only on Review 11 OPEN findings ENG-016-IMPL-008 and ENG-016-IMPL-012 pending fresh review.`
+- Concise completion summary: `CANDIDATE_CREATED_6ea02877364fcfa7eebc794998668e201c683c0c_STOPPED_FOR_INDEPENDENT_IMPLEMENTATION_REVIEW`
 
 ## Finding-resolution matrix for Independent PLAN Reviews 1–3
 
