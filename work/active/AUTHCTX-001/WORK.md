@@ -2,7 +2,7 @@
 
 Contract version: `campus-lms-work/v1`
 
-Status: `IMPLEMENTING`
+Status: `IMPLEMENTATION_REVIEW`
 
 Issue: `AUTHCTX-001` / GitHub issue `#1`
 
@@ -31,7 +31,7 @@ Implementation author actor label: `Codex implementer`
 
 Implementation author session label: `AUTHCTX-001-implementation-r1-2026-09-10-codex-root`
 
-Candidate Git commit SHA: `NONE`
+Candidate Git commit SHA: `847760a92c3519c4fc0ea1c0b1ba7a1b56b345a2`
 
 This file is the approved execution binding for a documentation-only
 implementation and local candidate commit. It authorizes no push, Pull Request
