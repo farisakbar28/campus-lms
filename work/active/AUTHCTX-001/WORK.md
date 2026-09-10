@@ -2,7 +2,7 @@
 
 Contract version: `campus-lms-work/v1`
 
-Status: `IMPLEMENTATION_REVIEW`
+Status: `READY_FOR_PR`
 
 Issue: `AUTHCTX-001` / GitHub issue `#1`
 
