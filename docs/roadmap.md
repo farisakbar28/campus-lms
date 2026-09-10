@@ -152,12 +152,13 @@ current repository history.
 
 ### 2. Identity, authentication, trusted tenant context, and authorization
 
-First decide how an authenticated user and session select or represent tenant
-context. The decision must require server-side validation against identity,
-active membership, role and lifecycle rules, route/object authorization, and
-fail-closed behavior. Then compose the existing token and session primitives
-into the running server and protected routes. Tenant context must never gain
-authority merely from an unvalidated client selector.
+ADR-0006 accepts tenant-neutral user/session access tokens and an explicit
+`/tenants/{tenant_id}/...` URL selector that remains untrusted until the server
+validates the active user, exact active session, active non-suspended tenant,
+and active membership. Runtime composition is not implemented: the next work
+must create and propagate the typed trusted Principal, compose the existing
+token and session primitives into protected routes, and enforce current role,
+object, and lifecycle authorization at each data operation.
 
 ### 3. SIAKAD integration contract
 
