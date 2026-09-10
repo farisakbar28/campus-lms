@@ -25,6 +25,12 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Test workflow validator
+        run: make workflow-test
+
+      - name: Check workflow artifacts
+        run: make workflow-check
+
       - name: Set up Go
         uses: actions/setup-go@v7
         with:

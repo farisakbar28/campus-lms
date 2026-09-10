@@ -25,6 +25,25 @@ This workflow is the target operating model. Do not claim that branch
 protection, required checks, or the complete remote workflow are active during
 the migration.
 
+## AI-assisted engineering workflow
+
+The repository-native process contract is `docs/engineering/ai-workflow.md`
+(`campus-lms-work/v1`). Resolve short prompts such as `Plan AUTHCTX-001`,
+`Independently review the current plan for AUTHCTX-001`, and `Implement
+approved AUTHCTX-001` from current repository and GitHub state. Use
+`work/templates/` for temporary phase and issue artifacts, and keep active
+work under `work/active/<planning-id>/` only.
+
+Plans bind a normalized canonical GitHub Issue title/body digest to an exact
+plan revision/hash. Implementation requires a directly human-authored Issue
+approval, and implementation review must be fresh, independent, and bound to
+the exact authorized candidate commit. Agents must not author approvals,
+residual-risk acceptance, production approval, merge, push, or PR mutation.
+Local commits are allowed only when the work item explicitly authorizes them.
+There is no per-task evidence receipt system or completed-work archive; native
+Git, GitHub, and CI state remain the evidence sources. Run `make workflow-test`
+and `make workflow-check` for the local machine-verifiable workflow checks.
+
 ## Repository-wide rules
 
 - Make the smallest coherent change and keep the repository runnable.
