@@ -1,6 +1,6 @@
 # ENG-016 — Repository-native AI engineering workflow harness
 
-Status: `IMPLEMENTATION_REVIEW`
+Status: `READY_FOR_PR`
 
 Issue: `ENG-016` / GitHub issue `#16`
 
@@ -1015,8 +1015,8 @@ PRODUCTION operation/evidence is required for ENG-016.
 - Implementation author session label: `ENG-016-implement-r4-2026-09-06`
 - Candidate Git commit SHA: `6ea02877364fcfa7eebc794998668e201c683c0c`
 - Material deviations: `NONE`
-- Concise verification result: `PASS: 33 hermetic workflow tests, targeted post-bootstrap canonical-only and template round-trip probes, cleanup/zero-active workflow test/check simulations, Go race tests, build, go vet, go mod verify, Python compile, Go formatting, help, and diff checks; workflow-check expected-fails only on Review 11 OPEN findings ENG-016-IMPL-008 and ENG-016-IMPL-012 pending fresh review.`
-- Concise completion summary: `CANDIDATE_CREATED_6ea02877364fcfa7eebc794998668e201c683c0c_STOPPED_FOR_INDEPENDENT_IMPLEMENTATION_REVIEW`
+- Concise verification result: `PASS: Independent implementation Review 12 (ENG-016-IMPLEMENTATION-REVIEW-007) approved exact candidate 6ea02877364fcfa7eebc794998668e201c683c0c with findings ENG-016-IMPL-001 through ENG-016-IMPL-012 resolved, material deviation NONE, post-review workflow-check passing, and live Issue/approval validation passing.`
+- Concise completion summary: `READY_FOR_PR_AFTER_APPROVED_IMPLEMENTATION_REVIEW_ENG-016-IMPLEMENTATION-REVIEW-007`
 
 ## Finding-resolution matrix for Independent PLAN Reviews 1–3
 

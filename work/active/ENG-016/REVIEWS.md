@@ -1491,3 +1491,80 @@ status=OPEN
 summary=The durable implementation-review template omits work_item_id even though the validator requires that field and the workflow contract says implementation reviews identify their work item. A record populated exactly from the template fails with missing work_item_id, so the published schema does not produce a valid implementation review.
 
 verdict=CHANGES_REQUIRED
+
+## Review 12
+
+review_id=ENG-016-IMPLEMENTATION-REVIEW-007
+type=IMPLEMENTATION
+work_item_id=ENG-016
+actor_label=Codex implementation reviewer r7
+session_label=ENG-016-implementation-review-r7-2026-09-10
+implementation_author_actor_label=Codex implementer
+implementation_author_session_label=ENG-016-implement-r4-2026-09-06
+fresh_session_attestation=Fresh independent implementation-review session; I reconstructed the approved contract from repository and live read-only GitHub state, inspected the exact candidate and complete base/remediation/metadata diffs, ran independent adversarial, template, cleanup, and full regression checks, and treated implementer and prior-review conclusions only as claims to verify.
+candidate_git_sha=6ea02877364fcfa7eebc794998668e201c683c0c
+plan_revision=4
+plan_hash=sha256:d6c0464e030f68eb2a9f1089c233e091725a306e9af5d3a7caa0bffa9c7cf934
+issue_digest=sha256:c1cf78cad608524cec118bc469fc223f2cf3d556f37fef0d17c91fc00850ccf4
+
+finding_id=ENG-016-IMPL-001
+severity=HIGH
+status=RESOLVED
+summary=READY_FOR_PR still requires exactly one complete APPROVED implementation review bound to the current work item, plan revision/hash, Issue digest, candidate SHA, implementation author, distinct reviewer actor/session, and fresh attestation; missing, duplicate, or mismatched bindings fail.
+
+finding_id=ENG-016-IMPL-002
+severity=HIGH
+status=RESOLVED
+summary=Fresh Issue and plan-approval inputs bind the canonical repository, Issue number, web/API URLs, comment ID, exact approval body, GitHub User provenance, and unedited native timestamps; the live Issue 16 and approval comment 5556469166 passed those checks.
+
+finding_id=ENG-016-IMPL-003
+severity=HIGH
+status=RESOLVED
+summary=Residual-risk validation still binds the exact current work item, finding, plan revision/hash, candidate SHA, canonical Issue comment identity, supplied GitHub User provenance, and referenced finding; wrong or absent bindings fail.
+
+finding_id=ENG-016-IMPL-004
+severity=HIGH
+status=RESOLVED
+summary=Finding severity and status remain allow-listed; unknown values fail, OPEN CRITICAL/HIGH findings block, and CRITICAL/HIGH residual-risk acceptance is rejected.
+
+finding_id=ENG-016-IMPL-005
+severity=MEDIUM
+status=RESOLVED
+summary=Standard live GitHub Issue JSON distinguishes repository_url, API url, and html_url while enforcing the canonical repository, Issue number, and independently recomputed title/body digest.
+
+finding_id=ENG-016-IMPL-006
+severity=HIGH
+status=RESOLVED
+summary=Cleanup validation still checks ancestry and candidate active-tree shape, permits deletion of exactly the explicitly reviewed WORK.md/REVIEWS.md pair, and rejects other work items, non-deletions, extra paths, content changes, and nested completed/archive directories.
+
+finding_id=ENG-016-IMPL-007
+severity=MEDIUM
+status=RESOLVED
+summary=The 33-test focused suite and independent probes cover exact review bindings, canonical URLs, approval/residual-risk provenance, finding enums and gates, malformed inputs, post-bootstrap review forms, template round trips, cleanup scope, archive rejection, and active-artifact removal.
+
+finding_id=ENG-016-IMPL-008
+severity=HIGH
+status=RESOLVED
+summary=Exact historical Review 5 passes only through its pinned index, heading, SHA-256, and ENG-016 work bindings; every later Review block requires canonical type and mandatory fields, while prose-only, PLAN-APPROVED sentences, Markdown-bold, zero-width, multiline, continuation, fully-bound legacy, missing/malformed/unknown type, foreign/future work, and cloned Review 5 records fail closed without prose inference.
+
+finding_id=ENG-016-IMPL-009
+severity=HIGH
+status=RESOLVED
+summary=Missing, empty, whitespace-only, and null-like plan-author actor/session values fail before independence checks; equal reviewer/author actor or session values fail and complete distinct bindings pass.
+
+finding_id=ENG-016-IMPL-010
+severity=HIGH
+status=RESOLVED
+summary=The reproduced finding matrix blocks OPEN CRITICAL/HIGH/MEDIUM, rejects CRITICAL/HIGH residual-risk acceptance and unknown severity/status, permits RESOLVED and LOW/OPEN states, and requires exact supplied human-comment bindings for accepted MEDIUM or LOW residual risk.
+
+finding_id=ENG-016-IMPL-011
+severity=HIGH
+status=RESOLVED
+summary=Exact-candidate workflow tests do not read live ENG-016 active artifacts and pass after its temporary pair is removed with work/active both empty and absent; workflow-check passes in both cleanup states, an unrelated future active item validates independently, and no completed or hidden process-history archive exists.
+
+finding_id=ENG-016-IMPL-012
+severity=MEDIUM
+status=RESOLVED
+summary=PLAN and IMPLEMENTATION template field sets exactly match their canonical validator schemas including implementation work_item_id, contain no ENG-016-specific value, and populated records pass; omitted or wrong implementation work_item_id fails and no template field is unrecognized.
+
+verdict=APPROVED
