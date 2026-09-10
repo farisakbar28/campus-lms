@@ -43,6 +43,7 @@ repository facts.
 | [0002d](0002d-azure-production-region-sku.md) | Azure production region and VM SKU | Accepted |
 | [0002e](0002e-zero-domain-quick-tunnel-validation.md) | Zero-domain Quick Tunnel bounded validation | Accepted |
 | [0005](0005-api-healthcheck-probe.md) | API binary health-check probe | Accepted |
+| [0006](0006-trusted-authenticated-tenant-context.md) | Trusted authenticated tenant context | Accepted |
 
 Only ADR files tracked in this directory are listed here. A future decision
 may add a new ADR; a missing number is not a placeholder or a requirement to
