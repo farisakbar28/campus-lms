@@ -12,37 +12,36 @@ The product and architecture sources of truth are:
 - `docs/domain-ai.md` for the staff-side AI direction and AI safety boundaries;
 - accepted decisions in `docs/adr/` for architecture and operational constraints.
 
-## Engineering workflow
+## Cold start and engineering workflow
 
-The normal repository workflow is:
+For every task, read [the documentation map](docs/README.md) first, then read
+the applicable scoped `AGENTS.md` files before entering a narrower tree.
+Inspect the actual source, Git history, GitHub state, and CI evidence before
+making claims. Use [engineering history](docs/engineering/history.md) for
+durable current state and verified milestones, [the roadmap](docs/roadmap.md)
+for future direction, and GitHub Issues for the operational backlog.
 
-```text
-short-lived branch → implementation → local verification → review
-→ Pull Request → required CI → human squash merge into protected master
-```
+The repository-native sequence is documented in
+[the workflow](docs/engineering/workflow.md): orient, brainstorm, have a
+human choose the task, plan, obtain a fresh independent plan review, obtain
+direct human plan approval, implement, obtain a fresh independent
+implementation review, create a Pull Request, observe CI and human review,
+and have a human merge. Human task selection, plan approval, merge, and
+production approval are never delegated to an agent.
 
-This workflow is the target operating model. Do not claim that branch
-protection, required checks, or the complete remote workflow are active during
-the migration.
+After a human approves the plan, an agent may create a short-lived local
+branch, edit files, and create local commits when the task authorizes them.
+Push or Pull Request creation is allowed only after the independent
+implementation review passes and the human explicitly asks for the PR. Never
+automatically merge or deploy production.
 
-## AI-assisted engineering workflow
-
-The repository-native process contract is `docs/engineering/ai-workflow.md`
-(`campus-lms-work/v1`). Resolve short prompts such as `Plan AUTHCTX-001`,
-`Independently review the current plan for AUTHCTX-001`, and `Implement
-approved AUTHCTX-001` from current repository and GitHub state. Use
-`work/templates/` for temporary phase and issue artifacts, and keep active
-work under `work/active/<planning-id>/` only.
-
-Plans bind a normalized canonical GitHub Issue title/body digest to an exact
-plan revision/hash. Implementation requires a directly human-authored Issue
-approval, and implementation review must be fresh, independent, and bound to
-the exact authorized candidate commit. Agents must not author approvals,
-residual-risk acceptance, production approval, merge, push, or PR mutation.
-Local commits are allowed only when the work item explicitly authorizes them.
-There is no per-task evidence receipt system or completed-work archive; native
-Git, GitHub, and CI state remain the evidence sources. Run `make workflow-test`
-and `make workflow-check` for the local machine-verifiable workflow checks.
+For production-impacting work, follow the separate readiness checklist and
+require human approval for the exact revision or immutable artifact, target
+environment, and scope. A material change invalidates that approval.
+Destructive database or data operations require explicit task authority and
+human confirmation. External or cloud operations require the same two gates.
+Agents must not author human approvals, accept residual risk, merge, push,
+mutate Issues or Pull Requests, or perform production mutations.
 
 ## Repository-wide rules
 
@@ -61,6 +60,8 @@ and `make workflow-check` for the local machine-verifiable workflow checks.
   invalid.
 - Applied database migrations are immutable; add a new migration for a schema
   change.
+- Destructive database or data operations require explicit task authority and
+  human confirmation.
 - Never weaken a security or acceptance check merely to obtain a passing
   result.
 
@@ -73,9 +74,8 @@ and `make workflow-check` for the local machine-verifiable workflow checks.
 - Do not rewrite published history, force-push, or delete a protected/default
   branch unless a separately authorized destructive procedure explicitly
   requires it.
-- External or cloud mutations require explicit task authorization and human
+- External or cloud mutations require explicit task authority and human
   confirmation.
-- Destructive database or data operations require explicit authorization.
 - Do not edit an already-applied migration.
 - The project constraint is zero incremental paid infrastructure or tooling.
   There is no automatic paid fallback.

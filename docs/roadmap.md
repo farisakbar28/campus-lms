@@ -1,37 +1,20 @@
 # campus-lms Engineering and Product Roadmap
 
-Status: active product and engineering planning direction.
+Status: active product and engineering direction.
 
-This document describes product direction and engineering dependencies. It is
-Operational work is tracked in GitHub Issues rather than in this roadmap. A
-capability is not presented as implemented merely because it is described here.
+This document is future-looking. GitHub Issues are the operational backlog;
+[the current architecture](architecture.md) is the implementation snapshot;
+and [engineering history](engineering/history.md) records durable, verified
+milestones. A capability is not implemented merely because it appears below.
 
-## Purpose and planning rules
+## Planning rules
 
-The roadmap is dependency-driven and implementation-state-aware. Each item is
-classified as an existing foundation, partial work, a future capability, a
-stale implementation that needs reconciliation, or a decision that remains
-open. Sequencing follows authorization, data ownership, safety, and operational
-dependencies rather than calendar milestones.
-
-Current engineering work follows the repository contracts in `AGENTS.md`,
-`CONTRIBUTING.md`, the scoped engineering instructions, `docs/domain.md`,
-`docs/domain-ai.md`, and accepted ADRs. Applied migrations remain immutable;
-security-sensitive configuration fails closed; and no automatic paid fallback
-may be introduced.
-
-## Product/Phase Planning synchronization
-
-Temporary Product/Phase Planning is a planning aid, not a durable task
-archive. A phase proposal under `work/phases/active/` records its goal and
-outcomes, dependency order and rationale, exit criteria, exclusions,
-unresolved decisions, revision/hash, risk, and exact existing planning-ID to
-GitHub Issue mapping. A fresh independent review and directly human-authored
-phase approval are required before the accepted decision is synchronized here
-and to the canonical GitHub Issues. The roadmap handoff is reviewed and
-human-merged; temporary phase artifacts are then removed. See
-`docs/engineering/ai-workflow.md` for the complete contract and trust
-boundaries.
+Roadmap sequencing follows authorization, data ownership, safety, and
+operational dependencies rather than calendar milestones. Future work must
+preserve the contracts in `docs/domain.md`, `docs/domain-ai.md`, `SECURITY.md`,
+accepted ADRs, and scoped engineering instructions. Applied migrations remain
+immutable, security-sensitive configuration fails closed, and no automatic
+paid fallback may be introduced.
 
 ## Product boundary
 
@@ -116,30 +99,6 @@ Historic external infrastructure, provider, region, quota, storage, and
 capacity facts require fresh revalidation before reliance. The project retains
 the zero-incremental-paid-infrastructure constraint and must fail closed,
 defer, or disable a capability when verified zero-cost capacity is exhausted.
-
-## Current implementation snapshot
-
-| Classification | Current repository state |
-|---|---|
-| Implemented foundation | Go API foundation; fail-closed configuration; `/healthz` and dependency-backed `/readyz`; migrations through `0006`; tenant/RLS and composite-constraint foundations; roster repository and handler; access-token and refresh-session primitives; Docker, Compose, health probes, and deployment tooling foundations. |
-| Partial / requires composition | Authentication: primitives exist, but the running server does not yet produce the trusted `Principal` required by protected routes. Backup/restore: local tooling exists, but its validator is stale and does not cover the current schema. |
-| Not implemented | Frontend application; AI subsystem; AI evaluation; complete course-content workflow; assessment and gradebook workflow; attendance workflow; production observability; permanent production ingress; and a current hosted CI baseline beyond the dated evidence checkpoint below. |
-| Stale / requires reconciliation | Legacy deployment wiring using loopback 8443, Origin-CA files, and hostname-based Caddy TLS conflicts with the later bounded Quick Tunnel validation ADR. |
-| Decision required | AI role allowlist; institutional AI data-processing boundary; permanent production ingress; and fresh external infrastructure/provider validation. |
-
-These classifications are bounded by the current source and documentation.
-Existing authentication and session primitives do not imply complete
-authenticated API behavior, production readiness, or a complete authorization
-boundary.
-
-### Hosted CI evidence checkpoint
-
-On 2026-09-06, a successful hosted `CI / API` run was observed for base SHA
-`92419ed6144e8d07b1392e0b931cdf32a044af77`. This is evidence for that exact
-revision and job only; current hosted status, required-check settings, and
-branch-protection state must be fetched from GitHub before relying on them.
-ENG-016 does not mutate branch protection or claim that local CI makes the
-governance contract tamper-proof.
 
 ## Dependency-oriented capability roadmap
 

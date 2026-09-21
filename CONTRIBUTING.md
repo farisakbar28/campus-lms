@@ -1,35 +1,21 @@
 # Contributing
 
-## Development workflow
+## Normal workflow
 
-The development workflow is:
+Start from an updated `master`, create a short-lived descriptive branch, and
+make one coherent change. Follow
+[the repository workflow](docs/engineering/workflow.md): orient and
+brainstorm, have a human choose the task, plan it, obtain an independent plan
+review and human approval, implement, obtain an independent implementation
+review, then create a Pull Request only when the human explicitly asks for it.
+CI and human review precede a human squash merge. History updates use the
+same branch, Pull Request, CI, and human-merge boundary.
 
-1. Start from an updated `master`.
-2. Create a short-lived, descriptive branch.
-3. Implement one coherent change.
-4. Run targeted local checks.
-5. Request review and address review findings.
-6. Open a Pull Request.
-7. Ensure the applicable CI checks pass.
-8. Have the human maintainer squash-merge the change.
-
-Changes intended for master should be developed on short-lived branches and
-submitted through pull requests.
-
-## AI-assisted work items
-
-For AI-assisted work, follow `docs/engineering/ai-workflow.md` and the schemas
-under `work/templates/`. A temporary phase is independently reviewed and
-human-approved before its durable roadmap and GitHub Issue handoff. An active
-Issue work item then follows the repository-local states from `DRAFT` through
-`READY_TO_MERGE`; the human maintainer remains the authority for intent,
-material changes, push, PR mutation, merge, release, and production.
-
-The canonical Issue title/body digest, exact plan revision/hash, directly
-human-authored approval comment, candidate commit, and independent review are
-rechecked at their applicable gates. Active files are removed before merge
-only after the durable native GitHub handoff. Do not create `work/completed/`,
-progress journals, command receipts, or a parallel evidence archive.
+AI-assisted work follows the same workflow and evidence model as human work.
+Agents inspect actual source and native GitHub/Git/CI records, never invent
+results, and never create a parallel task archive or command-receipt system.
+Human task choice, plan approval, merge, and production approval remain
+mandatory. A material change returns the work to planning and fresh review.
 
 ## Branch names
 
@@ -79,8 +65,9 @@ documentation aligned with actual source and runtime behavior.
 ## Claims and review
 
 Do not claim functionality, performance, runtime, security, cloud state, or
-cost state without verification appropriate to that claim. There is no
-per-task evidence-receipt system; review the actual command output and diff.
+cost state without verification appropriate to that claim. Review the actual
+command output, hosted CI result, and complete diff. Local checks do not prove
+cloud state, branch protection, or production readiness.
 
 Before review, inspect every changed file, ensure no secret or personal data is
 present, and confirm that behavior changes have focused tests.

@@ -19,38 +19,29 @@ The exact staff role allow-list is unresolved:
 No student-facing AI chat, RAG assistant, or study-planner functionality is
 implemented or promised. The AI service itself is not implemented yet.
 
-## Current status
+## Start here
 
-| Area | Status | What is actually present |
-|---|---|---|
-| Go API foundation | Implemented | Standard-library `net/http` server, package layering, dependency wiring, and structured JSON logging. |
-| Configuration | Implemented | Fail-closed environment parsing and validation for the current API. |
-| Health and lifecycle | Implemented | `/healthz`, dependency-backed `/readyz`, server timeouts, and graceful shutdown. |
-| PostgreSQL schema | Implemented | Versioned tenant, identity, academic, membership, enrollment, audit, and auth-session migrations. |
-| Tenant/RLS foundation | Implemented | Tenant-scoped constraints, RLS policies, transaction-local context, and repository tests. |
-| Authentication/session primitives | Partially implemented | Access-token verification, bearer parsing, and refresh-session lifecycle primitives exist. |
-| Production authentication composition | Incomplete | The running server does not yet provide complete Principal/auth endpoint wiring. |
-| Containers and local deployment tooling | Materially present | Multi-stage API/migrator image, development Compose, production Compose, health probes, and deployment scripts exist. |
-| Production deployment/ingress | Incomplete and stale | Existing Caddy/Compose implementation is stale relative to the accepted bounded Quick Tunnel validation architecture and requires separately authorized implementation reconciliation; it is not production-ready. The bounded-validation decision is accepted, while permanent production ingress remains unresolved and is not implemented. |
-| Backup and restore | Partial | Local backup and disposable restore tooling exists; production off-machine operations are not complete. |
-| Frontend | Not implemented | No frontend application is present. |
-| AI service | Not implemented | No AI application or model integration is present. |
-| CI | Defined in repository | `.github/workflows/ci.yml` defines API validation for pull requests and pushes to `master`; hosted execution status must be determined from current GitHub Actions results rather than inferred from documentation. |
-| CD | Not implemented | No working remote release workflow is present. |
-| AI evaluation | Not implemented | No evaluation pipeline or golden dataset runner is present. |
-| Full production observability | Not implemented | Structured API logs exist; the planned metrics, traces, and dashboards do not. |
-| Permanent production ingress | Not implemented | The bounded validation topology is not a permanent ingress solution. |
+- [Documentation map](docs/README.md) — what we build, how it is designed,
+  security boundaries, engineering workflow, current architecture, and future
+  direction.
+- [Current architecture](docs/architecture.md) — implementation facts,
+  accepted decisions, known gaps, and future work.
+- [Domain contract](docs/domain.md) and [AI contract](docs/domain-ai.md) —
+  ownership, tenancy, authorization, and future staff-side AI boundaries.
+- [Architecture decisions](docs/adr/README.md) — accepted and proposed ADRs.
+- [Engineering history](docs/engineering/history.md) — concise, verified
+  milestones and changed assumptions.
+- [Roadmap](docs/roadmap.md) — future product and engineering direction.
+- [Security requirements](SECURITY.md) — enduring security rules and known
+  limitations.
+- [Engineering workflow](docs/engineering/workflow.md) and
+  [agent playbook](docs/engineering/agent-playbook.md) — how humans and
+  agents plan, review, implement, and hand off work.
 
-## Architecture and domain references
-
-- [Domain model](docs/domain.md)
-- [AI domain boundaries](docs/domain-ai.md)
-- [Architecture decisions](docs/adr/)
-
-These documents describe ownership, tenant isolation, authorization boundaries,
-and decisions that must remain aligned with the implementation. External
-provider, cloud, runtime, and cost claims require current verification before
-they are presented as facts.
+The architecture and history documents distinguish repository facts from
+future plans and external state. Hosted CI status must be read from the
+current GitHub Actions run, and no local command proves cloud state or
+production readiness.
 
 ## Development
 

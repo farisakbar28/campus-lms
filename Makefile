@@ -9,16 +9,6 @@ help: ## Show available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
 		| awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
 
-# ---------------------------------------------------------------- workflow
-
-.PHONY: workflow-test
-workflow-test: ## Run repository-native AI workflow validator tests
-	python3 -m unittest scripts/test_validate_ai_workflow.py
-
-.PHONY: workflow-check
-workflow-check: ## Validate repository-native AI workflow artifacts
-	python3 scripts/validate_ai_workflow.py
-
 # ---------------------------------------------------------------- development
 
 .PHONY: up
