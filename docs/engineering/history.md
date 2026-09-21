@@ -26,6 +26,12 @@ hosted CI, branch-protection, provider, cloud, runtime, or production state.
 - **Engineering baseline — 2026-09-05.** Commit
   `92419ed6144e8d07b1392e0b931cdf32a044af77` established the tracked
   repository baseline used by the subsequent engineering work.
+- **Hosted CI evidence checkpoint — 2026-09-06.** A successful hosted
+  `CI / API` run was observed for the exact revision
+  `92419ed6144e8d07b1392e0b931cdf32a044af77`. This is historical evidence for
+  that revision and job only; current hosted status, required-check settings,
+  and branch-protection state must be fetched from GitHub before relying on
+  them.
 - **AUTHCTX-001 durable architecture milestone — 2026-09-10 to 2026-09-20.**
   Commit `847760a92c3519c4fc0ea1c0b1ba7a1b56b345a2` recorded the trusted
   authenticated tenant-context contract, and merge commit
