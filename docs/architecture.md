@@ -59,6 +59,13 @@ not a production-readiness claim.
 - [ADR-0002](adr/0002-multi-tenancy.md) accepts shared PostgreSQL schema,
   explicit tenant identity, RLS, composite constraints, and application
   authorization as defense in depth.
+- [ADR-0002c](adr/0002c-azure-conventions.md) accepts Azure resource naming
+  and tagging conventions; its dated region context is historical and does
+  not establish current provider state.
+- [ADR-0002d](adr/0002d-azure-production-region-sku.md) records the accepted
+  East Asia and initial Standard_B2ats_v2 trial design, subject to fresh
+  verification before present use; it does not claim current quota,
+  entitlement, availability, or deployment state.
 - [ADR-0002e](adr/0002e-zero-domain-quick-tunnel-validation.md) accepts only
   a bounded no-domain Quick Tunnel validation path and does not establish
   permanent production ingress.
@@ -74,11 +81,14 @@ Other accepted and superseded decisions are indexed in
 
 ## Proposed or unresolved decisions
 
-The repository does not currently select a frontend, cloud/database provider,
-AI provider or model, permanent ingress design, AI role allow-list, or
-institutional AI processing boundary. These choices require their own
-decision and verification; this document must not turn a proposal or historic
-observation into an implementation claim.
+The repository does not currently select a frontend or AI provider/model,
+permanent ingress design, AI role allow-list, or institutional AI processing
+boundary. Accepted cloud ADRs record Azure naming, region/SKU, and bounded
+validation design decisions; they do not establish current provider
+entitlement, quota, runtime deployment, or production readiness. These choices
+and present-state claims require their own decision and verification; this
+document must not turn a proposal or historic observation into an
+implementation claim.
 
 ## Known gaps and future work
 

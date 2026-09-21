@@ -15,8 +15,8 @@ authentication/session primitives, deployment tooling, and the accepted
 tenant-context contract described in [architecture.md](../architecture.md).
 The repository was preparing the transition from the high-ceremony
 `campus-lms-work/v1` harness to the simpler repository-native v2 documents;
-those v2 documents become authoritative when their reviewed Pull Request is
-human-merged.
+ENG-017 / Issue #21 defines that transition, and those v2 documents become
+authoritative only when their reviewed Pull Request is human-merged.
 
 The dated state above is historical evidence. It does not assert current
 hosted CI, branch-protection, provider, cloud, runtime, or production state.
@@ -26,7 +26,7 @@ hosted CI, branch-protection, provider, cloud, runtime, or production state.
 - **Engineering baseline — 2026-09-05.** Commit
   `92419ed6144e8d07b1392e0b931cdf32a044af77` established the tracked
   repository baseline used by the subsequent engineering work.
-- **Hosted CI evidence checkpoint — 2026-09-06.** A successful hosted
+- **Hosted CI evidence checkpoint — 2026-09-05 (12:00 UTC).** A successful hosted
   `CI / API` run was observed for the exact revision
   `92419ed6144e8d07b1392e0b931cdf32a044af77`. This is historical evidence for
   that revision and job only; current hosted status, required-check settings,
@@ -40,11 +40,6 @@ hosted CI, branch-protection, provider, cloud, runtime, or production state.
   AUTHCTX-001 work records in PR #20. The durable milestone is the accepted
   architecture contract, not a claim that runtime authentication composition
   is complete.
-- **ENG-017 workflow-v2 transition — 2026-09-21.** GitHub Issue #21 defines
-  the simpler repository-native workflow and its human approval boundary. The
-  migration retires the local v1 harness while preserving independent review,
-  human authority, fail-closed security, and a separate production approval
-  path.
 
 ## Current gaps
 
