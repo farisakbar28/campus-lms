@@ -17,8 +17,9 @@ The product and architecture sources of truth are:
 For every task, read [the documentation map](docs/README.md) first, then read
 the applicable scoped `AGENTS.md` files before entering a narrower tree.
 Inspect the actual source, Git history, GitHub state, and CI evidence before
-making claims. Use [engineering history](docs/engineering/history.md) for
-durable current state and verified milestones, [the roadmap](docs/roadmap.md)
+making claims. Use [current architecture](docs/architecture.md) for the
+implementation snapshot, [engineering history](docs/engineering/history.md)
+for verified milestones and changed assumptions, [the roadmap](docs/roadmap.md)
 for future direction, and GitHub Issues for the operational backlog.
 
 The repository-native sequence is documented in
@@ -40,8 +41,9 @@ require human approval for the exact revision or immutable artifact, target
 environment, and scope. A material change invalidates that approval.
 Destructive database or data operations require explicit task authority and
 human confirmation. External or cloud operations require the same two gates.
-Agents must not author human approvals, accept residual risk, merge, push,
-mutate Issues or Pull Requests, or perform production mutations.
+Agents must not author human approvals, accept residual risk, merge, or perform
+production mutations. Issue and Pull Request mutations, pushes, and remote
+branch mutations require explicit task authority and human confirmation.
 
 ## Repository-wide rules
 

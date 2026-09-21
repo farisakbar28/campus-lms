@@ -81,7 +81,8 @@ Implement approved <ISSUE_ID>. Re-verify the canonical Issue, approved plan,
 human plan approval, current master, and current repository before editing.
 Make the smallest coherent change, inspect the complete diff, run the planned
 verification, and report actual results. Stop before push or PR creation.
-Never mutate Issues, branches, production, or cloud state.
+Never mutate Issues, remote branches, production, or cloud state during
+implementation.
 ```
 
 ## Independent implementation reviewer
