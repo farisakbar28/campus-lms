@@ -25,7 +25,9 @@ production status. Detailed task and review history remains in GitHub.
 
 - **Engineering baseline (2026-09-05):** commit
   `92419ed6144e8d07b1392e0b931cdf32a044af77` established the tracked
-  repository baseline.
+  repository baseline. A successful hosted `CI / API` run was observed for
+  that exact revision on 2026-09-05 at 12:00 UTC. This is historical evidence
+  for that revision and job only; check GitHub Actions for current CI status.
 - **Trusted tenant-context contract (2026-09-20):**
   [ADR-0006](adr/0006-trusted-authenticated-tenant-context.md) entered
   `master` through [PR #19](https://github.com/farisakbar28/campus-lms/pull/19)
