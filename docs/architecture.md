@@ -103,6 +103,5 @@ implementation claim.
 - Define the approved staff-side AI role/data boundary before implementing a
   narrow, optional, non-authoritative capability.
 
-For dependency order and future classifications, see the
-[roadmap](roadmap.md). For dated, verifiable milestones, see
-[engineering history](engineering/history.md).
+For dependency order, future classifications, completed progress, and durable
+material changes, see the [roadmap](roadmap.md).

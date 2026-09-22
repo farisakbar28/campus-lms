@@ -54,12 +54,17 @@ The scoped rules in [apps/api/AGENTS.md](../apps/api/AGENTS.md) and
 
 ## How do engineers and agents work?
 
-Use the simple repository-native sequence in
-[engineering/workflow.md](engineering/workflow.md). The
-[agent playbook](engineering/agent-playbook.md) provides copy-paste prompts
-for common roles. Humans choose tasks, approve plans, review intent, merge,
-and approve production changes. Independent plan and implementation reviews
-are required; a material change returns the work to planning and fresh review.
+Use [the engineering workflow](engineering/workflow.md) for the full
+human-and-agent sequence. Repository skills guide
+[orientation](../.agents/skills/project-orient/SKILL.md),
+[planning](../.agents/skills/task-plan/SKILL.md),
+[implementation](../.agents/skills/task-implement/SKILL.md),
+[implementation review](../.agents/skills/implementation-review/SKILL.md),
+[shipping](../.agents/skills/task-ship/SKILL.md), and
+[production release](../.agents/skills/production-release/SKILL.md).
+Project reviewer definitions live in `.codex/agents/`. Humans choose tasks,
+decide plans and material changes, merge, and approve production. Independent
+implementation review is mandatory; there is no independent plan review.
 
 The [production-readiness checklist](engineering/production-readiness.md) is a
 checklist for production-impacting work, not a workflow engine.
@@ -67,9 +72,9 @@ checklist for production-impacting work, not a workflow engine.
 ## Where are we now?
 
 [architecture.md](architecture.md) owns the current repository implementation
-snapshot. [engineering/history.md](engineering/history.md) records concise,
-verified milestones and changed assumptions. Current hosted CI status belongs
-to GitHub Actions for the relevant revision, not to a static status claim.
+snapshot. [roadmap.md](roadmap.md) records future direction, completed
+progress, and durable material changes. Current hosted CI status belongs to
+GitHub Actions for the relevant revision, not to a static status claim.
 
 The repository has a runnable API and PostgreSQL/RLS foundations, token and
 session primitives, local deployment tooling, and accepted tenant-context
@@ -80,17 +85,18 @@ permanent ingress remain separate gaps or future work.
 ## Where are we going?
 
 [roadmap.md](roadmap.md) contains future product and engineering direction,
-dependency order, classifications, and unresolved decisions. GitHub Issues
-contain the canonical operational backlog and task intent. Git commits, Pull
-Requests, reviews, and CI provide implementation evidence.
+dependency order, completed progress, durable material changes, and unresolved
+decisions. GitHub Issues contain the canonical operational backlog and task
+intent. Git commits, Pull Requests, reviews, and CI provide implementation
+evidence.
 
 ## Recommended reading order
 
 1. [Domain contract](domain.md) and [security requirements](../SECURITY.md).
 2. [Current architecture](architecture.md) and [accepted ADRs](adr/README.md).
-3. [Engineering workflow](engineering/workflow.md) and
-   [agent playbook](engineering/agent-playbook.md).
-4. [Engineering history](engineering/history.md) and
-   [future roadmap](roadmap.md).
-5. [Contributing guide](../CONTRIBUTING.md) and applicable scoped
-   `AGENTS.md` files.
+3. [Engineering workflow](engineering/workflow.md),
+   [repository skills](../.agents/skills/project-orient/SKILL.md), and
+   [production readiness](engineering/production-readiness.md).
+4. [Roadmap](roadmap.md) for future direction and completed progress.
+5. [Contributing guide](../CONTRIBUTING.md), root
+   [AGENTS.md](../AGENTS.md), and applicable scoped `AGENTS.md` files.

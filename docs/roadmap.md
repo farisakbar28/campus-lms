@@ -2,10 +2,12 @@
 
 Status: active product and engineering direction.
 
-This document is future-looking. GitHub Issues are the operational backlog;
+This document owns future direction, concise completed progress, and durable
+material changes. GitHub Issues are the operational backlog;
 [the current architecture](architecture.md) is the implementation snapshot;
-and [engineering history](engineering/history.md) records durable, verified
-milestones. A capability is not implemented merely because it appears below.
+Git and Pull Requests show delivered changes; tests and GitHub Actions hold
+verification evidence. A capability is not implemented merely because it
+appears below.
 
 ## Planning rules
 
@@ -15,6 +17,46 @@ preserve the contracts in `docs/domain.md`, `docs/domain-ai.md`, `SECURITY.md`,
 accepted ADRs, and scoped engineering instructions. Applied migrations remain
 immutable, security-sensitive configuration fails closed, and no automatic
 paid fallback may be introduced.
+
+## Completed progress
+
+These milestones record durable outcomes, not current hosted CI, cloud, or
+production status. Detailed task and review history remains in GitHub.
+
+- **Engineering baseline (2026-09-05):** commit
+  `92419ed6144e8d07b1392e0b931cdf32a044af77` established the tracked
+  repository baseline. A successful hosted `CI / API` run was observed for
+  that exact revision on 2026-09-05 at 12:00 UTC. This is historical evidence
+  for that revision and job only; check GitHub Actions for current CI status.
+- **Trusted tenant-context contract (2026-09-20):**
+  [ADR-0006](adr/0006-trusted-authenticated-tenant-context.md) entered
+  `master` through [PR #19](https://github.com/farisakbar28/campus-lms/pull/19)
+  at `27eeecef73776ac26e47149ad9a3ab3414f14bb4`. It defines admission
+  semantics; runtime authentication composition remains future work.
+- **Repository-native workflow v2 (2026-09-22):**
+  [ENG-017 / PR #22](https://github.com/farisakbar28/campus-lms/pull/22)
+  merged at `4d70aea2b5a4cd67a332b713b569af4bc8b0fc26`, replacing the
+  earlier v1 workflow harness. ENG-018 /
+  [Issue #23](https://github.com/farisakbar28/campus-lms/issues/23)
+  specifies the subsequent Codex-native cutover; that change becomes
+  authoritative only when its implementing PR is human-merged.
+
+## Durable material changes
+
+- **2026-08-31 — bounded ingress:** accepted
+  [ADR-0002e](adr/0002e-zero-domain-quick-tunnel-validation.md) superseded
+  ADR-0002b only for its ingress, domain, Origin-CA, and normal
+  administration assumptions. Its private-origin, recovery, and zero-cost
+  boundaries remain. The accepted path is temporary validation, not
+  permanent production ingress or evidence of a running tunnel.
+- **2026-09-20 — tenant-context authority:** ADR-0006 established trusted
+  admission semantics without completing runtime Principal or authentication
+  wiring. The runtime gap stays in [architecture.md](architecture.md) and
+  the future work below.
+- **2026-09-22 — implementation snapshot ownership:** current code facts
+  belong in [architecture.md](architecture.md), while this roadmap owns
+  direction and durable progress. Current hosted CI status must be read
+  from GitHub Actions for the relevant revision.
 
 ## Product boundary
 

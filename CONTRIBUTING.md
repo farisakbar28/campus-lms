@@ -2,20 +2,22 @@
 
 ## Normal workflow
 
-Start from an updated `master`, create a short-lived descriptive branch, and
-make one coherent change. Follow
-[the repository workflow](docs/engineering/workflow.md): orient and
-brainstorm, have a human choose the task, plan it, obtain an independent plan
-review and human approval, implement, obtain an independent implementation
-review, then create a Pull Request only when the human explicitly asks for it.
-CI and human review precede a human squash merge. History updates use the
-same branch, Pull Request, CI, and human-merge boundary.
+Follow [the repository workflow](docs/engineering/workflow.md): orient and
+brainstorm with the human, have the human choose a task, create or update its
+canonical Issue, propose a plan, and obtain direct human plan approval. Then
+start a short-lived branch from updated `master`, implement and test, obtain
+an independent implementation review, finalize the roadmap, and push and
+create or update the PR. Observe CI for the PR head; the human reviews and
+merges. The PR closes its Issue on merge. There is no independent plan review.
 
 AI-assisted work follows the same workflow and evidence model as human work.
 Agents inspect actual source and native GitHub/Git/CI records, never invent
 results, and never create a parallel task archive or command-receipt system.
-Human task choice, plan approval, merge, and production approval remain
-mandatory. A material change returns the work to planning and fresh review.
+The human chooses tasks, decides plans and material deviations, merges PRs,
+and approves production. Normal Issue, comment, branch, push, and PR
+operations within a selected and approved task need no separate approval for
+each action. Material changes return to the human and a revised plan;
+relevant candidate changes require renewed implementation review.
 
 ## Branch names
 

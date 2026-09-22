@@ -55,8 +55,10 @@ approval remains mandatory and is separate from implementation review.
 - [ ] External provider, quota, region, cost, certificate, DNS, and account
       claims are freshly verified when material; historic claims are not
       treated as current state.
-- [ ] Any external, cloud, Issue, PR, branch, or production mutation has
-      explicit task authority and human confirmation.
+- [ ] Any external, cloud, or production mutation has explicit task authority
+      and human confirmation. Normal task-scoped Issue, PR, and branch
+      operations follow the selected and approved task authority in the
+      [engineering workflow](workflow.md).
 
 ## Security
 

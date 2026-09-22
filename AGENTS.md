@@ -18,32 +18,43 @@ For every task, read [the documentation map](docs/README.md) first, then read
 the applicable scoped `AGENTS.md` files before entering a narrower tree.
 Inspect the actual source, Git history, GitHub state, and CI evidence before
 making claims. Use [current architecture](docs/architecture.md) for the
-implementation snapshot, [engineering history](docs/engineering/history.md)
-for verified milestones and changed assumptions, [the roadmap](docs/roadmap.md)
-for future direction, and GitHub Issues for the operational backlog.
+implementation snapshot, [the roadmap](docs/roadmap.md) for future direction,
+completed progress, and durable material changes, and GitHub Issues for the
+operational backlog. Tests and CI provide automated evidence.
 
-The repository-native sequence is documented in
-[the workflow](docs/engineering/workflow.md): orient, brainstorm, have a
-human choose the task, plan, obtain a fresh independent plan review, obtain
-direct human plan approval, implement, obtain a fresh independent
-implementation review, create a Pull Request, observe CI and human review,
-and have a human merge. Human task selection, plan approval, merge, and
-production approval are never delegated to an agent.
+Follow [the engineering workflow](docs/engineering/workflow.md) and the
+repository skills in `.agents/skills/`. Orient and brainstorm with the human;
+the human chooses the task. The agent may then create or update its canonical
+Issue and propose a plan. A human directly approves, revises, or rejects the
+plan. There is no independent plan review. Implementation starts only after
+human plan approval on a short-lived branch, followed by tests and an
+implementation review independent from the implementer.
 
-After a human approves the plan, an agent may create a short-lived local
-branch, edit files, and create local commits when the task authorizes them.
-Push or Pull Request creation is allowed only after the independent
-implementation review passes and the human explicitly asks for the PR. Never
+Human task selection authorizes task-scoped Issue creation or updates. After
+plan approval, agents may make normal task-scoped Issue and PR creations or
+updates, comments, branches, commits, and pushes without separate approval
+for each action. Finalize roadmap changes and obtain a passing independent
+review of the final candidate before pushing or opening a PR. Observe CI for
+the PR head; only a human merges. A closing reference in the PR lets the
+Issue close on merge.
+
+If requirements, architecture, security, scope, acceptance, or production
+impact materially changes, stop affected work and ask the human to decide;
+revise the plan and Issue as needed before continuing. Relevant changes after
+implementation review require a fresh review. Agents must not author human
+task choice, plan approval, material-deviation approval, residual-risk
+acceptance, merge, or production approval.
+
+After merge, production-impacting work follows the separate
+[readiness checklist](docs/engineering/production-readiness.md) and needs
+human approval for the exact revision or immutable artifact, target
+environment, and scope before deployment. A material change invalidates that
+approval. Destructive database or data operations and external or cloud
+mutations require explicit task authority and human confirmation. Never
 automatically merge or deploy production.
 
-For production-impacting work, follow the separate readiness checklist and
-require human approval for the exact revision or immutable artifact, target
-environment, and scope. A material change invalidates that approval.
-Destructive database or data operations require explicit task authority and
-human confirmation. External or cloud operations require the same two gates.
-Agents must not author human approvals, accept residual risk, merge, or perform
-production mutations. Issue and Pull Request mutations, pushes, and remote
-branch mutations require explicit task authority and human confirmation.
+When changing this workflow, the authority rules on the default branch
+govern that migration until its Pull Request is human-merged.
 
 ## Repository-wide rules
 
