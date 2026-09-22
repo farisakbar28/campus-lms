@@ -2,7 +2,7 @@
 
 Contract version: `campus-lms-work/v1`
 
-Status: `APPROVED`
+Status: `READY_FOR_PR`
 
 Issue: `ENG-017` / GitHub issue `#21`
 
@@ -32,7 +32,7 @@ Implementation author actor label: `Codex implementer`
 
 Implementation author session label: `ENG-017-in-plan-fix-2026-09-21`
 
-Candidate Git commit SHA: `NONE`
+Candidate Git commit SHA: `1547d05d2fd95bfea845b8a8247e11b4728ffe27`
 
 This is the temporary v1 execution binding for the governance migration. The
 v1 contract remains authoritative until the v2 Pull Request is human-merged.
@@ -239,9 +239,10 @@ hash, obtain fresh independent plan review and human approval, then resume.
 <!-- PLAN-NORMATIVE-END -->
 
 - Material deviations: `NONE`
-- Concise verification result: `git diff --check, make help, make test,
-  make build, go mod verify, go vet, Markdown-link check, and focused obsolete
-  reference search passed for this in-plan fix; hosted PR CI is pending.`
-- Concise completion summary: `Documentation contradictions corrected and the
-  ENG-017 transitional files restored. Independent v1 candidate review, Issue
-  handoff, cleanup, and final-diff review remain pending.`
+- Concise verification result: `PASS: independent implementation review
+  ENG-017-IMPLEMENTATION-REVIEW-01 approved exact candidate
+  1547d05d2fd95bfea845b8a8247e11b4728ffe27 with no findings requiring changes;
+  git diff --check, make help, make test, make build, go mod verify, go vet,
+  Go formatting, Markdown-link check, and focused obsolete-reference search
+  passed; hosted PR CI is pending.`
+- Concise completion summary: `READY_FOR_PR_AFTER_APPROVED_IMPLEMENTATION_REVIEW_ENG-017-IMPLEMENTATION-REVIEW-01`
