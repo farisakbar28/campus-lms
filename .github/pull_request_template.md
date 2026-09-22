@@ -1,7 +1,9 @@
-## Task
+## Task and human plan decision
 
-<!-- Link the canonical GitHub Issue and include its task identifier. -->
+<!-- Link the canonical Issue, its identifier, and the human-approved plan. -->
 - Issue:
+- Human plan approval:
+- Material deviations and human decisions, if any:
 
 ## Summary and scope
 
@@ -9,31 +11,34 @@
 - In scope:
 - Out of scope:
 
-## Risk
+## Risk and preserved contracts
 
 - Risk level and notable failure modes:
-
-## Architecture, security, and tenancy impact
-
 - Architecture impact:
-- Security and tenancy impact:
+- Security, privacy, and tenancy impact:
+- Preserved domain, ADR, migration, and cost constraints:
 
 ## Verification
 
-- Checks run and observed results:
+<!-- State actual commands and observed results; do not claim unrun checks. -->
+- Local checks and observed results:
+- Hosted CI for the exact PR head:
 
-## Independent reviews
+## Independent implementation review
 
-- Plan review:
-- Implementation review:
+<!-- Bind the verdict to the final candidate after roadmap edits. -->
+- Reviewer and candidate revision or diff:
+- Verdict, findings, and resolution:
 
-## Documentation/history
+## Documentation and roadmap
 
-- Documentation and living-history impact:
+- Navigation and documentation changes:
+- Roadmap progress or durable material-change record:
 
 ## Release and production impact
 
 - Release required:
-- Production impact:
+- Production impact and readiness path, if applicable:
 
-## Closes #
+<!-- Replace the placeholder with the canonical Issue number. -->
+Closes #<issue-number>

@@ -29,19 +29,18 @@ implemented or promised. The AI service itself is not implemented yet.
 - [Domain contract](docs/domain.md) and [AI contract](docs/domain-ai.md) —
   ownership, tenancy, authorization, and future staff-side AI boundaries.
 - [Architecture decisions](docs/adr/README.md) — accepted and proposed ADRs.
-- [Engineering history](docs/engineering/history.md) — concise, verified
-  milestones and changed assumptions.
-- [Roadmap](docs/roadmap.md) — future product and engineering direction.
+- [Roadmap](docs/roadmap.md) — future direction, completed progress, and
+  durable material changes.
 - [Security requirements](SECURITY.md) — enduring security rules and known
   limitations.
 - [Engineering workflow](docs/engineering/workflow.md) and
-  [agent playbook](docs/engineering/agent-playbook.md) — how humans and
-  agents plan, review, implement, and hand off work.
+  [Codex skills](.agents/skills/project-orient/SKILL.md) — how humans and
+  agents plan, implement, review, and ship work.
 
-The architecture and history documents distinguish repository facts from
-future plans and external state. Hosted CI status must be read from the
-current GitHub Actions run, and no local command proves cloud state or
-production readiness.
+The architecture and roadmap distinguish current repository facts from future
+plans and external state. Hosted CI status must be read from the current
+GitHub Actions run, and no local command proves cloud state or production
+readiness.
 
 ## Development
 
