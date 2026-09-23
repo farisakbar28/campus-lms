@@ -14,11 +14,14 @@ import (
 	"github.com/farisakbar28/campus-lms/apps/api/internal/database"
 	"github.com/farisakbar28/campus-lms/apps/api/internal/domain"
 	"github.com/farisakbar28/campus-lms/apps/api/internal/middleware"
+	"github.com/google/uuid"
 )
 
 const validOfferingID = "2888c021-06ae-73da-2f57-884c1dd5d059"
 const validTenantID = "19cd4773-2aeb-d614-028f-e21bf9b73d0c"
 const validUserID = "4ec42919-bc1a-17bc-10b0-d75b8343dff8"
+const validSessionID = "7bd7c5f5-f2ec-48cd-9259-c9f7e3f20510"
+const validMembershipID = "1ec2ad6e-a42a-4bc8-bf6a-c0a3f79c5cf2"
 
 type countingRosterStub struct {
 	calls  int
@@ -58,7 +61,7 @@ func TestCourseOfferingParticipants(t *testing.T) {
 		{
 			name:      "maps not found without leaking access state",
 			path:      "/course-offerings/" + validOfferingID + "/participants",
-			principal: &middleware.Principal{TenantID: validTenantID, UserID: validUserID},
+			principal: testPrincipal(),
 			stub: countingRosterStub{
 				err: domain.ErrNotFound,
 			},
@@ -69,7 +72,7 @@ func TestCourseOfferingParticipants(t *testing.T) {
 		{
 			name:      "maps database unavailable",
 			path:      "/course-offerings/" + validOfferingID + "/participants",
-			principal: &middleware.Principal{TenantID: validTenantID, UserID: validUserID},
+			principal: testPrincipal(),
 			stub: countingRosterStub{
 				err: errors.Join(database.ErrUnavailable, errors.New("connection reset")),
 			},
@@ -80,7 +83,7 @@ func TestCourseOfferingParticipants(t *testing.T) {
 		{
 			name:      "maps unexpected errors safely",
 			path:      "/course-offerings/" + validOfferingID + "/participants",
-			principal: &middleware.Principal{TenantID: validTenantID, UserID: validUserID},
+			principal: testPrincipal(),
 			stub: countingRosterStub{
 				err: errors.New("SQLSTATE secret database detail"),
 			},
@@ -91,7 +94,7 @@ func TestCourseOfferingParticipants(t *testing.T) {
 		{
 			name:      "returns roster response",
 			path:      "/course-offerings/" + validOfferingID + "/participants",
-			principal: &middleware.Principal{TenantID: validTenantID, UserID: validUserID},
+			principal: testPrincipal(),
 			stub: countingRosterStub{
 				roster: domain.Roster{
 					Offering: domain.CourseOffering{ID: validOfferingID, DisplayName: "Algorithms"},
@@ -139,5 +142,14 @@ func TestCourseOfferingParticipants(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func testPrincipal() *middleware.Principal {
+	return &middleware.Principal{
+		TenantID:     uuid.MustParse(validTenantID),
+		UserID:       uuid.MustParse(validUserID),
+		SessionID:    uuid.MustParse(validSessionID),
+		MembershipID: uuid.MustParse(validMembershipID),
 	}
 }

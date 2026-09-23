@@ -46,11 +46,11 @@ For tenant-scoped database work:
 3. retain RLS as a defense-in-depth backstop rather than relying only on
    application filters.
 
-The repository currently contains access-token verification, bearer parsing,
-and refresh-session primitives. Production authentication composition is not
-complete: the running server does not yet provide the full Principal/auth
-endpoint wiring. Do not paper over this gap with tests or documentation; track
-it as product work.
+The repository contains access-token verification, bearer parsing, refresh
+session primitives, and runtime admission that produces a typed trusted
+Principal for tenant-prefixed protected routes. Authentication entrypoints
+that create the first session or expose HTTP login and refresh flows remain
+future product work. Do not present those missing entrypoints as implemented.
 
 ## Database changes and testing
 

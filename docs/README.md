@@ -77,10 +77,11 @@ progress, and durable material changes. Current hosted CI status belongs to
 GitHub Actions for the relevant revision, not to a static status claim.
 
 The repository has a runnable API and PostgreSQL/RLS foundations, token and
-session primitives, local deployment tooling, and accepted tenant-context
-architecture. Runtime authentication composition, product capabilities beyond
-the current foundation, production observability, current-schema recovery, and
-permanent ingress remain separate gaps or future work.
+session primitives, runtime tenant admission for the protected roster route,
+local deployment tooling, and accepted tenant-context architecture. Complete
+authentication entrypoints, product capabilities beyond the current
+foundation, production observability, current-schema recovery, and permanent
+ingress remain separate gaps or future work.
 
 ## Where are we going?
 

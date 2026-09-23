@@ -11,6 +11,7 @@ import (
 	"github.com/farisakbar28/campus-lms/apps/api/internal/database"
 	"github.com/farisakbar28/campus-lms/apps/api/internal/domain"
 	"github.com/farisakbar28/campus-lms/apps/api/internal/middleware"
+	"github.com/google/uuid"
 )
 
 type rosterReader interface {
@@ -26,12 +27,12 @@ func courseOfferingParticipants(reader rosterReader, logger *slog.Logger) nethtt
 		}
 
 		principal, ok := middleware.PrincipalFromContext(request.Context())
-		if !ok || !isUUID(principal.TenantID) || !isUUID(principal.UserID) {
+		if !ok || principal.TenantID == uuid.Nil || principal.UserID == uuid.Nil || principal.SessionID == uuid.Nil || principal.MembershipID == uuid.Nil {
 			writeError(response, nethttp.StatusUnauthorized, "unauthenticated", "authentication is required")
 			return
 		}
 
-		roster, err := reader.AuthorizedRoster(request.Context(), principal.TenantID, principal.UserID, offeringID)
+		roster, err := reader.AuthorizedRoster(request.Context(), principal.TenantID.String(), principal.UserID.String(), offeringID)
 		if err != nil {
 			switch {
 			case errors.Is(err, domain.ErrNotFound):

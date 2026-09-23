@@ -6,6 +6,9 @@ import (
 	"log/slog"
 	nethttp "net/http"
 	"time"
+
+	"github.com/farisakbar28/campus-lms/apps/api/internal/auth"
+	"github.com/farisakbar28/campus-lms/apps/api/internal/middleware"
 )
 
 type readinessChecker interface {
@@ -23,11 +26,20 @@ const (
 var ErrServerClosed = nethttp.ErrServerClosed
 
 // NewServer creates the API server with timeouts that bound slow clients.
-func NewServer(address string, logger *slog.Logger, readiness readinessChecker, roster rosterReader) *nethttp.Server {
+func NewServer(address string, logger *slog.Logger, readiness readinessChecker, roster rosterReader, verifier auth.AccessTokenVerifier, admitter middleware.TenantAdmitter) (*nethttp.Server, error) {
+	bearer, err := middleware.NewBearerMiddleware(verifier)
+	if err != nil {
+		return nil, err
+	}
+	tenantAdmission, err := middleware.NewTenantAdmissionMiddleware(admitter, logger)
+	if err != nil {
+		return nil, err
+	}
+
 	mux := nethttp.NewServeMux()
 	mux.HandleFunc("GET /healthz", healthz(logger))
 	mux.HandleFunc("GET /readyz", readyz(logger, readiness))
-	mux.HandleFunc("GET /course-offerings/{id}/participants", courseOfferingParticipants(roster, logger))
+	mux.Handle("GET /tenants/{tenant_id}/course-offerings/{id}/participants", bearer(tenantAdmission(courseOfferingParticipants(roster, logger))))
 
 	return &nethttp.Server{
 		Addr:              address,
@@ -36,7 +48,7 @@ func NewServer(address string, logger *slog.Logger, readiness readinessChecker, 
 		ReadTimeout:       readTimeout,
 		WriteTimeout:      writeTimeout,
 		IdleTimeout:       idleTimeout,
-	}
+	}, nil
 }
 
 func healthz(logger *slog.Logger) nethttp.HandlerFunc {

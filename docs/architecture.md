@@ -40,10 +40,15 @@ decisions are not commitments; and gaps are not implied capabilities.
 ### Authentication boundary
 
 Access-token verification, strict Bearer parsing, refresh-session lifecycle,
-and a `Principal` context helper exist as primitives. The running server does
-not yet compose the full user/session/membership admission boundary, typed
-trusted Principal propagation, or complete authentication endpoints. This is
-an implementation gap, not a reason to weaken the accepted security contract.
+typed trusted `Principal` propagation, and the user/session/tenant/membership
+admission boundary are composed in the running server. Protected roster access
+uses the tenant-prefixed route
+`/tenants/{tenant_id}/course-offerings/{id}/participants`; the URL tenant is
+validated against active user/session state, an active tenant, and an active
+membership before the handler runs. Course-role and object authorization still
+run in the roster repository transaction. Authentication entrypoints that
+create the first session or expose HTTP refresh/login flows remain future work;
+this composition does not claim an identity-provider integration.
 
 ### Deployment and operations
 

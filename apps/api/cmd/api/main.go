@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/farisakbar28/campus-lms/apps/api/internal/auth"
 	"github.com/farisakbar28/campus-lms/apps/api/internal/config"
 	"github.com/farisakbar28/campus-lms/apps/api/internal/database"
 	"github.com/farisakbar28/campus-lms/apps/api/internal/healthcheck"
@@ -53,7 +54,17 @@ func main() {
 	defer databasePool.Close()
 
 	rosterService := repository.NewRosterService(databasePool)
-	server := apphttp.NewServer(cfg.Address(), logger, databasePool, rosterService)
+	admissionService := repository.NewAdmissionService(databasePool)
+	accessTokens, err := auth.NewAccessTokenManager(cfg.JWTSecret, cfg.AccessTTL)
+	if err != nil {
+		logger.Error("configure access tokens", "error", err)
+		os.Exit(1)
+	}
+	server, err := apphttp.NewServer(cfg.Address(), logger, databasePool, rosterService, accessTokens, admissionService)
+	if err != nil {
+		logger.Error("configure HTTP server", "error", err)
+		os.Exit(1)
+	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()

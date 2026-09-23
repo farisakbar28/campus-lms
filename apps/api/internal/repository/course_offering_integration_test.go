@@ -15,6 +15,7 @@ import (
 
 	"github.com/farisakbar28/campus-lms/apps/api/internal/database"
 	"github.com/farisakbar28/campus-lms/apps/api/internal/domain"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	postgrescontainer "github.com/testcontainers/testcontainers-go/modules/postgres"
 )
@@ -202,6 +203,73 @@ FROM pg_roles r WHERE r.rolname = $1`, testRole).Scan(&superuser, &bypassRLS, &o
 	}
 }
 
+func TestAdmissionResolvesActiveSessionTenantAndMembership(t *testing.T) {
+	ctx := context.Background()
+	userID, err := uuid.Parse(repositorySuite.instructorA)
+	if err != nil {
+		t.Fatalf("parse instructor fixture: %v", err)
+	}
+	tenantID, err := uuid.Parse(tenantAID)
+	if err != nil {
+		t.Fatalf("parse tenant fixture: %v", err)
+	}
+	sessionID := uuid.New()
+	now := time.Now().UTC()
+	if _, err := repositorySuite.owner.Exec(ctx, `
+INSERT INTO auth_sessions (id, user_id, refresh_token_hash, issued_at, expires_at)
+VALUES ($1, $2, decode('aabbcc', 'hex'), $3, $4)`, sessionID, userID, now.Add(-time.Minute), now.Add(time.Hour)); err != nil {
+		t.Fatalf("insert active auth session: %v", err)
+	}
+
+	service := NewAdmissionService(repositorySuite.appPool)
+	membershipID, err := service.Admit(ctx, userID, sessionID, tenantID)
+	if err != nil {
+		t.Fatalf("Admit() error = %v", err)
+	}
+	var wantMembershipID uuid.UUID
+	if err := repositorySuite.owner.QueryRow(ctx, `SELECT id FROM memberships WHERE tenant_id = $1 AND user_id = $2`, tenantID, userID).Scan(&wantMembershipID); err != nil {
+		t.Fatalf("read expected membership: %v", err)
+	}
+	if membershipID != wantMembershipID {
+		t.Fatalf("membership ID = %s, want %s", membershipID, wantMembershipID)
+	}
+
+	if _, err := service.Admit(ctx, userID, sessionID, uuid.MustParse(tenantBID)); !errors.Is(err, ErrTenantAdmission) {
+		t.Fatalf("cross-tenant admission error = %v, want ErrTenantAdmission", err)
+	}
+
+	inactiveMemberID := uuid.MustParse(fixtureMember)
+	inactiveSessionID := uuid.New()
+	if _, err := repositorySuite.owner.Exec(ctx, `
+INSERT INTO auth_sessions (id, user_id, refresh_token_hash, issued_at, expires_at)
+VALUES ($1, $2, decode('112233', 'hex'), $3, $4)`, inactiveSessionID, inactiveMemberID, now.Add(-time.Minute), now.Add(time.Hour)); err != nil {
+		t.Fatalf("insert inactive-member auth session: %v", err)
+	}
+	if _, err := service.Admit(ctx, inactiveMemberID, inactiveSessionID, tenantID); !errors.Is(err, ErrTenantAdmission) {
+		t.Fatalf("inactive membership admission error = %v, want ErrTenantAdmission", err)
+	}
+
+	revokedSessionID := uuid.New()
+	if _, err := repositorySuite.owner.Exec(ctx, `
+INSERT INTO auth_sessions (id, user_id, refresh_token_hash, issued_at, expires_at, revoked_at, revoked_reason)
+VALUES ($1, $2, decode('445566', 'hex'), $3, $4, $5, 'test_revocation')`, revokedSessionID, userID, now.Add(-time.Minute), now.Add(time.Hour), now); err != nil {
+		t.Fatalf("insert revoked auth session: %v", err)
+	}
+	if _, err := service.Admit(ctx, userID, revokedSessionID, tenantID); !errors.Is(err, ErrAuthenticationState) {
+		t.Fatalf("revoked session error = %v, want ErrAuthenticationState", err)
+	}
+
+	expiredSessionID := uuid.New()
+	if _, err := repositorySuite.owner.Exec(ctx, `
+INSERT INTO auth_sessions (id, user_id, refresh_token_hash, issued_at, expires_at)
+VALUES ($1, $2, decode('ddeeff', 'hex'), $3, $4)`, expiredSessionID, userID, now.Add(-2*time.Hour), now.Add(-time.Hour)); err != nil {
+		t.Fatalf("insert expired auth session: %v", err)
+	}
+	if _, err := service.Admit(ctx, userID, expiredSessionID, tenantID); !errors.Is(err, ErrAuthenticationState) {
+		t.Fatalf("expired session error = %v, want ErrAuthenticationState", err)
+	}
+}
+
 func TestSequentialTenantTransactionsAndFixedDataQueryCount(t *testing.T) {
 	ctx := context.Background()
 	repository := CourseOfferingRepository{}
@@ -282,6 +350,7 @@ func integrationSQLFiles() []string {
 		filepath.Join(apiRoot, "migrations", "0003_auth_membership_schema.up.sql"),
 		filepath.Join(apiRoot, "migrations", "0004_academic_term_time_range_check.up.sql"),
 		filepath.Join(apiRoot, "migrations", "0005_enrollments_active_student_lookup_index.up.sql"),
+		filepath.Join(apiRoot, "migrations", "0006_auth_sessions_schema.up.sql"),
 		filepath.Join(apiRoot, "testdata", "seed.sql"),
 	}
 }
@@ -297,7 +366,7 @@ func bootstrapApplicationRole(ctx context.Context, owner *pgx.Conn, ownerURL str
 	if _, err := owner.Exec(ctx, `GRANT USAGE ON SCHEMA public TO roster_test_app`); err != nil {
 		return "", fmt.Errorf("grant schema usage to test application role: %w", err)
 	}
-	if _, err := owner.Exec(ctx, `GRANT SELECT ON course_offerings, courses, academic_terms, course_staff, memberships, membership_roles, enrollments, users TO roster_test_app`); err != nil {
+	if _, err := owner.Exec(ctx, `GRANT SELECT ON tenants, users, auth_sessions, course_offerings, courses, academic_terms, course_staff, memberships, membership_roles, enrollments TO roster_test_app`); err != nil {
 		return "", fmt.Errorf("grant test application role: %w", err)
 	}
 	parsed, err := url.Parse(ownerURL)
