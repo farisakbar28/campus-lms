@@ -32,7 +32,10 @@ production status. Detailed task and review history remains in GitHub.
   [ADR-0006](adr/0006-trusted-authenticated-tenant-context.md) entered
   `master` through [PR #19](https://github.com/farisakbar28/campus-lms/pull/19)
   at `27eeecef73776ac26e47149ad9a3ab3414f14bb4`. It defines admission
-  semantics; runtime authentication composition remains future work.
+  semantics. The AUTH-002 implementation candidate on the task branch
+  composes that contract into the protected roster route; it becomes effective
+  on `master` only after its implementing PR is human-merged. Authentication
+  entrypoints remain future work.
 - **Repository-native workflow v2 (2026-09-22):**
   [ENG-017 / PR #22](https://github.com/farisakbar28/campus-lms/pull/22)
   merged at `4d70aea2b5a4cd67a332b713b569af4bc8b0fc26`, replacing the
@@ -50,9 +53,9 @@ production status. Detailed task and review history remains in GitHub.
   boundaries remain. The accepted path is temporary validation, not
   permanent production ingress or evidence of a running tunnel.
 - **2026-09-20 — tenant-context authority:** ADR-0006 established trusted
-  admission semantics without completing runtime Principal or authentication
-  wiring. The runtime gap stays in [architecture.md](architecture.md) and
-  the future work below.
+  admission semantics. At the time of that decision, runtime Principal and
+  authentication wiring were not complete; the AUTH-002 candidate now carries
+  the typed Principal and admission composition, pending human merge.
 - **2026-09-22 — implementation snapshot ownership:** current code facts
   belong in [architecture.md](architecture.md), while this roadmap owns
   direction and durable progress. Current hosted CI status must be read
@@ -156,10 +159,12 @@ current repository history.
 ADR-0006 accepts tenant-neutral user/session access tokens and an explicit
 `/tenants/{tenant_id}/...` URL selector that remains untrusted until the server
 validates the active user, exact active session, active non-suspended tenant,
-and active membership. Runtime composition is not implemented: the next work
-must create and propagate the typed trusted Principal, compose the existing
-token and session primitives into protected routes, and enforce current role,
-object, and lifecycle authorization at each data operation.
+and active membership. The AUTH-002 candidate creates and propagates the
+typed trusted Principal, composes the existing token and session primitives
+into the protected roster route, and retains current role, object, and
+lifecycle authorization at each data operation. After that candidate is
+merged, the remaining identity work is authentication entrypoints for initial
+session creation and HTTP login or refresh flows.
 
 ### 3. SIAKAD integration contract
 

@@ -1,12 +1,19 @@
 // Package middleware contains trusted request identity plumbing.
 package middleware
 
-import "context"
+import (
+	"context"
 
-// Principal is populated only by trusted authentication middleware in a future loop.
+	"github.com/google/uuid"
+)
+
+// Principal is populated only after trusted user, session, tenant, and
+// membership admission. It does not carry role or object authority.
 type Principal struct {
-	TenantID string
-	UserID   string
+	UserID       uuid.UUID
+	SessionID    uuid.UUID
+	TenantID     uuid.UUID
+	MembershipID uuid.UUID
 }
 
 type principalContextKey struct{}

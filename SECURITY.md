@@ -32,10 +32,11 @@ not claim formal compliance, certification, or completion of every control.
 
 ## Current limitations
 
-Production authentication composition, including complete Principal wiring, is
-not yet complete. The repository contains authentication and session
-primitives, but documentation and tests must not present the production
-authorization boundary as finished.
+Protected request admission and typed Principal wiring are implemented for the
+tenant-prefixed roster route. Authentication entrypoints that create the first
+session or expose HTTP login and refresh flows remain incomplete; this does
+not establish an identity-provider integration or claim that users can obtain
+credentials through the API.
 
 The AI service, AI security controls, evaluation gate, and permanent
 production-ingress controls are not implemented. They require separate design,
