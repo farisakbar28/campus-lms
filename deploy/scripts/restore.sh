@@ -1,10 +1,7 @@
 #!/usr/bin/env bash
 # Restores a local custom-format archive into a fresh disposable database,
 # verifies it against its paired state manifest, and removes that database
-# afterwards. The state validator remains pinned to the pre-0006, migration-5
-# baseline and is not validated for the repository's current schema;
-# current-schema backup/restore reconciliation is future authorized engineering
-# work.
+# afterwards.
 
 set -euo pipefail
 umask 077
@@ -37,7 +34,7 @@ is_safe_target() {
 
     is_safe_identifier "$target" || return 1
     case "$target" in
-        week03_restore_*) return 0 ;;
+        current_restore_*) return 0 ;;
         *) return 1 ;;
     esac
 }
@@ -55,16 +52,16 @@ validate_state() {
     local expected_rls
     local table
 
-    expected_presence="week3_table_presence=present:academic_terms,present:audit_logs,present:auth_identities,present:course_offerings,present:course_staff,present:courses,present:enrollments,present:membership_roles,present:memberships,present:tenants,present:users"
+    expected_presence="current_application_table_presence=present:academic_terms,present:audit_logs,present:auth_identities,present:auth_sessions,present:course_offerings,present:course_staff,present:courses,present:enrollments,present:membership_roles,present:memberships,present:tenants,present:users"
     expected_rls="rls_state=academic_terms:enabled,audit_logs:enabled,course_offerings:enabled,course_staff:enabled,courses:enabled,enrollments:enabled,membership_roles:enabled,memberships:enabled"
 
-    require_state_line "$state_file" "state_format=week03-backup-restore-v1" || return 1
-    require_state_line "$state_file" "week3_table_count=11" || return 1
-    require_state_line "$state_file" "public_application_table_count=11" || return 1
+    require_state_line "$state_file" "state_format=current-schema-backup-restore-v1" || return 1
+    require_state_line "$state_file" "current_application_table_count=12" || return 1
+    require_state_line "$state_file" "public_application_table_count=12" || return 1
     require_state_line "$state_file" "$expected_presence" || return 1
     require_state_line "$state_file" "schema_migrations=present" || return 1
     require_state_line "$state_file" "schema_migrations_rows=1" || return 1
-    require_state_line "$state_file" "migration_version=5" || return 1
+    require_state_line "$state_file" "migration_version=6" || return 1
     require_state_line "$state_file" "migration_dirty=false" || return 1
     require_state_line "$state_file" "$expected_rls" || return 1
     require_state_line "$state_file" "rls_enabled_count=8" || return 1
@@ -78,8 +75,16 @@ validate_state() {
     require_state_line "$state_file" "audit_policy_all=0" || return 1
     require_state_line "$state_file" "enrollments_active_student_lookup_index_count=1" || return 1
     grep -Eq '^enrollments_active_student_lookup_index_definition=CREATE INDEX ' "$state_file" || return 1
+    require_state_line "$state_file" "auth_sessions_tenant_id_column_count=0" || return 1
+    require_state_line "$state_file" "auth_sessions_rls_state=false|false" || return 1
+    require_state_line "$state_file" "auth_sessions_constraint_validated_count=9" || return 1
+    require_state_line "$state_file" "auth_sessions_constraints=auth_sessions_expires_after_issued_check,auth_sessions_id_user_id_key,auth_sessions_last_seen_after_issued_check,auth_sessions_not_self_rotated_check,auth_sessions_pkey,auth_sessions_refresh_token_hash_key,auth_sessions_revoked_after_issued_check,auth_sessions_rotated_from_user_id_fkey,auth_sessions_user_id_fkey" || return 1
+    require_state_line "$state_file" "auth_sessions_constraint_definitions=auth_sessions_expires_after_issued_check=CHECK ((expires_at > issued_at))|auth_sessions_id_user_id_key=UNIQUE (id, user_id)|auth_sessions_last_seen_after_issued_check=CHECK (((last_seen_at IS NULL) OR (last_seen_at >= issued_at)))|auth_sessions_not_self_rotated_check=CHECK (((rotated_from IS NULL) OR (rotated_from <> id)))|auth_sessions_pkey=PRIMARY KEY (id)|auth_sessions_refresh_token_hash_key=UNIQUE (refresh_token_hash)|auth_sessions_revoked_after_issued_check=CHECK (((revoked_at IS NULL) OR (revoked_at >= issued_at)))|auth_sessions_rotated_from_user_id_fkey=FOREIGN KEY (rotated_from, user_id) REFERENCES auth_sessions(id, user_id)|auth_sessions_user_id_fkey=FOREIGN KEY (user_id) REFERENCES users(id)" || return 1
+    require_state_line "$state_file" "auth_sessions_indexes=auth_sessions_active_user_idx,auth_sessions_expires_at_idx,auth_sessions_rotated_from_unique_idx" || return 1
+    require_state_line "$state_file" "auth_sessions_index_definitions=auth_sessions_active_user_idx=CREATE INDEX auth_sessions_active_user_idx ON public.auth_sessions USING btree (user_id) WHERE (revoked_at IS NULL)|auth_sessions_expires_at_idx=CREATE INDEX auth_sessions_expires_at_idx ON public.auth_sessions USING btree (expires_at)|auth_sessions_id_user_id_key=CREATE UNIQUE INDEX auth_sessions_id_user_id_key ON public.auth_sessions USING btree (id, user_id)|auth_sessions_pkey=CREATE UNIQUE INDEX auth_sessions_pkey ON public.auth_sessions USING btree (id)|auth_sessions_refresh_token_hash_key=CREATE UNIQUE INDEX auth_sessions_refresh_token_hash_key ON public.auth_sessions USING btree (refresh_token_hash)|auth_sessions_rotated_from_unique_idx=CREATE UNIQUE INDEX auth_sessions_rotated_from_unique_idx ON public.auth_sessions USING btree (rotated_from) WHERE (rotated_from IS NOT NULL)" || return 1
+    require_state_line "$state_file" "auth_sessions_rotated_from_index_predicate=true|(rotated_from IS NOT NULL)" || return 1
 
-    for table in tenants users auth_identities memberships membership_roles audit_logs academic_terms courses course_offerings course_staff enrollments; do
+    for table in tenants users auth_identities auth_sessions memberships membership_roles audit_logs academic_terms courses course_offerings course_staff enrollments; do
         grep -Eq "^table_rows:${table}=[0-9]+$" "$state_file" || return 1
         grep -Eq "^table_fingerprint:${table}=[[:xdigit:]]{32}$" "$state_file" || return 1
     done
@@ -245,7 +250,7 @@ echo "source_manifest_comparison=pass"
 
 if ! run_seed_verifier "$source_database" > "$source_seed_before" 2>&1; then
     cat "$source_seed_before" >&2
-    die "Week 3 source seed/invariant verification failed"
+    die "current-schema source seed/invariant verification failed"
 fi
 cat "$source_seed_before"
 echo "source_seed_verifier=pass"
@@ -255,7 +260,7 @@ source_exists="$(database_exists "$source_database")"
 echo "source_exists=pass"
 
 restore_timestamp="$(date -u +%Y%m%d%H%M%S)"
-target_database="week03_restore_${restore_timestamp}_$$_${RANDOM}"
+target_database="current_restore_${restore_timestamp}_$$_${RANDOM}"
 is_safe_target "$target_database" || die "generated restore target is unsafe"
 [ "$target_database" != "$source_database" ] || die "restore target equals source database"
 [ "$target_database" != "campus_lms" ] || die "restore target equals main database"
@@ -320,7 +325,7 @@ echo "source_restored_comparison=pass"
 
 if ! run_seed_verifier "$target_database" > "$restored_seed" 2>&1; then
     cat "$restored_seed" >&2
-    die "restored Week 3 seed/invariant verification failed"
+    die "restored current-schema seed/invariant verification failed"
 fi
 cat "$restored_seed"
 echo "restored_seed_verifier=pass"
@@ -336,7 +341,7 @@ if ! cmp -s "$STATE_MANIFEST" "$source_after_restore"; then
 fi
 if ! run_seed_verifier "$source_database" > "$source_seed_after" 2>&1; then
     cat "$source_seed_after" >&2
-    die "source/main Week 3 seed/invariant verification failed after restore"
+    die "source/main current-schema seed/invariant verification failed after restore"
 fi
 cat "$source_seed_after"
 source_exists_after="$(database_exists "$source_database")"
