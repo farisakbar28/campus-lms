@@ -97,8 +97,8 @@ implementation claim.
 
 ## Known gaps and future work
 
-- Compose the accepted authentication and tenant-context contract into the
-  running server and protected routes.
+- Complete authentication entrypoints for initial session creation and HTTP
+  login or refresh flows; no identity-provider integration is selected.
 - Build the remaining LMS content, assessment, gradebook, attendance, and
   frontend capabilities while preserving domain ownership and authorization.
 - Reconcile backup/restore validation with the current schema and add measured

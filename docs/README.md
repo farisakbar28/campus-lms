@@ -29,8 +29,8 @@ in the [accepted ADRs](adr/README.md).
 
 The current direction is a Go API with explicit SQL and PostgreSQL tenant
 isolation, surrounded by deliberately bounded deployment and recovery tooling.
-That summary does not claim a production deployment, provider entitlement, or
-complete authentication composition.
+That summary does not claim a production deployment, provider entitlement,
+authentication entrypoints, or identity-provider integration.
 
 ## What are the security constraints?
 
