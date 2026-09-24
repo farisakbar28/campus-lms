@@ -409,13 +409,16 @@ func (repository ContentRepository) UpdateModule(ctx context.Context, tx pgx.Tx,
 		return domain.Module{}, err
 	}
 	var current domain.Module
-	if err := tx.QueryRow(ctx, `SELECT title, description, position, status, created_by FROM modules WHERE tenant_id = $1::uuid AND course_offering_id = $2::uuid AND id = $3 FOR UPDATE`, tenantID, offeringID, id).Scan(&current.Title, &current.Description, &current.Position, &current.Status, &current.CreatedBy); err != nil {
+	var availableFrom, availableUntil pgtype.Timestamptz
+	if err := tx.QueryRow(ctx, `SELECT title, description, position, status, available_from, available_until, created_by FROM modules WHERE tenant_id = $1::uuid AND course_offering_id = $2::uuid AND id = $3 FOR UPDATE`, tenantID, offeringID, id).Scan(&current.Title, &current.Description, &current.Position, &current.Status, &availableFrom, &availableUntil, &current.CreatedBy); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return domain.Module{}, domain.ErrNotFound
 		}
 		return domain.Module{}, classifyDatabaseError("read content module", err)
 	}
 	current.ID, current.OfferingID = id.String(), offeringID
+	current.AvailableFrom = timestamptzPointer(availableFrom)
+	current.AvailableUntil = timestamptzPointer(availableUntil)
 	beforeStatus := current.Status
 	if input.Title != nil {
 		current.Title = *input.Title
@@ -426,6 +429,12 @@ func (repository ContentRepository) UpdateModule(ctx context.Context, tx pgx.Tx,
 	if input.Position != nil {
 		current.Position = *input.Position
 	}
+	if input.AvailableFrom != nil {
+		current.AvailableFrom = input.AvailableFrom
+	}
+	if input.AvailableUntil != nil {
+		current.AvailableUntil = input.AvailableUntil
+	}
 	if input.Status != nil {
 		if !validContentStatus(*input.Status) {
 			return domain.Module{}, domain.ErrInvalidContent
@@ -435,11 +444,11 @@ func (repository ContentRepository) UpdateModule(ctx context.Context, tx pgx.Tx,
 		}
 		current.Status = *input.Status
 	}
-	if strings.TrimSpace(current.Title) == "" || current.Position < 0 {
+	if strings.TrimSpace(current.Title) == "" || current.Position < 0 || domain.ValidateCreateModule(domain.CreateModuleInput{Title: current.Title, Position: current.Position, AvailableFrom: current.AvailableFrom, AvailableUntil: current.AvailableUntil}) != nil {
 		return domain.Module{}, domain.ErrInvalidContent
 	}
 	now := time.Now().UTC()
-	if _, err := tx.Exec(ctx, `UPDATE modules SET title = $1, description = $2, position = $3, status = $4, updated_at = $5 WHERE tenant_id = $6::uuid AND course_offering_id = $7::uuid AND id = $8`, current.Title, current.Description, current.Position, current.Status, now, tenantID, offeringID, id); err != nil {
+	if _, err := tx.Exec(ctx, `UPDATE modules SET title = $1, description = $2, position = $3, status = $4, available_from = $5, available_until = $6, updated_at = $7 WHERE tenant_id = $8::uuid AND course_offering_id = $9::uuid AND id = $10`, current.Title, current.Description, current.Position, current.Status, current.AvailableFrom, current.AvailableUntil, now, tenantID, offeringID, id); err != nil {
 		return domain.Module{}, classifyDatabaseError("update content module", err)
 	}
 	if beforeStatus != current.Status {
@@ -486,17 +495,20 @@ func (repository ContentRepository) UpdateLesson(ctx context.Context, tx pgx.Tx,
 		return domain.Lesson{}, err
 	}
 	var current domain.Lesson
+	var availableFrom, availableUntil pgtype.Timestamptz
 	if err := tx.QueryRow(ctx, `
-SELECT lesson.title, lesson.description, lesson.position, lesson.learning_mode, lesson.estimated_minutes, lesson.status, lesson.created_by, lesson.module_id
+	SELECT lesson.title, lesson.description, lesson.position, lesson.learning_mode, lesson.estimated_minutes, lesson.available_from, lesson.available_until, lesson.status, lesson.created_by, lesson.module_id
 FROM lessons AS lesson
 JOIN modules AS module ON module.tenant_id = lesson.tenant_id AND module.id = lesson.module_id
-WHERE lesson.tenant_id = $1::uuid AND module.course_offering_id = $2::uuid AND lesson.id = $3 FOR UPDATE`, tenantID, offeringID, id).Scan(&current.Title, &current.Description, &current.Position, &current.LearningMode, &current.EstimatedMinutes, &current.Status, &current.CreatedBy, &current.ModuleID); err != nil {
+	WHERE lesson.tenant_id = $1::uuid AND module.course_offering_id = $2::uuid AND lesson.id = $3 FOR UPDATE`, tenantID, offeringID, id).Scan(&current.Title, &current.Description, &current.Position, &current.LearningMode, &current.EstimatedMinutes, &availableFrom, &availableUntil, &current.Status, &current.CreatedBy, &current.ModuleID); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return domain.Lesson{}, domain.ErrNotFound
 		}
 		return domain.Lesson{}, classifyDatabaseError("read content lesson", err)
 	}
 	current.ID = id.String()
+	current.AvailableFrom = timestamptzPointer(availableFrom)
+	current.AvailableUntil = timestamptzPointer(availableUntil)
 	beforeStatus := current.Status
 	if input.Title != nil {
 		current.Title = *input.Title
@@ -513,6 +525,12 @@ WHERE lesson.tenant_id = $1::uuid AND module.course_offering_id = $2::uuid AND l
 	if input.EstimatedMinutes != nil {
 		current.EstimatedMinutes = *input.EstimatedMinutes
 	}
+	if input.AvailableFrom != nil {
+		current.AvailableFrom = input.AvailableFrom
+	}
+	if input.AvailableUntil != nil {
+		current.AvailableUntil = input.AvailableUntil
+	}
 	if input.Status != nil {
 		if !validContentStatus(*input.Status) {
 			return domain.Lesson{}, domain.ErrInvalidContent
@@ -522,11 +540,11 @@ WHERE lesson.tenant_id = $1::uuid AND module.course_offering_id = $2::uuid AND l
 		}
 		current.Status = *input.Status
 	}
-	if strings.TrimSpace(current.Title) == "" || current.Position < 0 || current.EstimatedMinutes < 0 {
+	if strings.TrimSpace(current.Title) == "" || current.Position < 0 || current.EstimatedMinutes < 0 || domain.ValidateCreateLesson(domain.CreateLessonInput{Title: current.Title, Position: current.Position, LearningMode: current.LearningMode, EstimatedMinutes: current.EstimatedMinutes, AvailableFrom: current.AvailableFrom, AvailableUntil: current.AvailableUntil}) != nil {
 		return domain.Lesson{}, domain.ErrInvalidContent
 	}
 	now := time.Now().UTC()
-	if _, err := tx.Exec(ctx, `UPDATE lessons SET title = $1, description = $2, position = $3, learning_mode = $4, estimated_minutes = $5, status = $6, updated_at = $7 WHERE tenant_id = $8::uuid AND id = $9`, current.Title, current.Description, current.Position, current.LearningMode, current.EstimatedMinutes, current.Status, now, tenantID, id); err != nil {
+	if _, err := tx.Exec(ctx, `UPDATE lessons SET title = $1, description = $2, position = $3, learning_mode = $4, estimated_minutes = $5, status = $6, available_from = $7, available_until = $8, updated_at = $9 WHERE tenant_id = $10::uuid AND id = $11`, current.Title, current.Description, current.Position, current.LearningMode, current.EstimatedMinutes, current.Status, current.AvailableFrom, current.AvailableUntil, now, tenantID, id); err != nil {
 		return domain.Lesson{}, classifyDatabaseError("update content lesson", err)
 	}
 	if beforeStatus != current.Status {

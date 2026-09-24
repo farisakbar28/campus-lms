@@ -80,10 +80,12 @@ type CreateModuleInput struct {
 }
 
 type UpdateModuleInput struct {
-	Title       *string
-	Description *string
-	Position    *int
-	Status      *string
+	Title          *string
+	Description    *string
+	Position       *int
+	Status         *string
+	AvailableFrom  *time.Time
+	AvailableUntil *time.Time
 }
 
 type CreateLessonInput struct {
@@ -103,6 +105,8 @@ type UpdateLessonInput struct {
 	LearningMode     *string
 	EstimatedMinutes *int
 	Status           *string
+	AvailableFrom    *time.Time
+	AvailableUntil   *time.Time
 }
 
 type CreateMaterialInput struct {
@@ -161,7 +165,7 @@ func ValidateCreateMaterial(input CreateMaterialInput) error {
 		if input.FileID == "" || input.ExternalURL != "" || input.Content != "" {
 			return ErrInvalidContent
 		}
-	case "link", "video", "audio":
+	case "link", "video", "audio", "embed", "learning_package", "external_tool":
 		if input.FileID != "" || input.ExternalURL == "" || input.Content != "" {
 			return ErrInvalidContent
 		}

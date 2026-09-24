@@ -32,13 +32,29 @@ LIMIT 1`, tenantAID, offeringAID).Scan(&studentID); err != nil {
 	}
 
 	service := NewContentService(repositorySuite.appPool)
-	module, err := service.CreateModule(ctx, tenantAID, repositorySuite.instructorA, offeringAID, "request-module", domain.CreateModuleInput{Title: "Week 1", Position: 1})
+	availableFrom := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
+	availableUntil := time.Date(2030, 1, 1, 0, 0, 0, 0, time.UTC)
+	module, err := service.CreateModule(ctx, tenantAID, repositorySuite.instructorA, offeringAID, "request-module", domain.CreateModuleInput{Title: "Week 1", Position: 1, AvailableFrom: &availableFrom, AvailableUntil: &availableUntil})
 	if err != nil {
 		t.Fatalf("create module: %v", err)
 	}
-	lesson, err := service.CreateLesson(ctx, tenantAID, repositorySuite.instructorA, offeringAID, module.ID, "request-lesson", domain.CreateLessonInput{Title: "Lecture", LearningMode: "asynchronous", Position: 1, EstimatedMinutes: 30})
+	updatedModule, err := service.UpdateModule(ctx, tenantAID, repositorySuite.instructorA, offeringAID, module.ID, "request-module-window", domain.UpdateModuleInput{AvailableFrom: &availableFrom, AvailableUntil: &availableUntil})
+	if err != nil {
+		t.Fatalf("update module availability: %v", err)
+	}
+	if updatedModule.AvailableFrom == nil || !updatedModule.AvailableFrom.Equal(availableFrom) || updatedModule.AvailableUntil == nil || !updatedModule.AvailableUntil.Equal(availableUntil) {
+		t.Fatalf("updated module availability = %#v/%#v, want %s/%s", updatedModule.AvailableFrom, updatedModule.AvailableUntil, availableFrom, availableUntil)
+	}
+	lesson, err := service.CreateLesson(ctx, tenantAID, repositorySuite.instructorA, offeringAID, module.ID, "request-lesson", domain.CreateLessonInput{Title: "Lecture", LearningMode: "asynchronous", Position: 1, EstimatedMinutes: 30, AvailableFrom: &availableFrom, AvailableUntil: &availableUntil})
 	if err != nil {
 		t.Fatalf("create lesson: %v", err)
+	}
+	updatedLesson, err := service.UpdateLesson(ctx, tenantAID, repositorySuite.instructorA, offeringAID, lesson.ID, "request-lesson-window", domain.UpdateLessonInput{AvailableFrom: &availableFrom, AvailableUntil: &availableUntil})
+	if err != nil {
+		t.Fatalf("update lesson availability: %v", err)
+	}
+	if updatedLesson.AvailableFrom == nil || !updatedLesson.AvailableFrom.Equal(availableFrom) || updatedLesson.AvailableUntil == nil || !updatedLesson.AvailableUntil.Equal(availableUntil) {
+		t.Fatalf("updated lesson availability = %#v/%#v, want %s/%s", updatedLesson.AvailableFrom, updatedLesson.AvailableUntil, availableFrom, availableUntil)
 	}
 	textMaterial, err := service.CreateMaterial(ctx, tenantAID, repositorySuite.instructorA, offeringAID, lesson.ID, "request-material", domain.CreateMaterialInput{Title: "Notes", Type: "text", Content: "Week 1 notes", Position: 1})
 	if err != nil {

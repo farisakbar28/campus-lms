@@ -30,6 +30,9 @@ func TestContentValidation(t *testing.T) {
 		{"text material", func() error {
 			return ValidateCreateMaterial(CreateMaterialInput{Title: "Notes", Type: "text", Content: "content"})
 		}, true},
+		{"external material types", func() error {
+			return ValidateCreateMaterial(CreateMaterialInput{Title: "Interactive", Type: "embed", ExternalURL: "https://example.test/embed"})
+		}, true},
 		{"file material missing file", func() error {
 			return ValidateCreateMaterial(CreateMaterialInput{Title: "Slides", Type: "file"})
 		}, false},

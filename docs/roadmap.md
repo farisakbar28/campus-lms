@@ -225,11 +225,11 @@ attendance synchronization path may depend on the SIAKAD integration contract.
 ### 7. Operational reliability and current-schema recovery
 
 The local backup, restore, normalized state, and source-safety validation cover
-migration `0006` and the current application tables, including `auth_sessions`.
-Remaining work is proportionate operational validation, structured signals,
-recovery procedures, and measured reliability checks for capabilities that
-actually exist. Do not claim production observability or recovery readiness
-before the relevant checks run.
+migration `0007` and the current application tables, including `auth_sessions`
+and the first course-content tables. Remaining work is proportionate
+operational validation, structured signals, recovery procedures, and measured
+reliability checks for capabilities that actually exist. Do not claim
+production observability or recovery readiness before the relevant checks run.
 
 ### 8. External and integration adapters
 
