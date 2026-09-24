@@ -1,13 +1,14 @@
--- Read-only normalized state snapshot for the local backup drill.
+-- Read-only normalized state snapshot for the current-schema local backup drill.
 -- The output is compared byte-for-byte between source and restored databases.
 
-SELECT 'state_format=week03-backup-restore-v1';
+SELECT 'state_format=current-schema-backup-restore-v1';
 
 WITH expected(tablename) AS (
     VALUES
         ('tenants'),
         ('users'),
         ('auth_identities'),
+        ('auth_sessions'),
         ('memberships'),
         ('membership_roles'),
         ('audit_logs'),
@@ -17,7 +18,7 @@ WITH expected(tablename) AS (
         ('course_staff'),
         ('enrollments')
 )
-SELECT 'week3_table_count=' || count(*)::text
+SELECT 'current_application_table_count=' || count(*)::text
 FROM pg_tables AS actual
 JOIN expected ON expected.tablename = actual.tablename
 WHERE actual.schemaname = 'public';
@@ -32,6 +33,7 @@ WITH expected(tablename) AS (
         ('tenants'),
         ('users'),
         ('auth_identities'),
+        ('auth_sessions'),
         ('memberships'),
         ('membership_roles'),
         ('audit_logs'),
@@ -41,7 +43,7 @@ WITH expected(tablename) AS (
         ('course_staff'),
         ('enrollments')
 )
-SELECT 'week3_table_presence=' || string_agg(
+SELECT 'current_application_table_presence=' || string_agg(
     CASE WHEN actual.tablename IS NULL
          THEN 'missing:' || expected.tablename
          ELSE 'present:' || expected.tablename
@@ -186,6 +188,98 @@ SELECT 'enrollments_active_student_lookup_index_definition=' || COALESCE(
     '<missing>'
 );
 
+SELECT 'auth_sessions_tenant_id_column_count=' || count(*)::text
+FROM information_schema.columns
+WHERE table_schema = 'public'
+  AND table_name = 'auth_sessions'
+  AND column_name = 'tenant_id';
+
+SELECT 'auth_sessions_rls_state=' || COALESCE(
+    (
+        SELECT relrowsecurity::text || '|' || relforcerowsecurity::text
+        FROM pg_class
+        WHERE oid = 'public.auth_sessions'::regclass
+    ),
+    '<missing>'
+);
+
+SELECT 'auth_sessions_constraint_validated_count=' || count(*)::text
+FROM pg_constraint
+WHERE conrelid = 'public.auth_sessions'::regclass
+  AND convalidated = true;
+
+SELECT 'auth_sessions_constraints=' || COALESCE(
+    (
+        SELECT string_agg(conname, ',' ORDER BY conname)
+        FROM pg_constraint
+        WHERE conrelid = 'public.auth_sessions'::regclass
+          AND convalidated = true
+    ),
+    '<missing>'
+);
+
+SELECT 'auth_sessions_constraint_definitions=' || COALESCE(
+    (
+        SELECT array_to_string(
+            ARRAY(
+                SELECT conname || '=' || pg_get_constraintdef(oid)
+                FROM pg_constraint
+                WHERE conrelid = 'public.auth_sessions'::regclass
+                  AND convalidated = true
+                ORDER BY conname
+            ),
+            '|'
+        )
+    ),
+    '<missing>'
+);
+
+SELECT 'auth_sessions_indexes=' || COALESCE(
+    (
+        SELECT array_to_string(
+            ARRAY(
+                SELECT indexname
+                FROM pg_indexes
+                WHERE schemaname = 'public'
+                  AND tablename = 'auth_sessions'
+                  AND indexname IN (
+                      'auth_sessions_active_user_idx',
+                      'auth_sessions_expires_at_idx',
+                      'auth_sessions_rotated_from_unique_idx'
+                  )
+                ORDER BY indexname
+            ),
+            ','
+        )
+    ),
+    '<missing>'
+);
+
+SELECT 'auth_sessions_index_definitions=' || COALESCE(
+    (
+        SELECT array_to_string(
+            ARRAY(
+                SELECT index_class.relname || '=' || pg_get_indexdef(index_info.indexrelid)
+                FROM pg_index AS index_info
+                JOIN pg_class AS index_class ON index_class.oid = index_info.indexrelid
+                WHERE index_info.indrelid = 'public.auth_sessions'::regclass
+                ORDER BY index_class.relname
+            ),
+            '|'
+        )
+    ),
+    '<missing>'
+);
+
+SELECT 'auth_sessions_rotated_from_index_predicate=' || COALESCE(
+    (
+        SELECT indisunique::text || '|' || pg_get_expr(indpred, indrelid)
+        FROM pg_index
+        WHERE indexrelid = 'public.auth_sessions_rotated_from_unique_idx'::regclass
+    ),
+    '<missing>'
+);
+
 SELECT 'table_rows:tenants=' || count(*)::text FROM public.tenants;
 SELECT 'table_fingerprint:tenants=' || md5(COALESCE(string_agg(md5(row_to_json(t)::text), '' ORDER BY t.id), '')) FROM public.tenants AS t;
 
@@ -194,6 +288,26 @@ SELECT 'table_fingerprint:users=' || md5(COALESCE(string_agg(md5(row_to_json(t):
 
 SELECT 'table_rows:auth_identities=' || count(*)::text FROM public.auth_identities;
 SELECT 'table_fingerprint:auth_identities=' || md5(COALESCE(string_agg(md5(row_to_json(t)::text), '' ORDER BY t.id), '')) FROM public.auth_identities AS t;
+
+SELECT 'table_rows:auth_sessions=' || count(*)::text FROM public.auth_sessions;
+SELECT 'table_fingerprint:auth_sessions=' || md5(COALESCE(
+    string_agg(
+        md5(concat_ws(
+            '|',
+            t.id::text,
+            t.user_id::text,
+            t.issued_at::text,
+            t.expires_at::text,
+            COALESCE(t.rotated_from::text, ''),
+            COALESCE(t.revoked_at::text, ''),
+            COALESCE(t.revoked_reason, ''),
+            COALESCE(t.last_seen_at::text, ''),
+            octet_length(t.refresh_token_hash)::text
+        )),
+        '' ORDER BY t.id
+    ),
+    ''
+)) FROM public.auth_sessions AS t;
 
 SELECT 'table_rows:memberships=' || count(*)::text FROM public.memberships;
 SELECT 'table_fingerprint:memberships=' || md5(COALESCE(string_agg(md5(row_to_json(t)::text), '' ORDER BY t.id), '')) FROM public.memberships AS t;

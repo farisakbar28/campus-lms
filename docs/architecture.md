@@ -54,10 +54,11 @@ this composition does not claim an identity-provider integration.
 
 The repository contains multi-stage API and migrator images, development and
 production Compose definitions, health probes, local backup/restore tooling,
-and deployment scripts. The production Compose/Caddy path still contains
-legacy loopback `8443`, Origin-CA, and hostname-based TLS wiring. It remains
-stale relative to the accepted bounded Quick Tunnel validation decision and is
-not a production-readiness claim.
+deployment scripts, and current-schema local backup/restore validation covering
+migration `0006` and `auth_sessions`. The production Compose/Caddy path still
+contains legacy loopback `8443`, Origin-CA, and hostname-based TLS wiring. It
+remains stale relative to the accepted bounded Quick Tunnel validation decision
+and is not a production-readiness claim.
 
 ## Accepted architectural decisions
 
@@ -101,8 +102,8 @@ implementation claim.
   login or refresh flows; no identity-provider integration is selected.
 - Build the remaining LMS content, assessment, gradebook, attendance, and
   frontend capabilities while preserving domain ownership and authorization.
-- Reconcile backup/restore validation with the current schema and add measured
-  operational observability.
+- Add measured operational observability and reconcile any future production
+  recovery, retention, or off-machine backup requirements.
 - Reconcile deployment ingress with the accepted bounded validation decision
   and separately decide permanent production ingress.
 - Define the approved staff-side AI role/data boundary before implementing a

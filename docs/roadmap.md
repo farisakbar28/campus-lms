@@ -46,6 +46,12 @@ production status. Detailed task and review history remains in GitHub.
   earlier v1 workflow harness. ENG-018 / [Issue #23](https://github.com/farisakbar28/campus-lms/issues/23)
   was delivered by [PR #24](https://github.com/farisakbar28/campus-lms/pull/24)
   and merged at `4330df83ed96e28485371cd0c9d979ab1fc81e34`.
+- **Current-schema local recovery validation (2026-09-24, OPS-003):** the
+  change set updates the local backup, disposable restore, normalized state,
+  and source-safety checks to migration `0006`, including the global
+  `auth_sessions` table and its current constraints. This remains local
+  operational validation, not production recovery readiness or off-machine
+  backup evidence.
 
 ## Durable material changes
 
@@ -140,8 +146,10 @@ contains legacy 8443 and Origin-CA assumptions and requires separately
 authorized reconciliation. Permanent production ingress remains a separate
 future architecture decision.
 
-Backup and restore validation remains pinned to migration 5, the pre-0006
-schema, and 11 application tables. It is not current-schema validation.
+The local backup and restore validation now targets migration `0006` and the
+current application tables, including global `auth_sessions`. It verifies a
+distinct disposable restore and source-state stability, but does not establish
+off-machine retention, production recovery readiness, or provider state.
 
 Historic external infrastructure, provider, region, quota, storage, and
 capacity facts require fresh revalidation before reliance. The project retains
@@ -207,11 +215,12 @@ attendance synchronization path may depend on the SIAKAD integration contract.
 
 ### 7. Operational reliability and current-schema recovery
 
-Reconcile backup, restore, and safety validation with migration `0006` and the
-current application tables. Add proportionate operational validation,
-structured signals, recovery procedures, and measured reliability checks for
-capabilities that actually exist. Do not claim production observability or
-recovery readiness before the relevant checks run.
+The local backup, restore, normalized state, and source-safety validation cover
+migration `0006` and the current application tables, including `auth_sessions`.
+Remaining work is proportionate operational validation, structured signals,
+recovery procedures, and measured reliability checks for capabilities that
+actually exist. Do not claim production observability or recovery readiness
+before the relevant checks run.
 
 ### 8. External and integration adapters
 

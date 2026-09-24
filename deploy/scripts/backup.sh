@@ -1,10 +1,7 @@
 #!/usr/bin/env bash
 # Creates a local custom-format PostgreSQL archive and paired normalized state
 # manifest. Off-machine copy, retention, and failure notification are not
-# implemented here. The state validator remains pinned to the pre-0006,
-# migration-5 baseline and is not validated for the repository's current
-# schema; current-schema backup/restore reconciliation is future authorized
-# engineering work.
+# implemented here.
 
 set -euo pipefail
 umask 077
@@ -44,16 +41,16 @@ validate_state() {
     local expected_rls
     local table
 
-    expected_presence="week3_table_presence=present:academic_terms,present:audit_logs,present:auth_identities,present:course_offerings,present:course_staff,present:courses,present:enrollments,present:membership_roles,present:memberships,present:tenants,present:users"
+    expected_presence="current_application_table_presence=present:academic_terms,present:audit_logs,present:auth_identities,present:auth_sessions,present:course_offerings,present:course_staff,present:courses,present:enrollments,present:membership_roles,present:memberships,present:tenants,present:users"
     expected_rls="rls_state=academic_terms:enabled,audit_logs:enabled,course_offerings:enabled,course_staff:enabled,courses:enabled,enrollments:enabled,membership_roles:enabled,memberships:enabled"
 
-    require_state_line "$state_file" "state_format=week03-backup-restore-v1"
-    require_state_line "$state_file" "week3_table_count=11"
-    require_state_line "$state_file" "public_application_table_count=11"
+    require_state_line "$state_file" "state_format=current-schema-backup-restore-v1"
+    require_state_line "$state_file" "current_application_table_count=12"
+    require_state_line "$state_file" "public_application_table_count=12"
     require_state_line "$state_file" "$expected_presence"
     require_state_line "$state_file" "schema_migrations=present"
     require_state_line "$state_file" "schema_migrations_rows=1"
-    require_state_line "$state_file" "migration_version=5"
+    require_state_line "$state_file" "migration_version=6"
     require_state_line "$state_file" "migration_dirty=false"
     require_state_line "$state_file" "$expected_rls"
     require_state_line "$state_file" "rls_enabled_count=8"
@@ -67,9 +64,17 @@ validate_state() {
     require_state_line "$state_file" "audit_policy_all=0"
     require_state_line "$state_file" "enrollments_active_student_lookup_index_count=1"
     grep -Eq '^enrollments_active_student_lookup_index_definition=CREATE INDEX ' "$state_file" ||
-        die "state precondition failed: migration-0005 index definition is missing"
+        die "state precondition failed: active student lookup index definition is missing"
+    require_state_line "$state_file" "auth_sessions_tenant_id_column_count=0"
+    require_state_line "$state_file" "auth_sessions_rls_state=false|false"
+    require_state_line "$state_file" "auth_sessions_constraint_validated_count=9"
+    require_state_line "$state_file" "auth_sessions_constraints=auth_sessions_expires_after_issued_check,auth_sessions_id_user_id_key,auth_sessions_last_seen_after_issued_check,auth_sessions_not_self_rotated_check,auth_sessions_pkey,auth_sessions_refresh_token_hash_key,auth_sessions_revoked_after_issued_check,auth_sessions_rotated_from_user_id_fkey,auth_sessions_user_id_fkey"
+    require_state_line "$state_file" "auth_sessions_constraint_definitions=auth_sessions_expires_after_issued_check=CHECK ((expires_at > issued_at))|auth_sessions_id_user_id_key=UNIQUE (id, user_id)|auth_sessions_last_seen_after_issued_check=CHECK (((last_seen_at IS NULL) OR (last_seen_at >= issued_at)))|auth_sessions_not_self_rotated_check=CHECK (((rotated_from IS NULL) OR (rotated_from <> id)))|auth_sessions_pkey=PRIMARY KEY (id)|auth_sessions_refresh_token_hash_key=UNIQUE (refresh_token_hash)|auth_sessions_revoked_after_issued_check=CHECK (((revoked_at IS NULL) OR (revoked_at >= issued_at)))|auth_sessions_rotated_from_user_id_fkey=FOREIGN KEY (rotated_from, user_id) REFERENCES auth_sessions(id, user_id)|auth_sessions_user_id_fkey=FOREIGN KEY (user_id) REFERENCES users(id)"
+    require_state_line "$state_file" "auth_sessions_indexes=auth_sessions_active_user_idx,auth_sessions_expires_at_idx,auth_sessions_rotated_from_unique_idx"
+    require_state_line "$state_file" "auth_sessions_index_definitions=auth_sessions_active_user_idx=CREATE INDEX auth_sessions_active_user_idx ON public.auth_sessions USING btree (user_id) WHERE (revoked_at IS NULL)|auth_sessions_expires_at_idx=CREATE INDEX auth_sessions_expires_at_idx ON public.auth_sessions USING btree (expires_at)|auth_sessions_id_user_id_key=CREATE UNIQUE INDEX auth_sessions_id_user_id_key ON public.auth_sessions USING btree (id, user_id)|auth_sessions_pkey=CREATE UNIQUE INDEX auth_sessions_pkey ON public.auth_sessions USING btree (id)|auth_sessions_refresh_token_hash_key=CREATE UNIQUE INDEX auth_sessions_refresh_token_hash_key ON public.auth_sessions USING btree (refresh_token_hash)|auth_sessions_rotated_from_unique_idx=CREATE UNIQUE INDEX auth_sessions_rotated_from_unique_idx ON public.auth_sessions USING btree (rotated_from) WHERE (rotated_from IS NOT NULL)"
+    require_state_line "$state_file" "auth_sessions_rotated_from_index_predicate=true|(rotated_from IS NOT NULL)"
 
-    for table in tenants users auth_identities memberships membership_roles audit_logs academic_terms courses course_offerings course_staff enrollments; do
+    for table in tenants users auth_identities auth_sessions memberships membership_roles audit_logs academic_terms courses course_offerings course_staff enrollments; do
         grep -Eq "^table_rows:${table}=[0-9]+$" "$state_file" ||
             die "state precondition failed: row count missing for $table"
         grep -Eq "^table_fingerprint:${table}=[[:xdigit:]]{32}$" "$state_file" ||

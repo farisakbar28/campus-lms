@@ -80,8 +80,8 @@ The repository has a runnable API and PostgreSQL/RLS foundations, token and
 session primitives, runtime tenant admission for the protected roster route,
 local deployment tooling, and accepted tenant-context architecture. Complete
 authentication entrypoints, product capabilities beyond the current
-foundation, production observability, current-schema recovery, and permanent
-ingress remain separate gaps or future work.
+foundation, production observability, production/off-machine recovery, and
+permanent ingress remain separate gaps or future work.
 
 ## Where are we going?
 

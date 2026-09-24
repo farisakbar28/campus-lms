@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
-# Read-only source-state verification against the selected local backup
-# manifest. The state validator remains pinned to the pre-0006, migration-5
-# baseline and is not validated for the repository's current schema;
-# current-schema backup/restore reconciliation is future authorized engineering
-# work.
+# Read-only source-state verification against the selected current-schema
+# local backup manifest.
 
 set -euo pipefail
 umask 077
@@ -112,7 +109,7 @@ cat "$source_state"
 
 if ! run_seed_verifier > "$source_seed" 2>&1; then
     cat "$source_seed" >&2
-    die "source Week 3 seed/invariant verification failed"
+    die "source current-schema seed/invariant verification failed"
 fi
 cat "$source_seed"
 echo "source_database=$source_database"
