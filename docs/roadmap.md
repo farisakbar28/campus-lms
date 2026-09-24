@@ -52,6 +52,12 @@ production status. Detailed task and review history remains in GitHub.
   `auth_sessions` table and its current constraints. This remains local
   operational validation, not production recovery readiness or off-machine
   backup evidence.
+- **Tenant-safe course content slice (2026-09-24, CONTENT-008):** the
+  implementation adds migration `0007`, modules, lessons, materials, file
+  metadata, protected API routes, staff/student offering authorization,
+  publication audit records, availability filtering, and PostgreSQL/RLS
+  integration coverage. Binary storage, signed delivery, malware scanning,
+  and frontend workflows remain separate work.
 
 ## Durable material changes
 
@@ -146,10 +152,11 @@ contains legacy 8443 and Origin-CA assumptions and requires separately
 authorized reconciliation. Permanent production ingress remains a separate
 future architecture decision.
 
-The local backup and restore validation now targets migration `0006` and the
-current application tables, including global `auth_sessions`. It verifies a
-distinct disposable restore and source-state stability, but does not establish
-off-machine retention, production recovery readiness, or provider state.
+The local backup and restore validation now targets migration `0007` and the
+current application tables, including global `auth_sessions` and the first
+course-content tables. It verifies a distinct disposable restore and
+source-state stability, but does not establish off-machine retention,
+production recovery readiness, or provider state.
 
 Historic external infrastructure, provider, region, quota, storage, and
 capacity facts require fresh revalidation before reliance. The project retains
@@ -188,11 +195,13 @@ master-data path.
 
 ### 4. Course delivery and content
 
-Build tenant-safe course-offering content workflows for modules, lessons,
-materials, publication state, and file metadata. Application authorization and
-database constraints must protect offering and tenant boundaries. Binary
-storage remains a separate decision when it is actually introduced; no storage
-provider is selected here.
+CONTENT-008 establishes the first tenant-safe API vertical slice for modules,
+lessons, materials, publication state, availability windows, and file
+metadata. Application authorization, composite database constraints, and RLS
+protect offering and tenant boundaries; publication changes are audited.
+Binary storage, signed file access, malware scanning, richer TA permission
+configuration, activities, and frontend workflows remain follow-up work. No
+storage provider is selected here.
 
 ### 5. Assessment, immutable submissions, and gradebook
 

@@ -86,7 +86,7 @@ docker run --rm --network "$NETWORK" \
 	-e "MIGRATE_DATABASE_URL=$database_url" \
 	"$IMAGE"
 first_version="$(docker exec "$POSTGRES" psql -U campus -d campus_lms -Atc "SELECT version || '|' || dirty FROM schema_migrations;")"
-test "$first_version" = "6|false"
+test "$first_version" = "7|false"
 printf 'first_up_version=%s\n' "$first_version"
 
 second_output="$(docker run --rm --network "$NETWORK" \
@@ -96,7 +96,7 @@ second_output="$(docker run --rm --network "$NETWORK" \
 grep -Fqx 'no change' <<<"$second_output"
 echo 'second_up_output=no change'
 second_version="$(docker exec "$POSTGRES" psql -U campus -d campus_lms -Atc "SELECT version || '|' || dirty FROM schema_migrations;")"
-test "$second_version" = "6|false"
+test "$second_version" = "7|false"
 printf 'second_up_version=%s\n' "$second_version"
 
 set +e

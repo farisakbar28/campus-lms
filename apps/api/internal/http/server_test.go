@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/farisakbar28/campus-lms/apps/api/internal/auth"
 	"github.com/farisakbar28/campus-lms/apps/api/internal/domain"
@@ -70,6 +71,41 @@ type capturingRoster struct {
 	tenantID   string
 	offeringID string
 	calls      int
+}
+
+type contentStub struct{ calls int }
+
+func (stub *contentStub) ListContent(context.Context, string, string, string, time.Time) (domain.Content, error) {
+	stub.calls++
+	return domain.Content{Modules: []domain.Module{}}, nil
+}
+
+func (*contentStub) CreateModule(context.Context, string, string, string, string, domain.CreateModuleInput) (domain.Module, error) {
+	return domain.Module{}, nil
+}
+
+func (*contentStub) UpdateModule(context.Context, string, string, string, string, string, domain.UpdateModuleInput) (domain.Module, error) {
+	return domain.Module{}, nil
+}
+
+func (*contentStub) CreateLesson(context.Context, string, string, string, string, string, domain.CreateLessonInput) (domain.Lesson, error) {
+	return domain.Lesson{}, nil
+}
+
+func (*contentStub) UpdateLesson(context.Context, string, string, string, string, string, domain.UpdateLessonInput) (domain.Lesson, error) {
+	return domain.Lesson{}, nil
+}
+
+func (*contentStub) CreateMaterial(context.Context, string, string, string, string, string, domain.CreateMaterialInput) (domain.Material, error) {
+	return domain.Material{}, nil
+}
+
+func (*contentStub) UpdateMaterial(context.Context, string, string, string, string, string, domain.UpdateMaterialInput) (domain.Material, error) {
+	return domain.Material{}, nil
+}
+
+func (*contentStub) CreateFile(context.Context, string, string, string, string, domain.CreateFileInput) (domain.File, error) {
+	return domain.File{}, nil
 }
 
 func (stub *capturingRoster) AuthorizedRoster(_ context.Context, tenantID, userID, offeringID string) (domain.Roster, error) {
@@ -187,6 +223,36 @@ func TestProtectedRosterRouteComposesTokenTenantAdmissionAndPrincipal(t *testing
 	}
 	if roster.calls != 1 || roster.tenantID != tenantID.String() || roster.userID != userID.String() || roster.offeringID != offeringID {
 		t.Fatalf("roster = calls=%d tenant=%s user=%s offering=%s", roster.calls, roster.tenantID, roster.userID, roster.offeringID)
+	}
+}
+
+func TestProtectedContentRouteComposesTokenTenantAdmissionAndService(t *testing.T) {
+	userID := uuid.MustParse("4ec42919-bc1a-17bc-10b0-d75b8343dff8")
+	sessionID := uuid.MustParse("7bd7c5f5-f2ec-48cd-9259-c9f7e3f20510")
+	tenantID := uuid.MustParse("19cd4773-2aeb-d614-028f-e21bf9b73d0c")
+	offeringID := "2888c021-06ae-73da-2f57-884c1dd5d059"
+	admitter := &acceptingAdmitter{membershipID: uuid.MustParse("1ec2ad6e-a42a-4bc8-bf6a-c0a3f79c5cf2")}
+	content := &contentStub{}
+	server, err := NewServer(
+		":8080",
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+		readyStub{}, rosterStub{},
+		acceptingVerifier{identity: auth.AuthIdentity{UserID: userID, SessionID: sessionID}}, admitter, content,
+	)
+	if err != nil {
+		t.Fatalf("NewServer() error = %v", err)
+	}
+
+	request := httptest.NewRequest(nethttp.MethodGet, "/tenants/"+tenantID.String()+"/course-offerings/"+offeringID+"/content", nil)
+	request.Header.Set("Authorization", "Bearer test-token")
+	response := httptest.NewRecorder()
+	server.Handler.ServeHTTP(response, request)
+
+	if response.Code != nethttp.StatusOK {
+		t.Fatalf("status = %d, want 200; body=%s", response.Code, response.Body.String())
+	}
+	if content.calls != 1 {
+		t.Fatalf("content service calls = %d, want 1", content.calls)
 	}
 }
 

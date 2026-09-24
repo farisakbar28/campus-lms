@@ -16,7 +16,11 @@ WITH expected(tablename) AS (
         ('courses'),
         ('course_offerings'),
         ('course_staff'),
-        ('enrollments')
+        ('enrollments'),
+        ('modules'),
+        ('lessons'),
+        ('files'),
+        ('materials')
 )
 SELECT 'current_application_table_count=' || count(*)::text
 FROM pg_tables AS actual
@@ -41,7 +45,11 @@ WITH expected(tablename) AS (
         ('courses'),
         ('course_offerings'),
         ('course_staff'),
-        ('enrollments')
+        ('enrollments'),
+        ('modules'),
+        ('lessons'),
+        ('files'),
+        ('materials')
 )
 SELECT 'current_application_table_presence=' || string_agg(
     CASE WHEN actual.tablename IS NULL
@@ -92,7 +100,11 @@ WITH expected(tablename) AS (
         ('courses'),
         ('course_offerings'),
         ('course_staff'),
-        ('enrollments')
+        ('enrollments'),
+        ('modules'),
+        ('lessons'),
+        ('files'),
+        ('materials')
 ), actual AS (
     SELECT c.relname AS tablename, c.relrowsecurity
     FROM pg_class AS c
@@ -115,7 +127,8 @@ JOIN pg_namespace AS n ON n.oid = c.relnamespace
 WHERE n.nspname = 'public'
   AND c.relname IN (
       'memberships', 'membership_roles', 'audit_logs', 'academic_terms',
-      'courses', 'course_offerings', 'course_staff', 'enrollments'
+      'courses', 'course_offerings', 'course_staff', 'enrollments',
+      'modules', 'lessons', 'files', 'materials'
   )
   AND c.relrowsecurity = true;
 
@@ -332,3 +345,15 @@ SELECT 'table_fingerprint:course_staff=' || md5(COALESCE(string_agg(md5(row_to_j
 
 SELECT 'table_rows:enrollments=' || count(*)::text FROM public.enrollments;
 SELECT 'table_fingerprint:enrollments=' || md5(COALESCE(string_agg(md5(row_to_json(t)::text), '' ORDER BY t.id), '')) FROM public.enrollments AS t;
+
+SELECT 'table_rows:modules=' || count(*)::text FROM public.modules;
+SELECT 'table_fingerprint:modules=' || md5(COALESCE(string_agg(md5(row_to_json(t)::text), '' ORDER BY t.id), '')) FROM public.modules AS t;
+
+SELECT 'table_rows:lessons=' || count(*)::text FROM public.lessons;
+SELECT 'table_fingerprint:lessons=' || md5(COALESCE(string_agg(md5(row_to_json(t)::text), '' ORDER BY t.id), '')) FROM public.lessons AS t;
+
+SELECT 'table_rows:files=' || count(*)::text FROM public.files;
+SELECT 'table_fingerprint:files=' || md5(COALESCE(string_agg(md5(row_to_json(t)::text), '' ORDER BY t.id), '')) FROM public.files AS t;
+
+SELECT 'table_rows:materials=' || count(*)::text FROM public.materials;
+SELECT 'table_fingerprint:materials=' || md5(COALESCE(string_agg(md5(row_to_json(t)::text), '' ORDER BY t.id), '')) FROM public.materials AS t;
