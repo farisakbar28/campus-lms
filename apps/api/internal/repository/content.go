@@ -264,7 +264,23 @@ func (ContentRepository) authorizeContent(ctx context.Context, queries Querier, 
 		}
 		return contentAccess{}, classifyDatabaseError("authorize content access", err)
 	}
-	if access.role == "" || (access.role == "student" && (access.offeringState == "draft" || !publishedAt.Valid)) {
+	switch access.offeringState {
+	case "draft":
+		if access.role == "student" {
+			return contentAccess{}, domain.ErrNotFound
+		}
+	case "published", "active", "closed":
+		if access.role == "student" && !publishedAt.Valid {
+			return contentAccess{}, domain.ErrNotFound
+		}
+	case "archived":
+		if access.role == "student" {
+			return contentAccess{}, domain.ErrNotFound
+		}
+	default:
+		return contentAccess{}, domain.ErrNotFound
+	}
+	if access.role == "" {
 		return contentAccess{}, domain.ErrNotFound
 	}
 	return access, nil
@@ -646,13 +662,11 @@ WHERE material.tenant_id = $1::uuid AND module.course_offering_id = $2::uuid AND
 		}
 		current.Published = *input.Published
 	}
-	if strings.TrimSpace(current.Title) == "" || current.Position < 0 {
-		return domain.Material{}, domain.ErrInvalidContent
+	fileID := ""
+	if fileUUID.Valid {
+		fileID = uuid.UUID(fileUUID.Bytes).String()
 	}
-	if current.Type == "text" && (current.Content == "" || current.ExternalURL != "") {
-		return domain.Material{}, domain.ErrInvalidContent
-	}
-	if current.Type != "text" && current.Type != "file" && current.ExternalURL == "" {
+	if err := domain.ValidateCreateMaterial(domain.CreateMaterialInput{Title: current.Title, Type: current.Type, FileID: fileID, ExternalURL: current.ExternalURL, Content: current.Content, Position: current.Position}); err != nil {
 		return domain.Material{}, domain.ErrInvalidContent
 	}
 	now := time.Now().UTC()

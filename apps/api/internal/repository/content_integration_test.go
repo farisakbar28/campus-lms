@@ -140,6 +140,15 @@ LIMIT 1`, tenantAID, offeringAID).Scan(&studentID); err != nil {
 	if _, err := service.CreateModule(ctx, tenantAID, repositorySuite.instructorA, offeringAID, "request-archived-denied", domain.CreateModuleInput{Title: "Denied", Position: 4}); !errors.Is(err, domain.ErrContentConflict) {
 		t.Fatalf("archived create error = %v, want content conflict", err)
 	}
+	if _, err := repositorySuite.owner.Exec(ctx, `UPDATE course_offerings SET lms_status = 'unexpected', published_at = now(), archived_at = NULL WHERE id = $1::uuid`, offeringAID); err != nil {
+		t.Fatalf("set invalid offering lifecycle fixture: %v", err)
+	}
+	if _, err := service.ListContent(ctx, tenantAID, studentID, offeringAID, time.Now().UTC()); !errors.Is(err, domain.ErrNotFound) {
+		t.Fatalf("student invalid lifecycle error = %v, want not found", err)
+	}
+	if _, err := service.ListContent(ctx, tenantAID, repositorySuite.instructorA, offeringAID, time.Now().UTC()); !errors.Is(err, domain.ErrNotFound) {
+		t.Fatalf("staff invalid lifecycle error = %v, want not found", err)
+	}
 }
 
 func TestContentListUsesFixedQueryShape(t *testing.T) {
