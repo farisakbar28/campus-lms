@@ -38,7 +38,7 @@ LIMIT 1`, tenantAID, offeringAID).Scan(&studentID); err != nil {
 	if err != nil {
 		t.Fatalf("create module: %v", err)
 	}
-	updatedModule, err := service.UpdateModule(ctx, tenantAID, repositorySuite.instructorA, offeringAID, module.ID, "request-module-window", domain.UpdateModuleInput{AvailableFrom: &availableFrom, AvailableUntil: &availableUntil})
+	updatedModule, err := service.UpdateModule(ctx, tenantAID, repositorySuite.instructorA, offeringAID, module.ID, "request-module-window", domain.UpdateModuleInput{AvailableFrom: domain.OptionalTime{Set: true, Value: &availableFrom}, AvailableUntil: domain.OptionalTime{Set: true, Value: &availableUntil}})
 	if err != nil {
 		t.Fatalf("update module availability: %v", err)
 	}
@@ -49,12 +49,26 @@ LIMIT 1`, tenantAID, offeringAID).Scan(&studentID); err != nil {
 	if err != nil {
 		t.Fatalf("create lesson: %v", err)
 	}
-	updatedLesson, err := service.UpdateLesson(ctx, tenantAID, repositorySuite.instructorA, offeringAID, lesson.ID, "request-lesson-window", domain.UpdateLessonInput{AvailableFrom: &availableFrom, AvailableUntil: &availableUntil})
+	updatedLesson, err := service.UpdateLesson(ctx, tenantAID, repositorySuite.instructorA, offeringAID, lesson.ID, "request-lesson-window", domain.UpdateLessonInput{AvailableFrom: domain.OptionalTime{Set: true, Value: &availableFrom}, AvailableUntil: domain.OptionalTime{Set: true, Value: &availableUntil}})
 	if err != nil {
 		t.Fatalf("update lesson availability: %v", err)
 	}
 	if updatedLesson.AvailableFrom == nil || !updatedLesson.AvailableFrom.Equal(availableFrom) || updatedLesson.AvailableUntil == nil || !updatedLesson.AvailableUntil.Equal(availableUntil) {
 		t.Fatalf("updated lesson availability = %#v/%#v, want %s/%s", updatedLesson.AvailableFrom, updatedLesson.AvailableUntil, availableFrom, availableUntil)
+	}
+	clearedModule, err := service.UpdateModule(ctx, tenantAID, repositorySuite.instructorA, offeringAID, module.ID, "request-module-window-clear", domain.UpdateModuleInput{AvailableFrom: domain.OptionalTime{Set: true}, AvailableUntil: domain.OptionalTime{Set: true}})
+	if err != nil {
+		t.Fatalf("clear module availability: %v", err)
+	}
+	if clearedModule.AvailableFrom != nil || clearedModule.AvailableUntil != nil {
+		t.Fatalf("cleared module availability = %#v/%#v, want nil/nil", clearedModule.AvailableFrom, clearedModule.AvailableUntil)
+	}
+	clearedLesson, err := service.UpdateLesson(ctx, tenantAID, repositorySuite.instructorA, offeringAID, lesson.ID, "request-lesson-window-clear", domain.UpdateLessonInput{AvailableFrom: domain.OptionalTime{Set: true}, AvailableUntil: domain.OptionalTime{Set: true}})
+	if err != nil {
+		t.Fatalf("clear lesson availability: %v", err)
+	}
+	if clearedLesson.AvailableFrom != nil || clearedLesson.AvailableUntil != nil {
+		t.Fatalf("cleared lesson availability = %#v/%#v, want nil/nil", clearedLesson.AvailableFrom, clearedLesson.AvailableUntil)
 	}
 	textMaterial, err := service.CreateMaterial(ctx, tenantAID, repositorySuite.instructorA, offeringAID, lesson.ID, "request-material", domain.CreateMaterialInput{Title: "Notes", Type: "text", Content: "Week 1 notes", Position: 1})
 	if err != nil {
@@ -67,6 +81,16 @@ LIMIT 1`, tenantAID, offeringAID).Scan(&studentID); err != nil {
 	fileMaterial, err := service.CreateMaterial(ctx, tenantAID, repositorySuite.instructorA, offeringAID, lesson.ID, "request-file-material", domain.CreateMaterialInput{Title: "Slides", Type: "file", FileID: file.ID, Position: 2})
 	if err != nil {
 		t.Fatalf("create file material: %v", err)
+	}
+	if fileMaterial.File == nil || fileMaterial.File.ID != file.ID || fileMaterial.File.StorageKey == "" {
+		t.Fatalf("created file material metadata = %#v, want attached file metadata", fileMaterial.File)
+	}
+	tenantBFile, err := service.CreateFile(ctx, tenantBID, repositorySuite.instructorB, offeringBID, "request-cross-tenant-file", domain.CreateFileInput{OriginalFilename: "other-tenant.pdf", MIMEType: "application/pdf", SizeBytes: 21, Checksum: "sha256:other-tenant"})
+	if err != nil {
+		t.Fatalf("create tenant B file metadata: %v", err)
+	}
+	if _, err := service.CreateMaterial(ctx, tenantAID, repositorySuite.instructorA, offeringAID, lesson.ID, "request-cross-tenant-file-material", domain.CreateMaterialInput{Title: "Other tenant slides", Type: "file", FileID: tenantBFile.ID, Position: 3}); !errors.Is(err, domain.ErrNotFound) {
+		t.Fatalf("cross-tenant file reference error = %v, want not found", err)
 	}
 
 	studentContent, err := service.ListContent(ctx, tenantAID, studentID, offeringAID, time.Now().UTC())
@@ -89,8 +113,27 @@ LIMIT 1`, tenantAID, offeringAID).Scan(&studentID); err != nil {
 	if _, err := service.UpdateMaterial(ctx, tenantAID, fixtureLead, offeringAID, textMaterial.ID, "request-text-publish", domain.UpdateMaterialInput{Published: boolPointer(true)}); err != nil {
 		t.Fatalf("lead publishes text material: %v", err)
 	}
-	if _, err := service.UpdateMaterial(ctx, tenantAID, fixtureLead, offeringAID, fileMaterial.ID, "request-file-publish", domain.UpdateMaterialInput{Published: boolPointer(true)}); err != nil {
+	updatedFileMaterial, err := service.UpdateMaterial(ctx, tenantAID, fixtureLead, offeringAID, fileMaterial.ID, "request-file-publish", domain.UpdateMaterialInput{Published: boolPointer(true)})
+	if err != nil {
 		t.Fatalf("lead publishes file material: %v", err)
+	}
+	if updatedFileMaterial.File == nil || updatedFileMaterial.File.ID != file.ID || updatedFileMaterial.File.StorageKey == "" {
+		t.Fatalf("updated file material metadata = %#v, want attached file metadata", updatedFileMaterial.File)
+	}
+	for _, entityID := range []string{module.ID, lesson.ID, textMaterial.ID, fileMaterial.ID} {
+		var auditCount int
+		if err := repositorySuite.owner.QueryRow(ctx, `
+SELECT count(*)
+FROM audit_logs
+WHERE tenant_id = $1::uuid
+  AND course_offering_id = $2::uuid
+  AND action = 'content.publication_changed'
+  AND entity_id = $3::uuid`, tenantAID, offeringAID, entityID).Scan(&auditCount); err != nil {
+			t.Fatalf("count publication audit for %s: %v", entityID, err)
+		}
+		if auditCount != 1 {
+			t.Fatalf("publication audit count for %s = %d, want 1", entityID, auditCount)
+		}
 	}
 
 	studentContent, err = service.ListContent(ctx, tenantAID, studentID, offeringAID, time.Now().UTC())

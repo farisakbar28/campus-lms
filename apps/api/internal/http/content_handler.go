@@ -40,12 +40,12 @@ type createModuleRequest struct {
 }
 
 type updateModuleRequest struct {
-	Title          *string    `json:"title"`
-	Description    *string    `json:"description"`
-	Position       *int       `json:"position"`
-	Status         *string    `json:"status"`
-	AvailableFrom  *time.Time `json:"available_from"`
-	AvailableUntil *time.Time `json:"available_until"`
+	Title          *string      `json:"title"`
+	Description    *string      `json:"description"`
+	Position       *int         `json:"position"`
+	Status         *string      `json:"status"`
+	AvailableFrom  optionalTime `json:"available_from"`
+	AvailableUntil optionalTime `json:"available_until"`
 }
 
 type createLessonRequest struct {
@@ -59,14 +59,37 @@ type createLessonRequest struct {
 }
 
 type updateLessonRequest struct {
-	Title            *string    `json:"title"`
-	Description      *string    `json:"description"`
-	Position         *int       `json:"position"`
-	LearningMode     *string    `json:"learning_mode"`
-	EstimatedMinutes *int       `json:"estimated_minutes"`
-	Status           *string    `json:"status"`
-	AvailableFrom    *time.Time `json:"available_from"`
-	AvailableUntil   *time.Time `json:"available_until"`
+	Title            *string      `json:"title"`
+	Description      *string      `json:"description"`
+	Position         *int         `json:"position"`
+	LearningMode     *string      `json:"learning_mode"`
+	EstimatedMinutes *int         `json:"estimated_minutes"`
+	Status           *string      `json:"status"`
+	AvailableFrom    optionalTime `json:"available_from"`
+	AvailableUntil   optionalTime `json:"available_until"`
+}
+
+type optionalTime struct {
+	set   bool
+	value *time.Time
+}
+
+func (value *optionalTime) UnmarshalJSON(data []byte) error {
+	value.set = true
+	if string(data) == "null" {
+		value.value = nil
+		return nil
+	}
+	var parsed time.Time
+	if err := json.Unmarshal(data, &parsed); err != nil {
+		return err
+	}
+	value.value = &parsed
+	return nil
+}
+
+func (value optionalTime) domainValue() domain.OptionalTime {
+	return domain.OptionalTime{Set: value.set, Value: value.value}
 }
 
 type createMaterialRequest struct {
@@ -136,7 +159,7 @@ func (handler contentHandler) updateModule(response nethttp.ResponseWriter, requ
 		return
 	}
 	requestID := setContentRequestID(response)
-	module, err := handler.service.UpdateModule(request.Context(), principal.TenantID.String(), principal.UserID.String(), offeringID, moduleID, requestID, domain.UpdateModuleInput{Title: body.Title, Description: body.Description, Position: body.Position, Status: body.Status, AvailableFrom: body.AvailableFrom, AvailableUntil: body.AvailableUntil})
+	module, err := handler.service.UpdateModule(request.Context(), principal.TenantID.String(), principal.UserID.String(), offeringID, moduleID, requestID, domain.UpdateModuleInput{Title: body.Title, Description: body.Description, Position: body.Position, Status: body.Status, AvailableFrom: body.AvailableFrom.domainValue(), AvailableUntil: body.AvailableUntil.domainValue()})
 	if err != nil {
 		handler.writeError(response, "update content module", err)
 		return
@@ -172,7 +195,7 @@ func (handler contentHandler) updateLesson(response nethttp.ResponseWriter, requ
 		return
 	}
 	requestID := setContentRequestID(response)
-	lesson, err := handler.service.UpdateLesson(request.Context(), principal.TenantID.String(), principal.UserID.String(), offeringID, lessonID, requestID, domain.UpdateLessonInput{Title: body.Title, Description: body.Description, Position: body.Position, LearningMode: body.LearningMode, EstimatedMinutes: body.EstimatedMinutes, Status: body.Status, AvailableFrom: body.AvailableFrom, AvailableUntil: body.AvailableUntil})
+	lesson, err := handler.service.UpdateLesson(request.Context(), principal.TenantID.String(), principal.UserID.String(), offeringID, lessonID, requestID, domain.UpdateLessonInput{Title: body.Title, Description: body.Description, Position: body.Position, LearningMode: body.LearningMode, EstimatedMinutes: body.EstimatedMinutes, Status: body.Status, AvailableFrom: body.AvailableFrom.domainValue(), AvailableUntil: body.AvailableUntil.domainValue()})
 	if err != nil {
 		handler.writeError(response, "update content lesson", err)
 		return

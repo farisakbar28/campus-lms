@@ -445,11 +445,11 @@ func (repository ContentRepository) UpdateModule(ctx context.Context, tx pgx.Tx,
 	if input.Position != nil {
 		current.Position = *input.Position
 	}
-	if input.AvailableFrom != nil {
-		current.AvailableFrom = input.AvailableFrom
+	if input.AvailableFrom.Set {
+		current.AvailableFrom = input.AvailableFrom.Value
 	}
-	if input.AvailableUntil != nil {
-		current.AvailableUntil = input.AvailableUntil
+	if input.AvailableUntil.Set {
+		current.AvailableUntil = input.AvailableUntil.Value
 	}
 	if input.Status != nil {
 		if !validContentStatus(*input.Status) {
@@ -541,11 +541,11 @@ JOIN modules AS module ON module.tenant_id = lesson.tenant_id AND module.id = le
 	if input.EstimatedMinutes != nil {
 		current.EstimatedMinutes = *input.EstimatedMinutes
 	}
-	if input.AvailableFrom != nil {
-		current.AvailableFrom = input.AvailableFrom
+	if input.AvailableFrom.Set {
+		current.AvailableFrom = input.AvailableFrom.Value
 	}
-	if input.AvailableUntil != nil {
-		current.AvailableUntil = input.AvailableUntil
+	if input.AvailableUntil.Set {
+		current.AvailableUntil = input.AvailableUntil.Value
 	}
 	if input.Status != nil {
 		if !validContentStatus(*input.Status) {
@@ -588,16 +588,16 @@ func (repository ContentRepository) CreateMaterial(ctx context.Context, tx pgx.T
 		return domain.Material{}, domain.ErrNotFound
 	}
 	var fileID any
+	var attachedFile *domain.File
 	if input.FileID != "" {
-		fileID, err = parseContentUUID(input.FileID)
+		fileUUID, parseErr := parseContentUUID(input.FileID)
+		if parseErr != nil {
+			return domain.Material{}, parseErr
+		}
+		fileID = fileUUID
+		attachedFile, err = loadContentFile(ctx, tx, tenantID, fileUUID)
 		if err != nil {
 			return domain.Material{}, err
-		}
-		if err := tx.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM files WHERE tenant_id = $1::uuid AND id = $2)`, tenantID, fileID).Scan(&exists); err != nil {
-			return domain.Material{}, classifyDatabaseError("authorize content file", err)
-		}
-		if !exists {
-			return domain.Material{}, domain.ErrNotFound
 		}
 	}
 	id := uuid.New()
@@ -607,7 +607,7 @@ INSERT INTO materials (id, tenant_id, lesson_id, title, description, type, file_
 VALUES ($1, $2::uuid, $3, $4, $5, $6, $7, NULLIF($8, ''), NULLIF($9, ''), $10, false, $11::uuid, $12, $12)`, id, tenantID, lessonUUID, input.Title, input.Description, input.Type, fileID, input.ExternalURL, input.Content, input.Position, userID, now); err != nil {
 		return domain.Material{}, classifyDatabaseError("create content material", err)
 	}
-	return domain.Material{ID: id.String(), LessonID: lessonID, Title: input.Title, Description: input.Description, Type: input.Type, ExternalURL: input.ExternalURL, Content: input.Content, Position: input.Position, Published: false, CreatedBy: userID}, nil
+	return domain.Material{ID: id.String(), LessonID: lessonID, Title: input.Title, Description: input.Description, Type: input.Type, File: attachedFile, ExternalURL: input.ExternalURL, Content: input.Content, Position: input.Position, Published: false, CreatedBy: userID}, nil
 }
 
 func (repository ContentRepository) UpdateMaterial(ctx context.Context, tx pgx.Tx, tenantID, userID, offeringID, materialID, requestID string, input domain.UpdateMaterialInput) (domain.Material, error) {
@@ -665,6 +665,10 @@ WHERE material.tenant_id = $1::uuid AND module.course_offering_id = $2::uuid AND
 	fileID := ""
 	if fileUUID.Valid {
 		fileID = uuid.UUID(fileUUID.Bytes).String()
+		current.File, err = loadContentFile(ctx, tx, tenantID, uuid.UUID(fileUUID.Bytes))
+		if err != nil {
+			return domain.Material{}, err
+		}
 	}
 	if err := domain.ValidateCreateMaterial(domain.CreateMaterialInput{Title: current.Title, Type: current.Type, FileID: fileID, ExternalURL: current.ExternalURL, Content: current.Content, Position: current.Position}); err != nil {
 		return domain.Material{}, domain.ErrInvalidContent
@@ -694,6 +698,20 @@ VALUES ($1, $2::uuid, $3, $4, $5, $6, $7, 'pending', $8::uuid, $9)`, id, tenantI
 		return domain.File{}, classifyDatabaseError("create content file metadata", err)
 	}
 	return domain.File{ID: id.String(), StorageKey: storageKey, OriginalFilename: input.OriginalFilename, MIMEType: input.MIMEType, SizeBytes: input.SizeBytes, Checksum: input.Checksum, MalwareScanStatus: "pending", UploadedBy: userID}, nil
+}
+
+func loadContentFile(ctx context.Context, queries Querier, tenantID string, fileID uuid.UUID) (*domain.File, error) {
+	file := &domain.File{ID: fileID.String()}
+	if err := queries.QueryRow(ctx, `
+SELECT storage_key, original_filename, mime_type, size_bytes, checksum, malware_scan_status, uploaded_by
+FROM files
+WHERE tenant_id = $1::uuid AND id = $2`, tenantID, fileID).Scan(&file.StorageKey, &file.OriginalFilename, &file.MIMEType, &file.SizeBytes, &file.Checksum, &file.MalwareScanStatus, &file.UploadedBy); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, classifyDatabaseError("read content file", err)
+	}
+	return file, nil
 }
 
 func insertContentAudit(ctx context.Context, tx pgx.Tx, tenantID, userID, role, action, entityType string, entityID uuid.UUID, offeringID, requestID string, before, after any) error {

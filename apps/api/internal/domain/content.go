@@ -84,8 +84,14 @@ type UpdateModuleInput struct {
 	Description    *string
 	Position       *int
 	Status         *string
-	AvailableFrom  *time.Time
-	AvailableUntil *time.Time
+	AvailableFrom  OptionalTime
+	AvailableUntil OptionalTime
+}
+
+// OptionalTime distinguishes an omitted patch field from an explicit null.
+type OptionalTime struct {
+	Set   bool
+	Value *time.Time
 }
 
 type CreateLessonInput struct {
@@ -105,8 +111,8 @@ type UpdateLessonInput struct {
 	LearningMode     *string
 	EstimatedMinutes *int
 	Status           *string
-	AvailableFrom    *time.Time
-	AvailableUntil   *time.Time
+	AvailableFrom    OptionalTime
+	AvailableUntil   OptionalTime
 }
 
 type CreateMaterialInput struct {
