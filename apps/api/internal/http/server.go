@@ -3,6 +3,7 @@ package http
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	nethttp "net/http"
 	"time"
@@ -25,8 +26,13 @@ const (
 // ErrServerClosed is re-exported to keep main's transport dependency explicit.
 var ErrServerClosed = nethttp.ErrServerClosed
 
+var errTooManyContentServices = errors.New("at most one content service is supported")
+
 // NewServer creates the API server with timeouts that bound slow clients.
-func NewServer(address string, logger *slog.Logger, readiness readinessChecker, roster rosterReader, verifier auth.AccessTokenVerifier, admitter middleware.TenantAdmitter) (*nethttp.Server, error) {
+func NewServer(address string, logger *slog.Logger, readiness readinessChecker, roster rosterReader, verifier auth.AccessTokenVerifier, admitter middleware.TenantAdmitter, contentServices ...contentService) (*nethttp.Server, error) {
+	if len(contentServices) > 1 {
+		return nil, errTooManyContentServices
+	}
 	bearer, err := middleware.NewBearerMiddleware(verifier)
 	if err != nil {
 		return nil, err
@@ -39,7 +45,16 @@ func NewServer(address string, logger *slog.Logger, readiness readinessChecker, 
 	mux := nethttp.NewServeMux()
 	mux.HandleFunc("GET /healthz", healthz(logger))
 	mux.HandleFunc("GET /readyz", readyz(logger, readiness))
-	mux.Handle("GET /tenants/{tenant_id}/course-offerings/{id}/participants", bearer(tenantAdmission(courseOfferingParticipants(roster, logger))))
+	protect := func(next nethttp.Handler) nethttp.Handler {
+		return bearer(tenantAdmission(next))
+	}
+	mux.Handle("GET /tenants/{tenant_id}/course-offerings/{id}/participants", protect(courseOfferingParticipants(roster, logger)))
+	if len(contentServices) == 1 {
+		if contentServices[0] == nil {
+			return nil, errors.New("content service is required when provided")
+		}
+		registerContentRoutes(mux, protect, contentServices[0], logger)
+	}
 
 	return &nethttp.Server{
 		Addr:              address,

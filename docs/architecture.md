@@ -12,13 +12,15 @@ decisions are not commitments; and gaps are not implied capabilities.
 ### API and package boundaries
 
 - `apps/api` is a Go module with a standard-library `net/http` transport.
-- `cmd/api` loads configuration, opens the database pool, wires the roster
-  repository, starts the server, handles signals, and supports the binary
-  health-check probe.
+- `cmd/api` loads configuration, opens the database pool, wires the roster and
+  course-content repositories, starts the server, handles signals, and
+  supports the binary health-check probe.
 - `internal/config` validates required environment-backed configuration and
   requires TLS-capable database URLs in production.
 - `internal/http` owns transport handlers and exposes `/healthz`, dependency-
-  backed `/readyz`, and the current course-offering participant route.
+  backed `/readyz`, the course-offering participant route, and the first
+  tenant-safe course-content routes for modules, lessons, materials, and file
+  metadata.
 - `internal/domain` contains transport- and database-independent domain types;
   `internal/repository` owns explicit PostgreSQL queries and transactions;
   `internal/middleware` owns bearer parsing and trusted-context helpers.
@@ -28,14 +30,24 @@ decisions are not commitments; and gaps are not implied capabilities.
 ### Data and tenant isolation
 
 - PostgreSQL is accessed through `pgx` and an injected connection pool.
-- Versioned migrations currently reach `0006`, covering tenant, identity,
-  academic, membership, enrollment, audit, and authentication-session data.
+- Versioned migrations currently reach `0007`, covering tenant, identity,
+  academic, membership, enrollment, audit, authentication-session, course
+  content, and file-metadata data.
 - Tenant-scoped data uses explicit `tenant_id`, composite consistency
   constraints, PostgreSQL RLS, and transaction-local context. Repository and
   database tests exercise authorization, RLS, constraints, and query shape.
 - The application authorization layer remains responsible for active
   membership, roles, course authority, object access, and lifecycle checks;
   RLS is defense in depth rather than a substitute for authorization.
+- Course content is tenant-scoped through modules, lessons, materials, and
+  file metadata with composite foreign keys and RLS. Staff content writes are
+  limited to active instructor/lead-instructor course staff; lead instructors
+  control publication state, and active enrolled students receive only
+  published, currently available content. Pending or non-clean file metadata
+  is withheld from students.
+- The content slice stores file metadata and an internal pending storage key
+  only. Binary object storage, upload/download endpoints, signed URLs,
+  malware scanning, and provider selection remain separate work.
 
 ### Authentication boundary
 
@@ -55,7 +67,7 @@ this composition does not claim an identity-provider integration.
 The repository contains multi-stage API and migrator images, development and
 production Compose definitions, health probes, local backup/restore tooling,
 deployment scripts, and current-schema local backup/restore validation covering
-migration `0006` and `auth_sessions`. The production Compose/Caddy path still
+migration `0007`, course-content tables, and `auth_sessions`. The production Compose/Caddy path still
 contains legacy loopback `8443`, Origin-CA, and hostname-based TLS wiring. It
 remains stale relative to the accepted bounded Quick Tunnel validation decision
 and is not a production-readiness claim.
@@ -100,8 +112,10 @@ implementation claim.
 
 - Complete authentication entrypoints for initial session creation and HTTP
   login or refresh flows; no identity-provider integration is selected.
-- Build the remaining LMS content, assessment, gradebook, attendance, and
-  frontend capabilities while preserving domain ownership and authorization.
+- Complete the remaining content lifecycle, including binary object access,
+  signed delivery, scan processing, richer staff permission configuration,
+  and frontend workflows, then build assessment, gradebook, attendance, and
+  other LMS capabilities while preserving domain ownership and authorization.
 - Add measured operational observability and reconcile any future production
   recovery, retention, or off-machine backup requirements.
 - Reconcile deployment ingress with the accepted bounded validation decision

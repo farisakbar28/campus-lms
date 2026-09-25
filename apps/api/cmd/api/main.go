@@ -54,13 +54,14 @@ func main() {
 	defer databasePool.Close()
 
 	rosterService := repository.NewRosterService(databasePool)
+	contentService := repository.NewContentService(databasePool)
 	admissionService := repository.NewAdmissionService(databasePool)
 	accessTokens, err := auth.NewAccessTokenManager(cfg.JWTSecret, cfg.AccessTTL)
 	if err != nil {
 		logger.Error("configure access tokens", "error", err)
 		os.Exit(1)
 	}
-	server, err := apphttp.NewServer(cfg.Address(), logger, databasePool, rosterService, accessTokens, admissionService)
+	server, err := apphttp.NewServer(cfg.Address(), logger, databasePool, rosterService, accessTokens, admissionService, contentService)
 	if err != nil {
 		logger.Error("configure HTTP server", "error", err)
 		os.Exit(1)

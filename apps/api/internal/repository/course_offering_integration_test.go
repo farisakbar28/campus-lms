@@ -351,6 +351,7 @@ func integrationSQLFiles() []string {
 		filepath.Join(apiRoot, "migrations", "0004_academic_term_time_range_check.up.sql"),
 		filepath.Join(apiRoot, "migrations", "0005_enrollments_active_student_lookup_index.up.sql"),
 		filepath.Join(apiRoot, "migrations", "0006_auth_sessions_schema.up.sql"),
+		filepath.Join(apiRoot, "migrations", "0007_content_schema.up.sql"),
 		filepath.Join(apiRoot, "testdata", "seed.sql"),
 	}
 }
@@ -368,6 +369,12 @@ func bootstrapApplicationRole(ctx context.Context, owner *pgx.Conn, ownerURL str
 	}
 	if _, err := owner.Exec(ctx, `GRANT SELECT ON tenants, users, auth_sessions, course_offerings, courses, academic_terms, course_staff, memberships, membership_roles, enrollments TO roster_test_app`); err != nil {
 		return "", fmt.Errorf("grant test application role: %w", err)
+	}
+	if _, err := owner.Exec(ctx, `GRANT SELECT, INSERT, UPDATE ON modules, lessons, materials, files TO roster_test_app`); err != nil {
+		return "", fmt.Errorf("grant content tables to test application role: %w", err)
+	}
+	if _, err := owner.Exec(ctx, `GRANT SELECT, INSERT ON audit_logs TO roster_test_app`); err != nil {
+		return "", fmt.Errorf("grant audit table to test application role: %w", err)
 	}
 	parsed, err := url.Parse(ownerURL)
 	if err != nil {

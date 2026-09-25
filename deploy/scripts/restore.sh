@@ -52,19 +52,19 @@ validate_state() {
     local expected_rls
     local table
 
-    expected_presence="current_application_table_presence=present:academic_terms,present:audit_logs,present:auth_identities,present:auth_sessions,present:course_offerings,present:course_staff,present:courses,present:enrollments,present:membership_roles,present:memberships,present:tenants,present:users"
-    expected_rls="rls_state=academic_terms:enabled,audit_logs:enabled,course_offerings:enabled,course_staff:enabled,courses:enabled,enrollments:enabled,membership_roles:enabled,memberships:enabled"
+    expected_presence="current_application_table_presence=present:academic_terms,present:audit_logs,present:auth_identities,present:auth_sessions,present:course_offerings,present:course_staff,present:courses,present:enrollments,present:files,present:lessons,present:materials,present:membership_roles,present:memberships,present:modules,present:tenants,present:users"
+    expected_rls="rls_state=academic_terms:enabled,audit_logs:enabled,course_offerings:enabled,course_staff:enabled,courses:enabled,enrollments:enabled,files:enabled,lessons:enabled,materials:enabled,membership_roles:enabled,memberships:enabled,modules:enabled"
 
     require_state_line "$state_file" "state_format=current-schema-backup-restore-v1" || return 1
-    require_state_line "$state_file" "current_application_table_count=12" || return 1
-    require_state_line "$state_file" "public_application_table_count=12" || return 1
+    require_state_line "$state_file" "current_application_table_count=16" || return 1
+    require_state_line "$state_file" "public_application_table_count=16" || return 1
     require_state_line "$state_file" "$expected_presence" || return 1
     require_state_line "$state_file" "schema_migrations=present" || return 1
     require_state_line "$state_file" "schema_migrations_rows=1" || return 1
-    require_state_line "$state_file" "migration_version=6" || return 1
+    require_state_line "$state_file" "migration_version=7" || return 1
     require_state_line "$state_file" "migration_dirty=false" || return 1
     require_state_line "$state_file" "$expected_rls" || return 1
-    require_state_line "$state_file" "rls_enabled_count=8" || return 1
+    require_state_line "$state_file" "rls_enabled_count=12" || return 1
     require_state_line "$state_file" "a7_fk_count=1" || return 1
     require_state_line "$state_file" "term_range_check_count=1" || return 1
     require_state_line "$state_file" "audit_policy_total=2" || return 1
@@ -84,7 +84,7 @@ validate_state() {
     require_state_line "$state_file" "auth_sessions_index_definitions=auth_sessions_active_user_idx=CREATE INDEX auth_sessions_active_user_idx ON public.auth_sessions USING btree (user_id) WHERE (revoked_at IS NULL)|auth_sessions_expires_at_idx=CREATE INDEX auth_sessions_expires_at_idx ON public.auth_sessions USING btree (expires_at)|auth_sessions_id_user_id_key=CREATE UNIQUE INDEX auth_sessions_id_user_id_key ON public.auth_sessions USING btree (id, user_id)|auth_sessions_pkey=CREATE UNIQUE INDEX auth_sessions_pkey ON public.auth_sessions USING btree (id)|auth_sessions_refresh_token_hash_key=CREATE UNIQUE INDEX auth_sessions_refresh_token_hash_key ON public.auth_sessions USING btree (refresh_token_hash)|auth_sessions_rotated_from_unique_idx=CREATE UNIQUE INDEX auth_sessions_rotated_from_unique_idx ON public.auth_sessions USING btree (rotated_from) WHERE (rotated_from IS NOT NULL)" || return 1
     require_state_line "$state_file" "auth_sessions_rotated_from_index_predicate=true|(rotated_from IS NOT NULL)" || return 1
 
-    for table in tenants users auth_identities auth_sessions memberships membership_roles audit_logs academic_terms courses course_offerings course_staff enrollments; do
+    for table in tenants users auth_identities auth_sessions memberships membership_roles audit_logs academic_terms courses course_offerings course_staff enrollments modules lessons files materials; do
         grep -Eq "^table_rows:${table}=[0-9]+$" "$state_file" || return 1
         grep -Eq "^table_fingerprint:${table}=[[:xdigit:]]{32}$" "$state_file" || return 1
     done

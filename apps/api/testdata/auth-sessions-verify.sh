@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-# Verify migration 0006 against disposable local PostgreSQL databases.
+# Verify migration 0006 against disposable local PostgreSQL databases. The
+# explicit `up 6` cap keeps this historical migration harness independent from
+# later migrations.
 # The Compose services supply credentials through their existing environment;
 # this harness never reads or prints .env contents.
 
@@ -175,7 +177,7 @@ case "$MODE" in
         echo "fresh_db=${FRESH_DB}"
         echo "upgrade_db=${UPGRADE_DB}"
         create_database "$FRESH_DB"
-        run_migrate "$FRESH_DB" up >/dev/null
+        run_migrate "$FRESH_DB" up 6 >/dev/null
         fresh_version=$(run_migrate "$FRESH_DB" version 2>&1)
         assert_equal fresh_0_to_6 6 "$fresh_version"
         assert_equal fresh_auth_sessions_table auth_sessions "$(run_psql "$FRESH_DB" -tA -c "SELECT to_regclass('public.auth_sessions');")"
@@ -214,7 +216,7 @@ case "$MODE" in
     catalog)
         echo "database=${DB_NAME}"
         create_database "$DB_NAME"
-        run_migrate "$DB_NAME" up >/dev/null
+        run_migrate "$DB_NAME" up 6 >/dev/null
 
         column_catalog=$(run_psql "$DB_NAME" -At -c "SELECT ordinal_position || '|' || column_name || '|' || data_type || '|' || is_nullable FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'auth_sessions' ORDER BY ordinal_position;")
         printf '%s\n' "$column_catalog"
@@ -262,7 +264,7 @@ case "$MODE" in
     constraints)
         echo "database=${DB_NAME}"
         create_database "$DB_NAME"
-        run_migrate "$DB_NAME" up >/dev/null
+        run_migrate "$DB_NAME" up 6 >/dev/null
         run_psql "$DB_NAME" -c "INSERT INTO users (id, email, display_name, status, created_at) VALUES ('11111111-1111-1111-1111-111111111111', 'auth-session-user-a@example.test', 'Auth Session User A', 'active', '2026-01-01T00:00:00Z'), ('22222222-2222-2222-2222-222222222222', 'auth-session-user-b@example.test', 'Auth Session User B', 'active', '2026-01-01T00:00:00Z');" >/dev/null
         run_psql "$DB_NAME" -c "INSERT INTO auth_sessions (id, user_id, refresh_token_hash, issued_at, expires_at) VALUES ('33333333-3333-3333-3333-333333333333', '11111111-1111-1111-1111-111111111111', decode('00', 'hex'), '2026-01-01T00:00:00Z', '2026-02-01T00:00:00Z');" >/dev/null
 
@@ -296,7 +298,7 @@ case "$MODE" in
     scope)
         echo "database=${DB_NAME}"
         create_database "$DB_NAME"
-        run_migrate "$DB_NAME" up >/dev/null
+        run_migrate "$DB_NAME" up 6 >/dev/null
         tenant_column_count=$(run_psql "$DB_NAME" -tA -c "SELECT count(*) FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'auth_sessions' AND column_name = 'tenant_id';")
         assert_equal auth_sessions_tenant_id_columns 0 "$tenant_column_count"
         rls_state=$(run_psql "$DB_NAME" -tA -c "SELECT relrowsecurity || '|' || relforcerowsecurity FROM pg_class WHERE oid = 'public.auth_sessions'::regclass;")
